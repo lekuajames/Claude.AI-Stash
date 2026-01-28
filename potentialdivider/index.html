@@ -1,0 +1,705 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC Circuit Potential Divider Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            transition: background-color 1s ease;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: background-color 1s ease, box-shadow 1s ease;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            transition: color 1s ease;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            align-items: center;
+            transition: background-color 1s ease;
+        }
+        .control-item {
+            min-width: 200px;
+            transition: color 1s ease;
+        }
+        .circuit-container {
+            position: relative;
+            margin: 20px auto;
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fffef7;
+            transition: background-color 1s ease, border-color 1s ease;
+        }
+        #circuit-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .meter-readings {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            transition: background-color 1s ease;
+        }
+        .meter {
+            text-align: center;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            width: 45%;
+            transition: background-color 1s ease, box-shadow 1s ease;
+        }
+        .reading {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #e74c3c;
+            transition: color 1s ease;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        #jockey-slider {
+            width: 80%;
+            margin: 20px auto;
+            display: block;
+        }
+        #jockey-info {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: color 1s ease;
+        }
+        .attribution {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            transition: color 1s ease, border-color 1s ease;
+        }
+        .indicator {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+        .indicator-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+        }
+        
+        /* Theme classes for hot/cold/bright/dim */
+        .hot-theme {
+            background-color: #fff3e0;
+        }
+        .hot-theme .container {
+            background-color: #fffaf0;
+            box-shadow: 0 0 15px rgba(255, 87, 34, 0.2);
+        }
+        .hot-theme h1 {
+            color: #ff5722;
+        }
+        .hot-theme .controls {
+            background-color: #fff8e1;
+        }
+        .hot-theme .circuit-container {
+            background-color: #fffaf0;
+            border-color: #ffab91;
+        }
+        .hot-theme .meter-readings {
+            background-color: #ffebee;
+        }
+        .hot-theme .meter {
+            background-color: #fff8f8;
+            box-shadow: 0 0 8px rgba(255, 87, 34, 0.1);
+        }
+        .hot-theme .reading {
+            color: #ff5722;
+        }
+        
+        .cold-theme {
+            background-color: #e3f2fd;
+        }
+        .cold-theme .container {
+            background-color: #f5f9ff;
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.2);
+        }
+        .cold-theme h1 {
+            color: #1976d2;
+        }
+        .cold-theme .controls {
+            background-color: #e8f5ff;
+        }
+        .cold-theme .circuit-container {
+            background-color: #f1f8ff;
+            border-color: #90caf9;
+        }
+        .cold-theme .meter-readings {
+            background-color: #e1f5fe;
+        }
+        .cold-theme .meter {
+            background-color: #f5fbff;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.1);
+        }
+        .cold-theme .reading {
+            color: #1976d2;
+        }
+        
+        .bright-theme {
+            background-color: #fffde7;
+        }
+        .bright-theme .container {
+            background-color: #fffef5;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+        }
+        .bright-theme h1 {
+            color: #ff8f00;
+        }
+        .bright-theme .controls {
+            background-color: #fffef0;
+        }
+        .bright-theme .circuit-container {
+            background-color: #fffef7;
+            border-color: #ffeb3b;
+        }
+        .bright-theme .meter-readings {
+            background-color: #fffde7;
+        }
+        .bright-theme .meter {
+            background-color: #fffef8;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.2);
+        }
+        .bright-theme .reading {
+            color: #ff8f00;
+        }
+        
+        .dim-theme {
+            background-color: #eeeeee;
+        }
+        .dim-theme .container {
+            background-color: #f5f5f5;
+            box-shadow: 0 0 15px rgba(66, 66, 66, 0.2);
+        }
+        .dim-theme h1 {
+            color: #424242;
+        }
+        .dim-theme .controls {
+            background-color: #e0e0e0;
+        }
+        .dim-theme .circuit-container {
+            background-color: #f0f0f0;
+            border-color: #bdbdbd;
+        }
+        .dim-theme .meter-readings {
+            background-color: #e0e0e0;
+        }
+        .dim-theme .meter {
+            background-color: #f5f5f5;
+            box-shadow: 0 0 8px rgba(66, 66, 66, 0.1);
+        }
+        .dim-theme .reading {
+            color: #616161;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DC Circuit Potential Divider Simulation</h1>
+        
+        <div class="controls">
+            <div class="control-item">
+                <label for="emf-input">Battery EMF (V):</label>
+                <input type="number" id="emf-input" min="1" max="24" value="12" step="0.5" style="width: 60px; margin-left: 10px;">
+            </div>
+            
+            <div class="control-item">
+                <label for="circuit-switch">Circuit:</label>
+                <label class="switch">
+                    <input type="checkbox" id="circuit-switch">
+                    <span class="slider"></span>
+                </label>
+                <span id="switch-status" style="margin-left: 10px;">Open</span>
+            </div>
+            
+            <div class="control-item">
+                <label for="wire-resistance">Wire Resistance (Ω):</label>
+                <input type="number" id="wire-resistance" min="10" max="1000" value="100" step="10" style="width: 60px; margin-left: 10px;">
+            </div>
+            
+            <div class="control-item">
+                <label for="component-select">Series Component:</label>
+                <select id="component-select" style="margin-left: 10px; padding: 5px;">
+                    <option value="none">None</option>
+                    <option value="resistor">Fixed Resistor</option>
+                    <option value="ntc">NTC Thermistor</option>
+                    <option value="ptc">PTC Thermistor</option>
+                    <option value="ldr">LDR</option>
+                </select>
+            </div>
+            
+            <div class="control-item" id="resistor-control" style="display: none;">
+                <label for="resistor-value">Resistor (Ω):</label>
+                <input type="number" id="resistor-value" min="0" max="500" value="50" step="10" style="width: 60px; margin-left: 10px;">
+            </div>
+            
+            <div class="control-item" id="temp-control" style="display: none;">
+                <label for="temp-toggle">Temperature:</label>
+                <label class="switch">
+                    <input type="checkbox" id="temp-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span id="temp-label" style="margin-left: 10px;">Cold</span>
+                <div class="indicator">
+                    <img id="cold-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzg3Y2VmYSI+PHBhdGggZD0iTTEyIDJDNi40NyAyIDIgNi40NyAyIDEyczQuNDcgMTAgMTAgMTAgMTAtNC40NyAxMC0xMFMxNy41MyAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LThzOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjxwYXRoIGQ9Ik0xMiA2djEyTTcuNSA5LjVMMTYuNSAxNC41TTcuNSAxNC41bDktNSIvPjwvc3ZnPg==" class="indicator-icon" style="display: block;">
+                    <img id="hot-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmNTcyMiI+PHBhdGggZD0iTTEyIDZjMC0yLjc5LTEuNjQtNS4yLTQtNi4zMnYxMi42M2MwIDEuNDctMS4yNCAyLjctMi43IDIuN2gtMS44MkM2Ljc3IDIwIDEyIDIwIDEyIDEyVjZ6bTAgNnYxMGM1LjUyIDAgMTAtNC40OCAxMC0xMHYtMmMtMy45IDAtNyAzLjEtNyA3aC0yYzAtMy45LTMuMS03LTctN3YyYzAgNS41MiA0LjQ4IDEwIDEwIDEweiIvPjwvc3ZnPg==" class="indicator-icon" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="control-item" id="light-control" style="display: none;">
+                <label for="light-toggle">Light:</label>
+                <label class="switch">
+                    <input type="checkbox" id="light-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span id="light-label" style="margin-left: 10px;">Dim</span>
+                <div class="indicator">
+                    <img id="dim-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzVjNmJjMCI+PHBhdGggZD0iTTEyIDNhOSA5IDAgMTAgMCAxOCA5IDkgMCAwIDAgMC0xOHptMCA1QzExIDE0IDMgOS44OCAzIDEyYzAgNC45NCAzLjA2IDkgOSA5czktNC4wNiA5LTljMC0yLjEyLTgtMi9zLTktNHoiLz48L3N2Zz4=" class="indicator-icon" style="display: block;">
+                    <img id="bright-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZDYwMCI+PHBhdGggZD0iTTEyIDNhOSA5IDAgMTAgMCAxOCA5IDkgMCAwIDAgMC0xOHptMCA2YTMgMyAwIDEgMSAwIDYgMyAzIDAgMCAxIDAtNnptMC05di4yNW0wIDE3Ljc1di4yNU0zLjc1IDEyaC0uMjVNMjAuNSAxMmguMjVNNS45NyA1Ljk3bC0uMTgtLjE4TTUuOTcgMTguMDNsLS4xOC4xOE0xOC4wMyA1Ljk3bC4xOC0uMThNMTguMDMgMTguMDNsLjE4LjE4Ii8+PC9zdmc+" class="indicator-icon" style="display: none;">
+                </div>
+            </div>
+        </div>
+        
+        <div class="circuit-container">
+            <svg id="circuit-svg" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Battery -->
+                <rect x="70" y="240" width="30" height="60" fill="none" stroke="black" stroke-width="2"/>
+                <line x1="85" y1="230" x2="85" y2="240" stroke="black" stroke-width="2"/>
+                <line x1="85" y1="300" x2="85" y2="310" stroke="black" stroke-width="2"/>
+                <line x1="75" y1="250" x2="95" y2="250" stroke="black" stroke-width="3"/>
+                <line x1="80" y1="270" x2="90" y2="270" stroke="black" stroke-width="2"/>
+                <line x1="75" y1="290" x2="95" y2="290" stroke="black" stroke-width="3"/>
+                <text x="60" y="245" font-size="14" text-anchor="middle">+</text>
+                <text x="60" y="295" font-size="14" text-anchor="middle">-</text>
+                <text id="battery-value" x="85" y="325" font-size="14" text-anchor="middle">12V</text>
+                
+                <!-- Switch -->
+                <circle cx="140" cy="230" r="5" fill="black"/>
+                <path id="switch-lever" d="M140 230 L175 215" stroke="black" stroke-width="2" fill="none"/>
+                <circle cx="180" cy="230" r="5" fill="black"/>
+                <text x="160" y="215" font-size="14" text-anchor="middle">Switch</text>
+                
+                <!-- Ammeter -->
+                <circle cx="230" cy="230" r="20" fill="none" stroke="black" stroke-width="2"/>
+                <text x="230" y="235" font-size="14" text-anchor="middle">A</text>
+                
+                <!-- Resistance Wire -->
+                <line x1="280" y1="230" x2="480" y2="230" stroke="#8B4513" stroke-width="4"/>
+                <text x="380" y="260" font-size="14" text-anchor="middle">Resistance Wire</text>
+                <text id="wire-resistance-label" x="380" y="280" font-size="12" text-anchor="middle">100Ω</text>
+                
+                <!-- Series Components (initially hidden) -->
+                <g id="series-component" style="display: none;">
+                    <rect x="530" y="215" width="30" height="30" fill="none" stroke="black" stroke-width="2"/>
+                    <text id="component-type" x="545" y="235" font-size="10" text-anchor="middle"></text>
+                    <text id="component-value" x="545" y="205" font-size="12" text-anchor="middle">50Ω</text>
+                </g>
+                
+                <!-- Circuit wires -->
+                <line x1="85" y1="230" x2="140" y2="230" stroke="black" stroke-width="2"/>
+                <line x1="180" y1="230" x2="210" y2="230" stroke="black" stroke-width="2"/>
+                <line x1="250" y1="230" x2="280" y2="230" stroke="black" stroke-width="2"/>
+                <line id="wire-before-component" x1="480" y1="230" x2="580" y2="230" stroke="black" stroke-width="2"/>
+                <line id="wire-after-component" x1="560" y1="230" x2="580" y2="230" stroke="black" stroke-width="2" style="display: none;"/>
+                <line x1="580" y1="230" x2="580" y2="310" stroke="black" stroke-width="2"/>
+                <line x1="580" y1="310" x2="85" y2="310" stroke="black" stroke-width="2"/>
+                
+                <!-- Connection points -->
+                <circle cx="280" cy="230" r="3" fill="black"/>
+                <circle cx="480" cy="230" r="3" fill="black"/>
+                <circle cx="530" cy="230" r="3" fill="black" id="component-start" style="display: none;"/>
+                <circle cx="560" cy="230" r="3" fill="black" id="component-end" style="display: none;"/>
+                
+                <!-- Jockey and Voltmeter -->
+                <g>
+                    <!-- Fixed left wire connection -->
+                    <line x1="280" y1="110" x2="280" y2="230" stroke="black" stroke-width="2"/>
+                    <line x1="280" y1="110" x2="385" y2="110" stroke="black" stroke-width="2"/>
+                </g>
+                <g id="jockey-group">
+                    <rect x="380" y="210" width="10" height="40" fill="#3498db" stroke="black" stroke-width="1"/>
+                    <circle cx="385" cy="150" r="20" fill="none" stroke="black" stroke-width="2"/>
+                    <text x="385" y="155" font-size="14" text-anchor="middle">V</text>
+                    <line x1="385" y1="210" x2="385" y2="170" stroke="black" stroke-width="2"/>
+                    <line x1="385" y1="130" x2="385" y2="110" stroke="black" stroke-width="2"/>
+                </g>
+            </svg>
+        </div>
+        
+        <input type="range" id="jockey-slider" min="0" max="100" value="50">
+        <div id="jockey-info">Jockey position: 50%</div>
+        
+        <div class="meter-readings">
+            <div class="meter">
+                <h3>Voltmeter Reading</h3>
+                <div id="voltmeter-reading" class="reading">0.00 V</div>
+            </div>
+            <div class="meter">
+                <h3>Ammeter Reading</h3>
+                <div id="ammeter-reading" class="reading">0.00 A</div>
+            </div>
+        </div>
+        
+        <div class="attribution">
+            Created by James Kua
+        </div>
+        <div class="attribution">
+Temasek Junior College
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const circuitSwitch = document.getElementById('circuit-switch');
+        const switchStatus = document.getElementById('switch-status');
+        const switchLever = document.getElementById('switch-lever');
+        const emfInput = document.getElementById('emf-input');
+        const batteryValue = document.getElementById('battery-value');
+        const wireResistanceInput = document.getElementById('wire-resistance');
+        const wireResistanceLabel = document.getElementById('wire-resistance-label');
+        const componentSelect = document.getElementById('component-select');
+        const resistorControl = document.getElementById('resistor-control');
+        const resistorValue = document.getElementById('resistor-value');
+        const tempControl = document.getElementById('temp-control');
+        const tempToggle = document.getElementById('temp-toggle');
+        const tempLabel = document.getElementById('temp-label');
+        const lightControl = document.getElementById('light-control');
+        const lightToggle = document.getElementById('light-toggle');
+        const lightLabel = document.getElementById('light-label');
+        const jockeySlider = document.getElementById('jockey-slider');
+        const jockeyInfo = document.getElementById('jockey-info');
+        const jockeyGroup = document.getElementById('jockey-group');
+        const voltmeterReading = document.getElementById('voltmeter-reading');
+        const ammeterReading = document.getElementById('ammeter-reading');
+        const seriesComponent = document.getElementById('series-component');
+        const componentType = document.getElementById('component-type');
+        const componentValue = document.getElementById('component-value');
+        const wireBeforeComponent = document.getElementById('wire-before-component');
+        const wireAfterComponent = document.getElementById('wire-after-component');
+        const componentStart = document.getElementById('component-start');
+        const componentEnd = document.getElementById('component-end');
+        
+        // Indicator icons
+        const coldIcon = document.getElementById('cold-icon');
+        const hotIcon = document.getElementById('hot-icon');
+        const dimIcon = document.getElementById('dim-icon');
+        const brightIcon = document.getElementById('bright-icon');
+        
+        // Circuit values and state
+        let emf = 12; // Volts
+        let wireResistance = 100; // Ohms
+        let currentComponent = 'none';
+        let circuitClosed = false;
+        let jockeyPosition = 0.5; // 0 to 1
+        let isHighTemp = false;
+        let isBright = false;
+        
+        // Component resistance values
+        const resistances = {
+            resistor: 50,
+            ntc: { cold: 100, hot: 20 },
+            ptc: { cold: 20, hot: 100 },
+            ldr: { dim: 200, bright: 20 }
+        };
+        
+        // Get current component resistance
+        function getComponentResistance() {
+            switch(currentComponent) {
+                case 'resistor':
+                    return resistances.resistor;
+                case 'ntc':
+                    return isHighTemp ? resistances.ntc.hot : resistances.ntc.cold;
+                case 'ptc':
+                    return isHighTemp ? resistances.ptc.hot : resistances.ptc.cold;
+                case 'ldr':
+                    return isBright ? resistances.ldr.bright : resistances.ldr.dim;
+                default:
+                    return 0;
+            }
+        }
+        
+        // Update component display
+        function updateComponentDisplay() {
+            if (currentComponent === 'none') {
+                seriesComponent.style.display = 'none';
+                wireBeforeComponent.setAttribute('x2', '580');
+                wireAfterComponent.style.display = 'none';
+                componentStart.style.display = 'none';
+                componentEnd.style.display = 'none';
+                
+                resistorControl.style.display = 'none';
+                tempControl.style.display = 'none';
+                lightControl.style.display = 'none';
+                return;
+            }
+            
+            // Show component and connection points
+            seriesComponent.style.display = 'block';
+            wireBeforeComponent.setAttribute('x2', '530');
+            wireAfterComponent.style.display = 'block';
+            componentStart.style.display = 'block';
+            componentEnd.style.display = 'block';
+            
+            // Set component type text
+            componentType.textContent = currentComponent === 'resistor' ? '' : 
+                currentComponent === 'ntc' ? 'NTC' : 
+                currentComponent === 'ptc' ? 'PTC' : 'LDR';
+            
+            // Set component value
+            componentValue.textContent = getComponentResistance() + 'Ω';
+            
+            // Show relevant controls
+            resistorControl.style.display = currentComponent === 'resistor' ? 'block' : 'none';
+            tempControl.style.display = (currentComponent === 'ntc' || currentComponent === 'ptc') ? 'block' : 'none';
+            lightControl.style.display = currentComponent === 'ldr' ? 'block' : 'none';
+            
+            // Update indicator icons
+            updateIndicators();
+        }
+        
+        function updateIndicators() {
+            // Temperature indicators
+            if (coldIcon && hotIcon) {
+                if (isHighTemp) {
+                    coldIcon.style.display = 'none';
+                    hotIcon.style.display = 'block';
+                } else {
+                    coldIcon.style.display = 'block';
+                    hotIcon.style.display = 'none';
+                }
+            }
+            
+            // Light indicators
+            if (dimIcon && brightIcon) {
+                if (isBright) {
+                    dimIcon.style.display = 'none';
+                    brightIcon.style.display = 'block';
+                } else {
+                    dimIcon.style.display = 'block';
+                    brightIcon.style.display = 'none';
+                }
+            }
+        }
+        
+        // Update jockey position
+        function updateJockeyPosition() {
+            const startX = 280;
+            const endX = 480;
+            const jockeyX = startX + (endX - startX) * jockeyPosition;
+            
+            // Update the movable jockey group's position
+            jockeyGroup.setAttribute('transform', `translate(${jockeyX - 385}, 0)`);
+            
+            // Create a new horizontal connecting wire to the fixed left wire
+            const horizontalWire = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            horizontalWire.setAttribute("x1", "280");
+            horizontalWire.setAttribute("y1", "110");
+            horizontalWire.setAttribute("x2", jockeyX.toString());
+            horizontalWire.setAttribute("y2", "110");
+            horizontalWire.setAttribute("stroke", "black");
+            horizontalWire.setAttribute("stroke-width", "2");
+            
+            // Find the existing horizontal connecting wire and replace it
+            const oldWire = document.querySelector("line[y1='110'][y2='110']");
+            if (oldWire) {
+                oldWire.parentNode.replaceChild(horizontalWire, oldWire);
+            } else {
+                const fixedWireGroup = document.querySelector("g:not(#jockey-group) > line[y1='110']").parentNode;
+                fixedWireGroup.appendChild(horizontalWire);
+            }
+            
+            jockeyInfo.textContent = `Jockey position: ${Math.round(jockeyPosition * 100)}%`;
+        }
+        
+        // Calculate and update meter readings
+        function updateReadings() {
+            if (!circuitClosed) {
+                voltmeterReading.textContent = '0.00 V';
+                ammeterReading.textContent = '0.00 A';
+                return;
+            }
+            
+            const componentR = getComponentResistance();
+            const totalR = wireResistance + (currentComponent !== 'none' ? componentR : 0);
+            
+            // Current calculation (I = V/R)
+            const current = emf / totalR;
+            
+            // Voltage calculation
+            let voltage;
+            if (currentComponent !== 'none') {
+                const componentVDrop = current * componentR;
+                const wireVoltage = emf - componentVDrop;
+                voltage = wireVoltage * jockeyPosition;
+            } else {
+                voltage = emf * jockeyPosition;
+            }
+            
+            voltmeterReading.textContent = voltage.toFixed(2) + ' V';
+            ammeterReading.textContent = current.toFixed(2) + ' A';
+        }
+        
+        function updateTheme() {
+            const body = document.body;
+            
+            // Remove all theme classes first
+            body.classList.remove('hot-theme', 'cold-theme', 'bright-theme', 'dim-theme');
+            
+            // Apply appropriate theme based on current component and state
+            if (currentComponent === 'ntc' || currentComponent === 'ptc') {
+                if (isHighTemp) {
+                    body.classList.add('hot-theme');
+                } else {
+                    body.classList.add('cold-theme');
+                }
+            } else if (currentComponent === 'ldr') {
+                if (isBright) {
+                    body.classList.add('bright-theme');
+                } else {
+                    body.classList.add('dim-theme');
+                }
+            }
+        }
+        
+        // Update all displays
+        function updateDisplay() {
+            batteryValue.textContent = emf + 'V';
+            wireResistanceLabel.textContent = wireResistance + 'Ω';
+            updateComponentDisplay();
+            updateJockeyPosition();
+            updateReadings();
+            updateTheme();
+        }
+        
+        // Event listeners
+        circuitSwitch.addEventListener('change', function() {
+            circuitClosed = this.checked;
+            switchStatus.textContent = circuitClosed ? 'Closed' : 'Open';
+            
+            // Update switch appearance
+            if (circuitClosed) {
+                switchLever.setAttribute('d', 'M140 230 L180 230');
+            } else {
+                switchLever.setAttribute('d', 'M140 230 L175 215');
+            }
+            
+            updateDisplay();
+        });
+        
+        emfInput.addEventListener('input', function() {
+            emf = parseFloat(this.value);
+            updateDisplay();
+        });
+        
+        wireResistanceInput.addEventListener('input', function() {
+            wireResistance = parseFloat(this.value);
+            updateDisplay();
+        });
+        
+        componentSelect.addEventListener('change', function() {
+            currentComponent = this.value;
+            updateDisplay();
+        });
+        
+        resistorValue.addEventListener('input', function() {
+            resistances.resistor = parseFloat(this.value);
+            updateDisplay();
+        });
+        
+        tempToggle.addEventListener('change', function() {
+            isHighTemp = this.checked;
+            tempLabel.textContent = isHighTemp ? 'Hot' : 'Cold';
+            updateIndicators();
+            updateDisplay();
+        });
+        
+        lightToggle.addEventListener('change', function() {
+            isBright = this.checked;
+            lightLabel.textContent = isBright ? 'Bright' : 'Dim';
+            updateIndicators();
+            updateDisplay();
+        });
+        
+        jockeySlider.addEventListener('input', function() {
+            jockeyPosition = this.value / 100;
+            updateDisplay();
+        });
+        
+        // Initial display update
+        updateDisplay();
+    </script>
+</body>
+</html>
