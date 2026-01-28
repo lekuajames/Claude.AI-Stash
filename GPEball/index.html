@@ -1,0 +1,661 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPE Simulation</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f5f7fa; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; margin-bottom: 15px; color: #2c3e50; }
+        
+        /* Simulation area */
+        .sim-area { position: relative; height: 450px; background: linear-gradient(#b7e9ff, #d9f2fe); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+        .ground { position: absolute; bottom: 0; width: 100%; height: 40px; background: #8d6e63; border-top: 3px solid #6d4c41; }
+        .ball { position: absolute; width: 50px; height: 50px; left: 100px; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3); }
+        
+        /* Height markers */
+        .height-marker { position: absolute; left: 20px; width: 100px; border-top: 1px dashed #555; }
+        .marker-label { position: absolute; left: 5px; top: -15px; background: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+        
+        /* Info panel */
+        .info-panel { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.85); padding: 10px; border-radius: 8px; text-align: center; min-width: 280px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* Energy graph */
+        .energy-graph { position: absolute; right: 5px; top: 70px; width: 260px; height: 330px; background: rgba(255,255,255,0.9); border-radius: 8px; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .graph-title { display: flex; justify-content: center; align-items: center; font-weight: bold; margin-bottom: 8px; font-size: 12px; }
+        
+        /* Bar graph */
+        .bar-graph { position: relative; height: 230px; border-left: 1px solid #aaa; border-bottom: 1px solid #aaa; margin-bottom: 15px; padding-left: 55px; margin-left: 10px; }
+        .graph-line { position: absolute; width: 100%; border-top: 1px dashed #aaa; left: 0; }
+        .graph-label { position: absolute; left: -20px; font-size: 8px; transform: translateY(-50%); color: #666; }
+        .energy-bar { position: absolute; bottom: 0; width: 18px; border-top-left-radius: 3px; border-top-right-radius: 3px; }
+        .bar-gpe { left: 40px; background: #2ecc71; }
+        .bar-ke { left: 70px; background: #3498db; }
+        .bar-total { left: 100px; background: #3498db; }
+        .bar-loss { left: 130px; background: #e74c3c; }
+        .bar-gpe-inside-total { background: #2ecc71; opacity: 0.8; z-index: 2; }
+        .bar-ke-inside-total { background: #3498db; opacity: 0.8; z-index: 2; }
+        .initial-bar-outline { position: absolute; bottom: 0; width: 22px; border: 2px dashed #555; border-bottom: none; background: none; }
+        
+        /* Legend */
+        .legend { display: flex; flex-direction: column; gap: 2px; font-size: 9px; }
+        .legend-item { display: flex; align-items: center; width: 100%; }
+        .legend-color { width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+        
+        /* Controls */
+        .controls { background: #f8f9fa; border-radius: 8px; padding: 15px; border: 1px solid #e9ecef; }
+        .slider-container { margin-bottom: 12px; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .slider-label { font-weight: bold; }
+        input[type="range"] { width: 100%; }
+        
+        .buttons { display: flex; gap: 8px; margin: 15px 0; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; }
+        button:hover:not(:disabled) { filter: brightness(0.9); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        #drop-btn { background: #2ecc71; }
+        #pause-btn { background: #f39c12; }
+        #reset-btn { background: #e74c3c; }
+        #earth-btn, #moon-btn { background: #3498db; }
+        
+        .toggle-container { display: flex; align-items: center; margin: 12px 0; }
+        .toggle-switch { position: relative; display: inline-block; width: 46px; height: 22px; margin-right: 10px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 22px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #2ecc71; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        
+        .formula { background: #f0f8ff; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gravitational Potential Energy Simulation</h1>
+        
+        <div class="formula">
+            <div><strong>GPE = m × g × h</strong> where:</div>
+            <div>GPE = gravitational potential energy (J)</div>
+            <div>m = mass (kg), g = gravitational field strength (N/kg), h = height (m)</div>
+        </div>
+        
+        <div class="sim-area" id="sim-area">
+            <div class="ground"></div>
+            <div class="ball" id="ball">1.0</div>
+            <div id="height-markers"></div>
+            
+            <div class="info-panel">
+                <div>Mass: <span id="mass-display">1.0</span> kg</div>
+                <div>Gravitational field strength: <span id="gravity-display">9.81</span> N/kg</div>
+                <div>Weight: <span id="weight-display">9.81</span> N</div>
+                <div>Height: <span id="height-display">0.0</span> m</div>
+                <div>GPE: <span id="gpe-display">0.0</span> J</div>
+                <div>Kinetic Energy: <span id="ke-display">0.0</span> J</div>
+            </div>
+            
+            <div class="energy-graph">
+                <div class="graph-title">
+                    <span style="margin: 0 auto;">Energy Graph</span>
+                </div>
+                
+                <div class="bar-graph" id="bar-graph"></div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2ecc71"></div>
+                        <div>GPE: <span id="legend-gpe">0.0</span> J</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db"></div>
+                        <div>KE: <span id="legend-ke">0.0</span> J</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db"></div>
+                        <div>Total Energy in Ball: <span id="legend-total">0.0</span> J</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e74c3c"></div>
+                        <div>Energy Loss: <span id="legend-loss">0.0</span> J</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span class="slider-label">Mass (kg)</span>
+                    <span id="mass-value">1.0</span>
+                </div>
+                <input type="range" id="mass-slider" min="0.1" max="10" step="0.1" value="1.0">
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span class="slider-label">Gravitational field strength (N/kg)</span>
+                    <span id="gravity-value">9.81</span>
+                </div>
+                <input type="range" id="gravity-slider" min="0.1" max="20" step="0.1" value="9.81">
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span class="slider-label">Height (m)</span>
+                    <span id="height-value">0.0</span>
+                </div>
+                <input type="range" id="height-slider" min="0" max="6" step="0.1" value="0">
+            </div>
+            
+            <div class="buttons">
+                <button id="earth-btn">Earth (9.81 N/kg)</button>
+                <button id="moon-btn">Moon (1.62 N/kg)</button>
+                <button id="drop-btn">DROP!</button>
+                <button id="pause-btn" disabled>PAUSE</button>
+                <button id="reset-btn" disabled>RESET</button>
+            </div>
+            
+            <div class="toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="energy-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Assume no energy loss</span>
+            </div>
+            
+            <div class="toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="time-scale-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Slow motion (0.5×)</span>
+            </div>
+        </div>
+        
+        <div class="attribution">Made by James Kua<br>Temasek Junior College</div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const ball = document.getElementById('ball');
+            const simArea = document.getElementById('sim-area');
+            const heightMarkers = document.getElementById('height-markers');
+            const barGraph = document.getElementById('bar-graph');
+            
+            // Info panel elements
+            const massDisplay = document.getElementById('mass-display');
+            const gravityDisplay = document.getElementById('gravity-display');
+            const weightDisplay = document.getElementById('weight-display');
+            const heightDisplay = document.getElementById('height-display');
+            const gpeDisplay = document.getElementById('gpe-display');
+            const keDisplay = document.getElementById('ke-display');
+            const legendGPE = document.getElementById('legend-gpe');
+            const legendKE = document.getElementById('legend-ke');
+            const legendTotal = document.getElementById('legend-total');
+            const legendLoss = document.getElementById('legend-loss');
+            
+            // Control elements
+            const massSlider = document.getElementById('mass-slider');
+            const massValue = document.getElementById('mass-value');
+            const gravitySlider = document.getElementById('gravity-slider');
+            const gravityValue = document.getElementById('gravity-value');
+            const heightSlider = document.getElementById('height-slider');
+            const heightValue = document.getElementById('height-value');
+            const earthBtn = document.getElementById('earth-btn');
+            const moonBtn = document.getElementById('moon-btn');
+            const dropBtn = document.getElementById('drop-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const energyToggle = document.getElementById('energy-toggle');
+            const timeScaleToggle = document.getElementById('time-scale-toggle');
+            
+            // Physics constants and variables
+            const GROUND_HEIGHT = 40; // px
+            const PIXELS_PER_METER = 60; // scale: 60px = 1m
+            let mass = 1.0; // kg
+            let gravity = 9.81; // N/kg
+            let maxEnergy = 100; // J
+            let initialHeight = 0; // m
+            let initialEnergy = 0; // J (total energy in the system)
+            let velocity = 0; // m/s
+            let energyLossFactor = 0.7; // 30% energy loss per bounce
+            let useEnergyLoss = true; // Whether to use energy loss
+            let timeScale = 1.0; // Time scale factor
+            
+            // Animation state
+            let isAnimating = false;
+            let isPaused = false;
+            let animationId = null;
+            let lastTimestamp = 0;
+            
+            // Energy bars
+            let energyBars = { gpe: null, ke: null, total: null, loss: null, gpeInsideTotal: null, keInsideTotal: null };
+            
+            // Initial energy outline bars
+            let initialOutlineBars = { gpe: null, total: null };
+            
+            // Initial total energy for tracking energy loss
+            let systemInitialEnergy = 0;
+            
+            // Creates height markers at 1m intervals
+            function createHeightMarkers() {
+                heightMarkers.innerHTML = '';
+                for (let i = 1; i <= 6; i++) {
+                    const marker = document.createElement('div');
+                    marker.className = 'height-marker';
+                    marker.style.bottom = `${GROUND_HEIGHT + i * PIXELS_PER_METER}px`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'marker-label';
+                    label.textContent = `${i}m`;
+                    
+                    marker.appendChild(label);
+                    heightMarkers.appendChild(marker);
+                }
+            }
+            
+            // Calculate gravitational potential energy
+            function calculateGPE() {
+                const ballBottom = parseFloat(ball.style.bottom);
+                const height = (ballBottom - GROUND_HEIGHT) / PIXELS_PER_METER;
+                const gpe = mass * gravity * height;
+                return { height, gpe };
+            }
+            
+            // Calculate kinetic energy
+            function calculateKE(velocity) {
+                return 0.5 * mass * velocity * velocity;
+            }
+            
+            // Update display elements with current values
+            function updateDisplay() {
+                const { height, gpe } = calculateGPE();
+                const ke = isAnimating ? calculateKE(velocity) : 0;
+                const total = gpe + ke;
+                const weight = mass * gravity;
+                
+                // Update ball
+                const baseSize = 50;
+                const scaleFactor = 0.8 + (mass / 10) * 0.4;
+                const newSize = baseSize * scaleFactor;
+                ball.style.width = `${newSize}px`;
+                ball.style.height = `${newSize}px`;
+                ball.textContent = mass.toFixed(1);
+                
+                // Update info panel
+                massDisplay.textContent = mass.toFixed(1);
+                gravityDisplay.textContent = gravity.toFixed(2);
+                weightDisplay.textContent = weight.toFixed(2);
+                heightDisplay.textContent = height.toFixed(1);
+                gpeDisplay.textContent = Math.round(gpe);
+                keDisplay.textContent = Math.round(ke);
+                
+                // Update graph
+                updateGraph(gpe, ke, total);
+            }
+            
+                // Create bar graph with grid lines
+                function createBarGraph() {
+                    barGraph.innerHTML = '';
+                    
+                    // Create grid lines in 10J intervals
+                    const numLines = Math.ceil(maxEnergy / 10) + 1;
+                    for (let i = 0; i < numLines; i++) {
+                        const energy = i * 10;
+                        const percent = Math.min((energy / maxEnergy) * 100, 100);
+                        
+                        if (percent <= 100) {
+                            // Grid line
+                            const line = document.createElement('div');
+                            line.className = 'graph-line';
+                            line.style.bottom = `${percent}%`;
+                            
+                            // Label
+                            const label = document.createElement('div');
+                            label.className = 'graph-label';
+                            label.style.bottom = `${percent}%`;
+                            label.textContent = `${energy} J`;
+                            
+                            barGraph.appendChild(line);
+                            barGraph.appendChild(label);
+                        }
+                    }
+                    
+                    // Create energy bars
+                    const gpeBar = document.createElement('div');
+                    gpeBar.className = 'energy-bar bar-gpe';
+                    
+                    const keBar = document.createElement('div');
+                    keBar.className = 'energy-bar bar-ke';
+                    
+                    const totalBar = document.createElement('div');
+                    totalBar.className = 'energy-bar bar-total';
+                    
+                    // Create GPE and KE components inside total bar
+                    const gpeInsideTotalBar = document.createElement('div');
+                    gpeInsideTotalBar.className = 'energy-bar bar-gpe-inside-total';
+                    gpeInsideTotalBar.style.left = '100px'; // Same position as total bar
+                    
+                    const keInsideTotalBar = document.createElement('div');
+                    keInsideTotalBar.className = 'energy-bar bar-ke-inside-total';
+                    keInsideTotalBar.style.left = '100px'; // Same position as total bar
+                    
+                    const lossBar = document.createElement('div');
+                    lossBar.className = 'energy-bar bar-loss';
+                    
+                    // Create initial energy outline bars
+                    const initialGpeOutline = document.createElement('div');
+                    initialGpeOutline.className = 'initial-bar-outline';
+                    initialGpeOutline.style.left = '38px';  // Slightly offset to surround the bar
+                    initialGpeOutline.style.display = 'none';
+                    
+                    const initialTotalOutline = document.createElement('div');
+                    initialTotalOutline.className = 'initial-bar-outline';
+                    initialTotalOutline.style.left = '98px';  // Slightly offset to surround the bar
+                    initialTotalOutline.style.display = 'none';
+                    
+                    barGraph.appendChild(gpeBar);
+                    barGraph.appendChild(keBar);
+                    barGraph.appendChild(totalBar);
+                    barGraph.appendChild(gpeInsideTotalBar);
+                    barGraph.appendChild(keInsideTotalBar);
+                    barGraph.appendChild(lossBar);
+                    barGraph.appendChild(initialGpeOutline);
+                    barGraph.appendChild(initialTotalOutline);
+                    
+                    energyBars.gpe = gpeBar;
+                    energyBars.ke = keBar;
+                    energyBars.total = totalBar;
+                    energyBars.loss = lossBar;
+                    energyBars.gpeInsideTotal = gpeInsideTotalBar;
+                    energyBars.keInsideTotal = keInsideTotalBar;
+                    
+                    initialOutlineBars.gpe = initialGpeOutline;
+                    initialOutlineBars.total = initialTotalOutline;
+                }
+            
+            // Update graphs based on energy values
+            function updateGraph(gpe, ke, total) {
+                // Calculate energy loss (difference between initial and current total energy)
+                const energyLoss = isAnimating ? systemInitialEnergy - total : 0;
+                
+                // Update bar heights
+                const gpePercent = Math.min((gpe / maxEnergy) * 100, 100);
+                const kePercent = Math.min((ke / maxEnergy) * 100, 100);
+                const totalPercent = Math.min((total / maxEnergy) * 100, 100);
+                const lossPercent = Math.min((energyLoss / maxEnergy) * 100, 100);
+                
+                energyBars.gpe.style.height = `${gpePercent}%`;
+                energyBars.ke.style.height = `${kePercent}%`;
+                energyBars.total.style.height = `${totalPercent}%`;
+                energyBars.loss.style.height = `${lossPercent}%`;
+                
+                // Update GPE and KE components inside the total bar
+                energyBars.gpeInsideTotal.style.height = `${gpePercent}%`;
+                energyBars.keInsideTotal.style.height = `${kePercent}%`;
+                // Adjust KE bar position based on GPE to stack them
+                const bottomOffset = gpePercent;
+                energyBars.keInsideTotal.style.bottom = `${bottomOffset}%`;
+                
+                // Ensure KE bar doesn't exceed total height
+                if (gpePercent + kePercent > totalPercent) {
+                    energyBars.keInsideTotal.style.height = `${Math.max(0, totalPercent - gpePercent)}%`;
+                }
+                
+                // Update legend values
+                legendGPE.textContent = Math.round(gpe);
+                legendKE.textContent = Math.round(ke);
+                legendTotal.textContent = Math.round(total);
+                legendLoss.textContent = Math.round(energyLoss);
+            }
+            
+            // Update max energy scale
+            function updateMaxEnergy() {
+                const maxHeight = 6; // meters
+                const rawEnergy = mass * gravity * maxHeight;
+                maxEnergy = Math.ceil(rawEnergy / 10) * 10 + 10; // round up to nearest 10J + buffer
+                
+                // Recreate graphs with new scale
+                createBarGraph();
+                updateDisplay();
+            }
+            
+            // Animation function for ball motion
+            function animateDrop(timestamp) {
+                if (!isAnimating || isPaused) return;
+                
+                // Calculate time step
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const dt = (timestamp - lastTimestamp) / 1000 * timeScale;
+                lastTimestamp = timestamp;
+                
+                // Current position
+                const ballBottom = parseFloat(ball.style.bottom);
+                
+                // Apply gravity
+                velocity -= gravity * dt;
+                
+                // Update position
+                let newY = ballBottom + velocity * dt * PIXELS_PER_METER;
+                
+                // Ground collision detection
+                if (newY <= GROUND_HEIGHT) {
+                    newY = GROUND_HEIGHT;
+                    
+                    if (velocity < 0) { // Only bounce if moving downward
+                        if (useEnergyLoss) {
+                            // Apply energy loss: velocity reduced by factor
+                            velocity = -velocity * Math.sqrt(energyLossFactor);
+                            
+                            // Stop if velocity becomes very small
+                            if (Math.abs(velocity) < 0.1) {
+                                isAnimating = false;
+                                velocity = 0;
+                                keDisplay.textContent = "0.0";
+                                dropBtn.disabled = false;
+                                pauseBtn.disabled = true;
+                                resetBtn.disabled = false;
+                                return;
+                            }
+                        } else {
+                            // Perfect conservation: recalculate velocity to maintain total energy
+                            velocity = Math.sqrt(2 * initialEnergy / mass);
+                        }
+                        
+                        // Visual feedback
+                        ball.style.backgroundColor = '#f1c40f';
+                        setTimeout(() => { ball.style.backgroundColor = '#e74c3c'; }, 100);
+                    }
+                }
+                
+                // Cap maximum height
+                const calculatedHeight = (newY - GROUND_HEIGHT) / PIXELS_PER_METER;
+                if (calculatedHeight > initialHeight) {
+                    newY = GROUND_HEIGHT + initialHeight * PIXELS_PER_METER;
+                }
+                
+                // Update ball position
+                ball.style.bottom = `${newY}px`;
+                
+                // Update height slider
+                const height = (newY - GROUND_HEIGHT) / PIXELS_PER_METER;
+                heightSlider.value = height;
+                heightValue.textContent = height.toFixed(1);
+                
+                // Update display
+                updateDisplay();
+                
+                // Continue animation
+                animationId = window.requestAnimationFrame(animateDrop);
+            }
+            
+            // Start the animation
+            function startAnimation() {
+                const ballBottom = parseInt(ball.style.bottom);
+                if (ballBottom <= GROUND_HEIGHT) return;
+                
+                // Store initial height and energy
+                initialHeight = (ballBottom - GROUND_HEIGHT) / PIXELS_PER_METER;
+                initialEnergy = mass * gravity * initialHeight;
+                
+                // Store initial energy for loss calculation
+                systemInitialEnergy = initialEnergy;
+                
+                // Show initial energy outlines
+                const initialGpePercent = Math.min((initialEnergy / maxEnergy) * 100, 100);
+                initialOutlineBars.gpe.style.height = `${initialGpePercent}%`;
+                initialOutlineBars.total.style.height = `${initialGpePercent}%`;
+                initialOutlineBars.gpe.style.display = 'block';
+                initialOutlineBars.total.style.display = 'block';
+                
+                // Initialize animation
+                isAnimating = true;
+                isPaused = false;
+                velocity = 0;
+                lastTimestamp = 0;
+                
+                // Update button states
+                dropBtn.disabled = true;
+                pauseBtn.disabled = false;
+                resetBtn.disabled = false;
+                pauseBtn.textContent = 'PAUSE';
+                
+                // Start animation
+                animationId = window.requestAnimationFrame(animateDrop);
+            }
+            
+            // Pause/resume animation
+            function togglePause() {
+                if (!isAnimating) return;
+                
+                if (isPaused) {
+                    // Resume
+                    isPaused = false;
+                    lastTimestamp = 0;
+                    pauseBtn.textContent = 'PAUSE';
+                    animationId = window.requestAnimationFrame(animateDrop);
+                } else {
+                    // Pause
+                    isPaused = true;
+                    pauseBtn.textContent = 'RESUME';
+                    window.cancelAnimationFrame(animationId);
+                }
+            }
+            
+            // Reset the animation
+            function resetAnimation() {
+                // Stop animation
+                isAnimating = false;
+                isPaused = false;
+                window.cancelAnimationFrame(animationId);
+                
+                // Reset ball
+                const newY = GROUND_HEIGHT + (initialHeight * PIXELS_PER_METER);
+                ball.style.bottom = `${newY}px`;
+                
+                // Reset state
+                velocity = 0;
+                lastTimestamp = 0;
+                
+                // Update height slider
+                heightSlider.value = initialHeight;
+                heightValue.textContent = initialHeight.toFixed(1);
+                
+                // Update UI
+                updateDisplay();
+                
+                // Update button states
+                dropBtn.disabled = false;
+                pauseBtn.disabled = true;
+                resetBtn.disabled = true;
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Mass slider
+                massSlider.addEventListener('input', function() {
+                    mass = parseFloat(this.value);
+                    massValue.textContent = mass.toFixed(1);
+                    updateMaxEnergy();
+                });
+                
+                // Gravity slider
+                gravitySlider.addEventListener('input', function() {
+                    gravity = parseFloat(this.value);
+                    gravityValue.textContent = gravity.toFixed(2);
+                    updateMaxEnergy();
+                });
+                
+                // Height slider
+                heightSlider.addEventListener('input', function() {
+                    if (isAnimating) return;
+                    const height = parseFloat(this.value);
+                    heightValue.textContent = height.toFixed(1);
+                    const newY = GROUND_HEIGHT + (height * PIXELS_PER_METER);
+                    ball.style.bottom = `${newY}px`;
+                    updateDisplay();
+                });
+                
+                // Earth preset
+                earthBtn.addEventListener('click', function() {
+                    gravity = 9.81;
+                    gravitySlider.value = gravity;
+                    gravityValue.textContent = gravity.toFixed(2);
+                    updateMaxEnergy();
+                });
+                
+                // Moon preset
+                moonBtn.addEventListener('click', function() {
+                    gravity = 1.62;
+                    gravitySlider.value = gravity;
+                    gravityValue.textContent = gravity.toFixed(2);
+                    updateMaxEnergy();
+                });
+                
+                // Drop button
+                dropBtn.addEventListener('click', startAnimation);
+                
+                // Pause button
+                pauseBtn.addEventListener('click', togglePause);
+                
+                // Reset button
+                resetBtn.addEventListener('click', resetAnimation);
+                
+                // Energy conservation toggle
+                energyToggle.addEventListener('change', function() {
+                    useEnergyLoss = !this.checked;
+                });
+                
+                // Time scale toggle
+                timeScaleToggle.addEventListener('change', function() {
+                    timeScale = this.checked ? 0.5 : 1.0;
+                });
+            }
+            
+            // Initialize simulation
+            function init() {
+                // Set initial ball position
+                ball.style.bottom = `${GROUND_HEIGHT}px`;
+                
+                // Create markers and graphs
+                createHeightMarkers();
+                createBarGraph();
+                
+                // Initial calculations
+                updateMaxEnergy();
+                updateDisplay();
+                
+                // Set up event listeners
+                setupEventListeners();
+            }
+            
+            // Start the simulation
+            init();
+        });
+    </script>
+</body>
+</html>
