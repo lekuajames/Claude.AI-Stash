@@ -1,0 +1,1095 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radioactive Decay Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    select, input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    input[type="checkbox"] {
+      margin-right: 5px;
+    }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .start-btn {
+      background-color: #4CAF50;
+    }
+    .start-btn:hover {
+      background-color: #3e8e41;
+    }
+    .pause-btn {
+      background-color: #FFC107;
+    }
+    .pause-btn:hover {
+      background-color: #d9a406;
+    }
+    .resume-btn {
+      background-color: #2196F3;
+    }
+    .resume-btn:hover {
+      background-color: #0b7dda;
+    }
+    .reset-btn {
+      background-color: #F44336;
+    }
+    .reset-btn:hover {
+      background-color: #d32f2f;
+    }
+    .simulation-container {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+    .canvas-container {
+      flex-grow: 1;
+    }
+    .graph-container {
+      width: 500px;
+    }
+    canvas {
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card h2 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .stat-card p {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .stat-card .sub-text {
+      font-size: 14px;
+      color: #666;
+      font-weight: normal;
+    }
+    .particles-remaining {
+      background-color: #E8F5E9;
+    }
+    .particles-decayed {
+      background-color: #F5F5F5;
+    }
+    .percent-remaining {
+      background-color: #E3F2FD;
+    }
+    .geiger-count {
+      background-color: #FFEBEE;
+    }
+    .info-container {
+      background-color: #FFF8E1;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .info-container h2 {
+      font-size: 18px;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .info-container p {
+      margin-bottom: 10px;
+    }
+    .info-container h3 {
+      font-size: 16px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+    .info-container ul {
+      margin-top: 5px;
+    }
+    .slider-container {
+      margin-bottom: 20px;
+    }
+    .slider-container input {
+      width: 100%;
+      margin-top: 10px;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 12px;
+      color: #666;
+    }
+    .checkpoint-container {
+      position: relative;
+      height: 40px;
+      margin-top: 10px;
+    }
+    .checkpoint {
+      position: absolute;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .checkpoint .marker {
+      height: 10px;
+      width: 2px;
+      background-color: #2196F3;
+      margin: 0 auto;
+    }
+    .checkpoint .label {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .checkpoint .time-label {
+      font-size: 10px;
+      color: #666;
+    }
+    .hidden {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .canvas-container {
+        min-width: 100%;
+      }
+      .graph-container {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Radioactive Decay Simulation</h1>
+  
+  <div class="control-panel">
+    <div class="control-group">
+      <label for="material-select">Radioactive Material:</label>
+      <select id="material-select">
+        <option value="uranium-238">Uranium-238 (4.5B years)</option>
+        <option value="uranium-235">Uranium-235 (704M years)</option>
+        <option value="plutonium-239">Plutonium-239 (24.1K years)</option>
+        <option value="carbon-14">Carbon-14 (5,730 years)</option>
+        <option value="radium-226">Radium-226 (1,600 years)</option>
+        <option value="strontium-90">Strontium-90 (28.8 years)</option>
+        <option value="cobalt-60">Cobalt-60 (5.27 years)</option>
+        <option value="iodine-131">Iodine-131 (8 days)</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    
+    <div class="control-group hidden" id="custom-half-life-container">
+      <label for="custom-half-life">Custom Half-Life (years):</label>
+      <input type="number" id="custom-half-life" min="0.001" step="0.001" value="100">
+    </div>
+    
+    <div class="control-group">
+      <label for="time-scale">Time Scale:</label>
+      <select id="time-scale">
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="2">2x</option>
+        <option value="5">5x</option>
+        <option value="10">10x</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>
+        <input type="checkbox" id="geiger-toggle">
+        Geiger Counter
+      </label>
+      <div id="background-control" class="hidden" style="display: flex; align-items: center; margin-top: 5px;">
+        <label for="background-count" style="margin-right: 5px; font-size: 12px;">Background (CPM):</label>
+        <input type="number" id="background-count" min="0" step="1" value="5" style="width: 60px; padding: 4px 8px;">
+      </div>
+    </div>
+    
+    <div class="control-group hidden" id="initial-count-container">
+      <label for="initial-count-rate">Initial Count Rate (CPM):</label>
+      <input type="number" id="initial-count-rate" min="6" step="1" value="200">
+    </div>
+  </div>
+  
+  <div class="button-group">
+    <button id="start-btn" class="start-btn">Start</button>
+    <button id="pause-btn" class="pause-btn hidden">Pause</button>
+    <button id="resume-btn" class="resume-btn hidden">Resume</button>
+    <button id="reset-btn" class="reset-btn">Reset</button>
+  </div>
+  
+  <div class="slider-container">
+    <div style="display: flex; justify-content: space-between;">
+      <span id="time-elapsed">Time Elapsed: 0 years</span>
+      <span id="half-lives-elapsed">0 half-lives</span>
+    </div>
+    <input type="range" id="time-slider" min="0" max="100" step="0.1" value="0">
+    <div id="checkpoint-container" class="checkpoint-container"></div>
+  </div>
+  
+  <div class="simulation-container">
+    <div class="canvas-container">
+      <canvas id="simulation-canvas" width="600" height="400"></canvas>
+    </div>
+    <div class="graph-container hidden" id="graph-container">
+      <canvas id="graph-canvas" width="500" height="400"></canvas>
+    </div>
+  </div>
+  
+  <div class="stats-container">
+    <div class="stat-card particles-remaining">
+      <h2>Particles Remaining</h2>
+      <p id="particles-remaining">1000</p>
+      <p class="sub-text" id="theoretical-remaining">Theoretical: 1000</p>
+    </div>
+    <div class="stat-card particles-decayed">
+      <h2>Particles Decayed</h2>
+      <p id="particles-decayed">0</p>
+      <p class="sub-text" id="theoretical-decayed">Theoretical: 0</p>
+    </div>
+    <div class="stat-card percent-remaining">
+      <h2>Percent Remaining</h2>
+      <p id="percent-remaining">100.0%</p>
+      <p class="sub-text" id="theoretical-percent">Theoretical: 100.0%</p>
+    </div>
+    <div class="stat-card geiger-count hidden" id="geiger-stats">
+      <h2>Geiger Counter</h2>
+      <p id="count-rate">0 CPM</p>
+      <p class="sub-text" id="background-display">Background: 5 CPM</p>
+      <p class="sub-text">(Average over last 10 readings)</p>
+    </div>
+  </div>
+  
+  <div class="info-container">
+    <h2>About Half-Life</h2>
+    <p>
+      Half-life is the time required for half of the atoms in a sample of radioactive material to decay. 
+      After one half-life, 50% of atoms remain. After two half-lives, 25% remain, and so on.
+    </p>
+    <p>
+      In this simulation, each particle decays randomly, but the overall pattern follows the exponential 
+      decay law: N(t) = N₀ × (1/2)^(t/T₁/₂), where N₀ is the initial number of atoms and T₁/₂ is the half-life.
+    </p>
+    
+    <div id="geiger-info" class="hidden">
+      <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #FFE082;">
+        <h3>Geiger Counter Measurement</h3>
+        <p>
+          The Activity Factor is determined by the Initial Count Rate setting and represents the 
+          radioactivity level of the sample. The count rate decreases proportionally with the 
+          number of undecayed particles.
+        </p>
+      </div>
+    </div>
+    
+    <div style="margin-top: 15px;">
+      <h3>About the radioactive materials:</h3>
+      <ul style="font-size: 14px; margin-top: 5px;">
+        <li><strong>Uranium-238:</strong> The most common isotope of uranium (4.5 billion years)</li>
+        <li><strong>Uranium-235:</strong> Used in nuclear reactors and weapons (704 million years)</li>
+        <li><strong>Plutonium-239:</strong> Used in nuclear weapons (24,100 years)</li>
+        <li><strong>Carbon-14:</strong> Used in radiocarbon dating (5,730 years)</li>
+        <li><strong>Radium-226:</strong> Historically used in luminous paint (1,600 years)</li>
+        <li><strong>Strontium-90:</strong> Product of nuclear fission (28.8 years)</li>
+        <li><strong>Cobalt-60:</strong> Used in medical radiation therapy (5.27 years)</li>
+        <li><strong>Iodine-131:</strong> Used in medical diagnosis and treatment (8 days)</li>
+      </ul>
+    </div>
+  </div>
+  
+  <footer style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">
+    Made by James Kua, Temasek Junior College
+  </footer>
+
+  <script>
+    // Radioactive materials data
+    const radioactiveMaterials = {
+      'uranium-238': { name: 'Uranium-238', halfLife: 4.5e9 },
+      'uranium-235': { name: 'Uranium-235', halfLife: 7.04e8 },
+      'plutonium-239': { name: 'Plutonium-239', halfLife: 2.41e4 },
+      'carbon-14': { name: 'Carbon-14', halfLife: 5730 },
+      'radium-226': { name: 'Radium-226', halfLife: 1600 },
+      'strontium-90': { name: 'Strontium-90', halfLife: 28.8 },
+      'cobalt-60': { name: 'Cobalt-60', halfLife: 5.27 },
+      'iodine-131': { name: 'Iodine-131', halfLife: 0.022 }, // 8 days in years
+      'custom': { name: 'Custom', halfLife: 100 }
+    };
+
+    // DOM elements
+    const materialSelect = document.getElementById('material-select');
+    const customHalfLifeContainer = document.getElementById('custom-half-life-container');
+    const customHalfLife = document.getElementById('custom-half-life');
+    const timeScale = document.getElementById('time-scale');
+    const geigerToggle = document.getElementById('geiger-toggle');
+    const backgroundControl = document.getElementById('background-control');
+    const backgroundCount = document.getElementById('background-count');
+    const initialCountContainer = document.getElementById('initial-count-container');
+    const initialCountRate = document.getElementById('initial-count-rate');
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resumeBtn = document.getElementById('resume-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const timeElapsedDisplay = document.getElementById('time-elapsed');
+    const halfLivesElapsedDisplay = document.getElementById('half-lives-elapsed');
+    const timeSlider = document.getElementById('time-slider');
+    const checkpointContainer = document.getElementById('checkpoint-container');
+    const simulationCanvas = document.getElementById('simulation-canvas');
+    const graphContainer = document.getElementById('graph-container');
+    const graphCanvas = document.getElementById('graph-canvas');
+    const particlesRemainingDisplay = document.getElementById('particles-remaining');
+    const theoreticalRemainingDisplay = document.getElementById('theoretical-remaining');
+    const particlesDecayedDisplay = document.getElementById('particles-decayed');
+    const theoreticalDecayedDisplay = document.getElementById('theoretical-decayed');
+    const percentRemainingDisplay = document.getElementById('percent-remaining');
+    const theoreticalPercentDisplay = document.getElementById('theoretical-percent');
+    const geigerStats = document.getElementById('geiger-stats');
+    const countRateDisplay = document.getElementById('count-rate');
+    const backgroundDisplay = document.getElementById('background-display');
+    const geigerInfo = document.getElementById('geiger-info');
+
+    // Simulation parameters
+    const INITIAL_PARTICLES = 1000;
+    const CANVAS_WIDTH = simulationCanvas.width;
+    const CANVAS_HEIGHT = simulationCanvas.height;
+    const GRAPH_WIDTH = graphCanvas.width;
+    const GRAPH_HEIGHT = graphCanvas.height;
+
+    let particles = [];
+    let decayedParticles = [];
+    let halfLife = radioactiveMaterials['uranium-238'].halfLife;
+    let timeElapsed = 0;
+    let timeScaleFactor = 1;
+    let animationId = null;
+    let lastUpdateTime = 0;
+    let isPaused = false;
+    let showGeiger = false;
+    let initialCount = 200;
+    let backgroundLevel = 5;
+    let currentCountRate = 0;
+    let averageCountRate = 0;
+    let lastCounts = [];
+    let countHistory = [];
+    
+    // Initialize canvas contexts
+    const simCtx = simulationCanvas.getContext('2d');
+    const graphCtx = graphCanvas.getContext('2d');
+
+    // Event listeners
+    materialSelect.addEventListener('change', handleMaterialChange);
+    customHalfLife.addEventListener('change', handleCustomHalfLifeChange);
+    timeScale.addEventListener('change', handleTimeScaleChange);
+    geigerToggle.addEventListener('change', toggleGeigerCounter);
+    backgroundCount.addEventListener('change', handleBackgroundCountChange);
+    initialCountRate.addEventListener('change', handleInitialCountRateChange);
+    startBtn.addEventListener('click', startSimulation);
+    pauseBtn.addEventListener('click', pauseSimulation);
+    resumeBtn.addEventListener('click', resumeSimulation);
+    resetBtn.addEventListener('click', resetSimulation);
+    timeSlider.addEventListener('input', handleTimeSliderChange);
+
+    // Initialize simulation
+    initializeSimulation();
+
+    // Functions
+    function initializeSimulation() {
+      particles = [];
+      decayedParticles = [];
+      timeElapsed = 0;
+      
+      // Create particles
+      for (let i = 0; i < INITIAL_PARTICLES; i++) {
+        particles.push({
+          id: i,
+          x: Math.random() * (CANVAS_WIDTH - 20) + 10,
+          y: Math.random() * (CANVAS_HEIGHT - 20) + 10,
+          radius: Math.random() * 2 + 3,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          decayTime: calculateDecayTime(halfLife),
+          color: 'rgba(0, 200, 0, 0.7)'
+        });
+      }
+
+      // Update DOM displays
+      updateTimeDisplay();
+      updateParticleCountDisplay();
+      updateCheckpoints();
+      
+      // Initialize slider max value (5 half-lives)
+      timeSlider.max = halfLife * 5;
+      timeSlider.step = halfLife / 1000;
+      timeSlider.value = 0;
+      
+      // Draw initial state
+      drawParticles();
+      
+      if (showGeiger) {
+        drawCountRateGraph();
+        updateGeigerCounter();
+      }
+    }
+
+    function calculateDecayTime(halfLifeValue) {
+      // Random exponential decay time based on half-life
+      return -Math.log(Math.random()) * halfLifeValue / Math.log(2);
+    }
+
+    function startSimulation() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      
+      isPaused = false;
+      lastUpdateTime = performance.now();
+      
+      startBtn.classList.add('hidden');
+      pauseBtn.classList.remove('hidden');
+      resumeBtn.classList.add('hidden');
+      
+      animate();
+    }
+
+    function pauseSimulation() {
+      isPaused = true;
+      
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.remove('hidden');
+    }
+
+    function resumeSimulation() {
+      isPaused = false;
+      lastUpdateTime = performance.now();
+      
+      resumeBtn.classList.add('hidden');
+      pauseBtn.classList.remove('hidden');
+      
+      animate();
+    }
+
+    function resetSimulation() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      startBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.add('hidden');
+      
+      initializeSimulation();
+    }
+
+    function animate() {
+      const now = performance.now();
+      const deltaTime = now - lastUpdateTime;
+      lastUpdateTime = now;
+      
+      // Update time elapsed
+      const timeIncrement = deltaTime / 1000 * timeScaleFactor;
+      timeElapsed += timeIncrement;
+      
+      // Update particles
+      updateParticles();
+      
+      // Update displays
+      updateTimeDisplay();
+      updateParticleCountDisplay();
+      
+      // Update Geiger counter if enabled
+      if (showGeiger) {
+        updateGeigerCounter();
+        drawCountRateGraph();
+      }
+      
+      // Draw
+      drawParticles();
+      
+      // Continue animation
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function updateParticles() {
+      const activeParticles = [];
+      const newlyDecayedParticles = [];
+      
+      for (const particle of particles) {
+        // Move particle
+        let newX = particle.x + particle.vx;
+        let newY = particle.y + particle.vy;
+        
+        // Bounce off walls
+        let newVx = particle.vx;
+        let newVy = particle.vy;
+        
+        if (newX < particle.radius || newX > CANVAS_WIDTH - particle.radius) {
+          newVx = -particle.vx;
+          newX = newX < particle.radius ? particle.radius : CANVAS_WIDTH - particle.radius;
+        }
+        
+        if (newY < particle.radius || newY > CANVAS_HEIGHT - particle.radius) {
+          newVy = -particle.vy;
+          newY = newY < particle.radius ? particle.radius : CANVAS_HEIGHT - particle.radius;
+        }
+        
+        // Check if particle has decayed
+        if (particle.decayTime <= timeElapsed) {
+          newlyDecayedParticles.push({
+            ...particle,
+            x: newX,
+            y: newY,
+            vx: newVx,
+            vy: newVy,
+            color: 'rgba(150, 150, 150, 0.5)'
+          });
+        } else {
+          activeParticles.push({
+            ...particle,
+            x: newX,
+            y: newY,
+            vx: newVx,
+            vy: newVy
+          });
+        }
+      }
+      
+      particles = activeParticles;
+      decayedParticles = [...decayedParticles, ...newlyDecayedParticles];
+    }
+
+    function drawParticles() {
+      simCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      
+      // Draw decayed particles first (in the background)
+      for (const particle of decayedParticles) {
+        simCtx.beginPath();
+        simCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        simCtx.fillStyle = particle.color;
+        simCtx.fill();
+      }
+      
+      // Draw active particles
+      for (const particle of particles) {
+        simCtx.beginPath();
+        simCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        simCtx.fillStyle = particle.color;
+        simCtx.fill();
+      }
+      
+      // Draw Geiger counter if enabled
+      if (showGeiger) {
+        const geigerSize = 20;
+        const geigerX = CANVAS_WIDTH / 2 - geigerSize / 2;
+        const geigerY = CANVAS_HEIGHT / 2 - geigerSize / 2;
+        
+        simCtx.beginPath();
+        simCtx.rect(geigerX, geigerY, geigerSize, geigerSize);
+        simCtx.fillStyle = 'rgba(200, 0, 0, 0.7)';
+        simCtx.fill();
+        
+        // Add detection circle (active area)
+        simCtx.beginPath();
+        simCtx.arc(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 100, 0, Math.PI * 2);
+        simCtx.strokeStyle = 'rgba(200, 0, 0, 0.3)';
+        simCtx.setLineDash([5, 5]);
+        simCtx.lineWidth = 2;
+        simCtx.stroke();
+        simCtx.setLineDash([]);
+      }
+    }
+
+    function updateGeigerCounter() {
+      // Calculate count rate
+      const meanCountRate = calculateCountRate(particles.length);
+      
+      // Add random fluctuations typical for a Geiger counter
+      const simulatedCount = simulateGeigerCounter(meanCountRate);
+      
+      // Update current count rate
+      currentCountRate = simulatedCount;
+      
+      // Update count history for the past readings
+      lastCounts.push(simulatedCount);
+      if (lastCounts.length > 10) {
+        lastCounts.shift();
+      }
+      
+      // Calculate rolling average
+      const average = lastCounts.reduce((sum, count) => sum + count, 0) / lastCounts.length;
+      averageCountRate = Math.round(average);
+      
+      // Update display
+      countRateDisplay.textContent = `${averageCountRate} CPM`;
+      backgroundDisplay.textContent = `Background: ${backgroundLevel} CPM`;
+      
+      // Add to count history for the graph (less frequently for better display)
+      const shouldAddPoint = 
+        countHistory.length === 0 || 
+        (timeElapsed - (countHistory[countHistory.length - 1]?.time || 0)) > 0.2 * halfLife / 100 ||
+        Math.abs(simulatedCount - (countHistory[countHistory.length - 1]?.count || 0)) > meanCountRate * 0.2;
+      
+      if (shouldAddPoint) {
+        countHistory.push({ time: timeElapsed, count: simulatedCount });
+        // Limit number of points for performance
+        if (countHistory.length > 100) {
+          countHistory = [countHistory[0], ...countHistory.slice(-99)];
+        }
+      }
+    }
+
+    function calculateCountRate(particleCount) {
+      // Count rate is proportional to particle count plus background
+      const activityFactor = (initialCount - backgroundLevel) / INITIAL_PARTICLES;
+      const particleContribution = particleCount * activityFactor;
+      return Math.round(particleContribution + backgroundLevel);
+    }
+
+    function simulateGeigerCounter(meanCountRate) {
+      // Poisson distribution for radioactive decay counting statistics
+      // Simple approximation using normal distribution with mean = variance = lambda
+      const lambda = meanCountRate;
+      const randomFactor = Math.sqrt(lambda) * (Math.random() * 2 - 1); // Random fluctuation
+      return Math.max(0, Math.round(lambda + randomFactor));
+    }
+
+    function drawCountRateGraph() {
+      graphCtx.clearRect(0, 0, GRAPH_WIDTH, GRAPH_HEIGHT);
+      
+      // Set background
+      graphCtx.fillStyle = 'rgba(250, 250, 250, 0.9)';
+      graphCtx.fillRect(0, 0, GRAPH_WIDTH, GRAPH_HEIGHT);
+      
+      // Draw title and borders
+      graphCtx.fillStyle = 'black';
+      graphCtx.font = '14px Arial';
+      graphCtx.textAlign = 'center';
+      graphCtx.fillText('Count Rate vs Time', GRAPH_WIDTH / 2, 20);
+      
+      graphCtx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+      graphCtx.lineWidth = 1;
+      graphCtx.strokeRect(1, 1, GRAPH_WIDTH - 2, GRAPH_HEIGHT - 2);
+      
+      // Skip if no data yet
+      if (countHistory.length <= 1) return;
+      
+      const graphMargin = { top: 30, right: 20, bottom: 40, left: 40 };
+      const graphInnerWidth = GRAPH_WIDTH - graphMargin.left - graphMargin.right;
+      const graphInnerHeight = GRAPH_HEIGHT - graphMargin.top - graphMargin.bottom;
+      
+      // Determine appropriate min/max values for scale
+      // For counts, use a range from 0 to a bit above the max count observed
+      const maxObservedCount = Math.max(...countHistory.map(point => point.count));
+      const maxCount = Math.max(maxObservedCount * 1.2, backgroundLevel * 2); // 20% headroom
+      
+      // For time, use a sliding window approach that moves with current time
+      // but always shows at least one half-life worth of time
+      const latestTime = countHistory[countHistory.length - 1].time;
+      const timeWindow = Math.max(halfLife, latestTime / 2); // Show at least one half-life
+      const minTime = Math.max(0, latestTime - timeWindow);
+      const maxTime = Math.max(timeWindow, latestTime + timeWindow / 5); // Some headroom
+      
+      // Filter visible points to those within the time window
+      const visiblePoints = countHistory.filter(point => point.time >= minTime);
+      
+      // Draw axes
+      graphCtx.beginPath();
+      graphCtx.moveTo(graphMargin.left, graphMargin.top);
+      graphCtx.lineTo(graphMargin.left, GRAPH_HEIGHT - graphMargin.bottom);
+      graphCtx.lineTo(GRAPH_WIDTH - graphMargin.right, GRAPH_HEIGHT - graphMargin.bottom);
+      graphCtx.strokeStyle = 'black';
+      graphCtx.lineWidth = 1;
+      graphCtx.stroke();
+      
+      // Draw background count line
+      graphCtx.beginPath();
+      graphCtx.moveTo(graphMargin.left, 
+                    GRAPH_HEIGHT - graphMargin.bottom - (backgroundLevel / maxCount) * graphInnerHeight);
+      graphCtx.lineTo(GRAPH_WIDTH - graphMargin.right, 
+                    GRAPH_HEIGHT - graphMargin.bottom - (backgroundLevel / maxCount) * graphInnerHeight);
+      graphCtx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+      graphCtx.setLineDash([4, 2]);
+      graphCtx.lineWidth = 1;
+      graphCtx.stroke();
+      graphCtx.setLineDash([]);
+      
+      // Add background count label
+      graphCtx.fillStyle = 'rgba(100, 100, 100, 0.8)';
+      graphCtx.font = '10px Arial';
+      graphCtx.textAlign = 'left';
+      graphCtx.fillText(`Bkg: ${backgroundLevel} CPM`, graphMargin.left + 5, 
+                      GRAPH_HEIGHT - graphMargin.bottom - (backgroundLevel / maxCount) * graphInnerHeight - 5);
+      
+      // Draw count rate graph if we have visible points
+      if (visiblePoints.length > 0) {
+        graphCtx.beginPath();
+        
+        visiblePoints.forEach((point, index) => {
+          const x = graphMargin.left + ((point.time - minTime) / (maxTime - minTime)) * graphInnerWidth;
+          const y = GRAPH_HEIGHT - graphMargin.bottom - (point.count / maxCount) * graphInnerHeight;
+          
+          if (index === 0) {
+            graphCtx.moveTo(x, y);
+          } else {
+            graphCtx.lineTo(x, y);
+          }
+        });
+        
+        graphCtx.strokeStyle = 'rgba(200, 0, 0, 0.8)';
+        graphCtx.lineWidth = 2;
+        graphCtx.stroke();
+      }
+      
+      // Draw half-life vertical markers if applicable
+      // Find the nearest half-life intervals within our visible range
+      const firstHLInView = Math.ceil(minTime / halfLife);
+      const lastHLInView = Math.floor(maxTime / halfLife);
+      
+      for (let i = firstHLInView; i <= lastHLInView; i++) {
+        const hlTime = i * halfLife;
+        const hlX = graphMargin.left + ((hlTime - minTime) / (maxTime - minTime)) * graphInnerWidth;
+        
+        graphCtx.beginPath();
+        graphCtx.moveTo(hlX, graphMargin.top);
+        graphCtx.lineTo(hlX, GRAPH_HEIGHT - graphMargin.bottom);
+        graphCtx.strokeStyle = 'rgba(0, 0, 200, 0.5)';
+        graphCtx.setLineDash([5, 3]);
+        graphCtx.lineWidth = 1;
+        graphCtx.stroke();
+        graphCtx.setLineDash([]);
+        
+        // Add half-life label
+        graphCtx.fillStyle = 'rgba(0, 0, 200, 0.8)';
+        graphCtx.font = '10px Arial';
+        graphCtx.textAlign = 'center';
+        graphCtx.fillText(`${i} HL`, hlX, GRAPH_HEIGHT - graphMargin.bottom + 15);
+      }
+      
+      // Add axis labels
+      graphCtx.fillStyle = 'black';
+      graphCtx.font = '12px Arial';
+      graphCtx.textAlign = 'center';
+      
+      // Get appropriate time unit
+      let timeUnit = "years";
+      let divisionFactor = 1;
+      
+      if (halfLife < 0.1) { // Less than a month
+        timeUnit = "days";
+        divisionFactor = 365;
+      } else if (halfLife < 10) { // Less than 10 years
+        timeUnit = "years";
+        divisionFactor = 1;
+      } else if (halfLife < 1000) { // Less than 1000 years
+        timeUnit = "years";
+        divisionFactor = 1;
+      } else if (halfLife < 1e6) { // Less than a million years
+        timeUnit = "thousand years";
+        divisionFactor = 1e3;
+      } else if (halfLife < 1e9) { // Less than a billion years
+        timeUnit = "million years";
+        divisionFactor = 1e6;
+      } else { // Billion+ years
+        timeUnit = "billion years";
+        divisionFactor = 1e9;
+      }
+      
+      // Add unit label to x-axis
+      graphCtx.fillText(`Time (${timeUnit})`, GRAPH_WIDTH / 2, GRAPH_HEIGHT - 10);
+      
+      // Add y-axis label
+      graphCtx.save();
+      graphCtx.translate(15, GRAPH_HEIGHT / 2);
+      graphCtx.rotate(-Math.PI / 2);
+      graphCtx.fillText('Count Rate (CPM)', 0, 0);
+      graphCtx.restore();
+      
+      // Add scale markers on y-axis
+      graphCtx.textAlign = 'right';
+      graphCtx.font = '10px Arial';
+      for (let i = 0; i <= 5; i++) {
+        const y = GRAPH_HEIGHT - graphMargin.bottom - (i / 5) * graphInnerHeight;
+        const value = Math.round((i / 5) * maxCount);
+        graphCtx.fillText(value.toString(), graphMargin.left - 5, y + 3);
+        
+        // Draw grid line
+        graphCtx.beginPath();
+        graphCtx.moveTo(graphMargin.left, y);
+        graphCtx.lineTo(GRAPH_WIDTH - graphMargin.right, y);
+        graphCtx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+        graphCtx.lineWidth = 1;
+        graphCtx.stroke();
+      }
+      
+      // Determine nice round numbers for the x-axis
+      const timeRange = maxTime - minTime;
+      const timeStep = timeRange / 4;
+      
+      for (let i = 0; i <= 4; i++) {
+        const x = graphMargin.left + (i / 4) * graphInnerWidth;
+        const timeValue = minTime + (i / 4) * timeRange;
+        const displayValue = (timeValue / divisionFactor).toFixed(
+          divisionFactor === 365 ? 1 : // 1 decimal for days
+          divisionFactor === 1 ? (timeValue < 10 ? 1 : 0) : // 0 or 1 decimal for years
+          1 // 1 decimal for larger units
+        );
+        
+        graphCtx.fillText(displayValue, x, GRAPH_HEIGHT - graphMargin.bottom + 15);
+      }
+    }
+
+    function handleMaterialChange() {
+      const selectedMaterial = materialSelect.value;
+      const material = radioactiveMaterials[selectedMaterial];
+      
+      if (material) {
+        halfLife = material.halfLife;
+        
+        // Show/hide custom half-life input
+        if (selectedMaterial === 'custom') {
+          customHalfLifeContainer.classList.remove('hidden');
+        } else {
+          customHalfLifeContainer.classList.add('hidden');
+        }
+        
+        resetSimulation();
+      }
+    }
+
+    function handleCustomHalfLifeChange() {
+      const value = parseFloat(customHalfLife.value);
+      if (value > 0) {
+        halfLife = value;
+        resetSimulation();
+      }
+    }
+
+    function handleTimeScaleChange() {
+      timeScaleFactor = parseFloat(timeScale.value);
+    }
+
+    function toggleGeigerCounter() {
+      showGeiger = geigerToggle.checked;
+      
+      if (showGeiger) {
+        graphContainer.classList.remove('hidden');
+        geigerStats.classList.remove('hidden');
+        backgroundControl.classList.remove('hidden');
+        initialCountContainer.classList.remove('hidden');
+        geigerInfo.classList.remove('hidden');
+        
+        // Initialize count rate
+        currentCountRate = calculateCountRate(particles.length);
+        averageCountRate = currentCountRate;
+        lastCounts = [currentCountRate];
+        countHistory = [{ time: timeElapsed, count: currentCountRate }];
+        
+        // Update display
+        updateGeigerCounter();
+        drawCountRateGraph();
+      } else {
+        graphContainer.classList.add('hidden');
+        geigerStats.classList.add('hidden');
+        backgroundControl.classList.add('hidden');
+        initialCountContainer.classList.add('hidden');
+        geigerInfo.classList.add('hidden');
+      }
+    }
+
+    function handleBackgroundCountChange() {
+      const value = parseInt(backgroundCount.value);
+      if (value >= 0 && value < initialCount) {
+        backgroundLevel = value;
+        updateGeigerCounter();
+      }
+    }
+
+    function handleInitialCountRateChange() {
+      const value = parseInt(initialCountRate.value);
+      if (value > backgroundLevel) {
+        initialCount = value;
+        updateGeigerCounter();
+      }
+    }
+
+    function handleTimeSliderChange() {
+      const newTime = parseFloat(timeSlider.value);
+      timeElapsed = newTime;
+      
+      // Recalculate particle states
+      recalculateParticlesState();
+      
+      // Update displays
+      updateTimeDisplay();
+      updateParticleCountDisplay();
+      
+      if (showGeiger) {
+        updateGeigerCounter();
+        drawCountRateGraph();
+      }
+      
+      drawParticles();
+    }
+
+    function recalculateParticlesState() {
+      const newParticles = [];
+      const newDecayedParticles = [];
+      
+      // Get the original combined set of particles
+      const allOriginalParticles = [...particles, ...decayedParticles];
+      
+      // Reassign based on decay time
+      for (const particle of allOriginalParticles) {
+        if (particle.decayTime <= timeElapsed) {
+          newDecayedParticles.push({
+            ...particle,
+            color: 'rgba(150, 150, 150, 0.5)'
+          });
+        } else {
+          newParticles.push({
+            ...particle,
+            color: 'rgba(0, 200, 0, 0.7)'
+          });
+        }
+      }
+      
+      particles = newParticles;
+      decayedParticles = newDecayedParticles;
+    }
+
+    function updateTimeDisplay() {
+      timeElapsedDisplay.textContent = `Time Elapsed: ${formatTime(timeElapsed)}`;
+      halfLivesElapsedDisplay.textContent = `${(timeElapsed / halfLife).toFixed(2)} half-lives`;
+      
+      // Update slider position
+      timeSlider.value = timeElapsed;
+    }
+
+    function updateParticleCountDisplay() {
+      const theoreticalCount = getTheoreticalCount();
+      
+      particlesRemainingDisplay.textContent = particles.length;
+      theoreticalRemainingDisplay.textContent = `Theoretical: ${theoreticalCount}`;
+      
+      particlesDecayedDisplay.textContent = decayedParticles.length;
+      theoreticalDecayedDisplay.textContent = `Theoretical: ${INITIAL_PARTICLES - theoreticalCount}`;
+      
+      percentRemainingDisplay.textContent = `${((particles.length / INITIAL_PARTICLES) * 100).toFixed(1)}%`;
+      theoreticalPercentDisplay.textContent = `Theoretical: ${((theoreticalCount / INITIAL_PARTICLES) * 100).toFixed(1)}%`;
+    }
+
+    function getTheoreticalCount() {
+      return Math.round(INITIAL_PARTICLES * Math.pow(0.5, timeElapsed / halfLife));
+    }
+
+    function updateCheckpoints() {
+      checkpointContainer.innerHTML = '';
+      
+      for (let i = 1; i <= 5; i++) {
+        const timeAtCheckpoint = i * halfLife;
+        let timeLabel = formatTime(timeAtCheckpoint);
+        const percentPosition = (timeAtCheckpoint / (halfLife * 5)) * 100;
+        
+        const checkpointDiv = document.createElement('div');
+        checkpointDiv.className = 'checkpoint';
+        checkpointDiv.style.left = `${percentPosition}%`;
+        
+        const markerDiv = document.createElement('div');
+        markerDiv.className = 'marker';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'label';
+        labelDiv.textContent = `${i} HL`;
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time-label';
+        timeDiv.textContent = timeLabel;
+        
+        checkpointDiv.appendChild(markerDiv);
+        checkpointDiv.appendChild(labelDiv);
+        checkpointDiv.appendChild(timeDiv);
+        checkpointContainer.appendChild(checkpointDiv);
+      }
+    }
+
+    function formatTime(timeInYears) {
+      if (timeInYears < 1) {
+        // Convert to days if less than a year
+        const days = Math.floor(timeInYears * 365);
+        return `${days} day${days !== 1 ? 's' : ''}`;
+      } else if (timeInYears < 1000) {
+        // Display as regular years if less than 1000
+        return `${timeInYears.toFixed(1)} year${timeInYears !== 1 ? 's' : ''}`;
+      } else if (timeInYears < 1e6) {
+        // Display in thousands
+        return `${(timeInYears / 1e3).toFixed(1)}K years`;
+      } else if (timeInYears < 1e9) {
+        // Display in millions
+        return `${(timeInYears / 1e6).toFixed(1)}M years`;
+      } else {
+        // Display in billions
+        return `${(timeInYears / 1e9).toFixed(1)}B years`;
+      }
+    }
+  </script>
+</body>
+</html>
