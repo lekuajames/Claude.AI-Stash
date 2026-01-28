@@ -1,35 +1,35 @@
 Science
-https://lekuajames.github.io/Claude.AI-Stash/foodmolecules
-https://lekuajames.github.io/Claude.AI-Stash/foodtests
-https://lekuajames.github.io/Claude.AI-Stash/enzymegraph
-https://lekuajames.github.io/Claude.AI-Stash/digestivesystem
+<br />https://lekuajames.github.io/Claude.AI-Stash/foodmolecules
+<br />https://lekuajames.github.io/Claude.AI-Stash/foodtests
+<br />https://lekuajames.github.io/Claude.AI-Stash/enzymegraph
+<br />https://lekuajames.github.io/Claude.AI-Stash/digestivesystem
 
-https://lekuajames.github.io/Claude.AI-Stash/menstrualcycle
+<br />https://lekuajames.github.io/Claude.AI-Stash/menstrualcycle
 
-https://lekuajames.github.io/Claude.AI-Stash/foodweb
+<br />https://lekuajames.github.io/Claude.AI-Stash/foodweb
 
 
-Forces
-https://lekuajames.github.io/Claude.AI-Stash/ForcesMotion
+<br />Forces
+<br />https://lekuajames.github.io/Claude.AI-Stash/ForcesMotion
 
-WEP
-https://lekuajames.github.io/Claude.AI-Stash/workdone
-https://lekuajames.github.io/Claude.AI-Stash/boxonslope
-https://lekuajames.github.io/Claude.AI-Stash/GPEball
+<br />WEP
+<br />https://lekuajames.github.io/Claude.AI-Stash/workdone
+<br />https://lekuajames.github.io/Claude.AI-Stash/boxonslope
+<br />https://lekuajames.github.io/Claude.AI-Stash/GPEball
 
-Pressure
-https://lekuajames.github.io/Claude.AI-Stash/waterpressure
-https://lekuajames.github.io/Claude.AI-Stash/pressure
-https://lekuajames.github.io/Claude.AI-Stash/pressurehydraulics
+<br />Pressure
+<br />https://lekuajames.github.io/Claude.AI-Stash/waterpressure
+<br />https://lekuajames.github.io/Claude.AI-Stash/pressure
+<br />https://lekuajames.github.io/Claude.AI-Stash/pressurehydraulics
 
-Static Electricity
-https://lekuajames.github.io/Claude.AI-Stash/staticrubbing
-https://lekuajames.github.io/Claude.AI-Stash/staticinduction
+<br />Static Electricity
+<br />https://lekuajames.github.io/Claude.AI-Stash/staticrubbing
+<br />https://lekuajames.github.io/Claude.AI-Stash/staticinduction
 
-Electricity
-https://lekuajames.github.io/Claude.AI-Stash/potentialdivider
+<br />Electricity
+<br />https://lekuajames.github.io/Claude.AI-Stash/potentialdivider
 
-Radiation
-https://lekuajames.github.io/Claude.AI-Stash/3radiation
-https://lekuajames.github.io/Claude.AI-Stash/nuclide-equations
-https://lekuajames.github.io/Claude.AI-Stash/halflife
+<br />Radiation
+<br />https://lekuajames.github.io/Claude.AI-Stash/3radiation
+<br />https://lekuajames.github.io/Claude.AI-Stash/nuclide-equations
+<br />https://lekuajames.github.io/Claude.AI-Stash/halflife
