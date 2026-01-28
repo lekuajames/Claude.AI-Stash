@@ -1,0 +1,1706 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biological Molecules Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 16px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(12px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .tab {
+            padding: 12px 28px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(52, 152, 219, 0.4);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        /* Discovery Counter */
+        .discovery-counter {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .counter-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 24px;
+            font-size: 18px;
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .counter-badge.complete {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3); }
+            50% { box-shadow: 0 8px 32px rgba(39, 174, 96, 0.6); }
+        }
+
+        /* Molecule Bank */
+        .molecule-bank {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .molecule-bank.drop-target {
+            border-color: #e74c3c;
+            background: #fff5f5;
+            box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
+        }
+
+        .bank-title {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+
+        .molecules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            justify-items: center;
+        }
+
+        /* Molecules */
+        .molecule {
+            cursor: grab;
+            transition: all 0.2s ease;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+            user-select: none;
+        }
+
+        .molecule:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.2));
+        }
+
+        .molecule:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .molecule.dragging {
+            opacity: 0.6;
+            z-index: 1000;
+        }
+
+        /* Sugar molecules */
+        .sugar {
+            width: 76px;
+            height: 76px;
+        }
+
+        .sugar.maltose, .sugar.sucrose {
+            width: 130px;
+            height: 90px;
+            padding-top: 20px;
+        }
+
+        .hexagon {
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 10px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            line-height: 1.1;
+            padding: 4px;
+        }
+
+        .double-hexagon {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .double-hexagon::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: #34495e;
+            border-radius: 2px;
+            z-index: 1;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .double-hex-label {
+            position: absolute;
+            left: 50%;
+            top: -20px;
+            transform: translateX(-50%);
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 10px;
+            text-align: center;
+            z-index: 4;
+            white-space: nowrap;
+        }
+
+        .hex-left, .hex-right {
+            width: 60px;
+            height: 60px;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+            z-index: 2;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        .glucose .hexagon { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .fructose .hexagon { background: linear-gradient(135deg, #f39c12, #d68910); }
+
+        .maltose .hex-left { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .maltose .hex-right { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .sucrose .hex-left { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .sucrose .hex-right { background: linear-gradient(135deg, #f39c12, #d68910); }
+
+        /* Water */
+        .water {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        .water::before {
+            content: 'Water';
+            transform: rotate(45deg);
+            text-align: center;
+        }
+
+        /* Glycerol */
+        .glycerol {
+            width: 92px;
+            height: 44px;
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 11px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Fatty acids */
+        .fatty-acids {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding-top: 20px;
+            position: relative;
+        }
+
+        .fatty-acids::before {
+            content: 'Fatty Acids';
+            position: absolute;
+            top: 0;
+            font-size: 10px;
+            color: #34495e;
+            font-weight: 600;
+        }
+
+        .fatty-chain {
+            width: 84px;
+            height: 8px;
+            background: linear-gradient(90deg, #34495e 0%, transparent 8%, #34495e 16%, transparent 24%, #34495e 32%, transparent 40%, #34495e 48%, transparent 56%, #34495e 64%, transparent 72%, #34495e 80%, transparent 88%, #34495e 100%);
+            border-radius: 4px;
+        }
+
+        /* Fat */
+        .fat {
+            width: 100px;
+            height: 60px;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 12px;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Reaction Area */
+        .reaction-workspace {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .reaction-slots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .reaction-slot {
+            width: 150px;
+            height: 150px;
+            border: 3px dashed #cbd5e0;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .reaction-slot::before {
+            content: 'Drop Here';
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 600;
+        }
+
+        .reaction-slot.filled::before {
+            display: none;
+        }
+
+        .reaction-slot.filled {
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.2);
+        }
+
+        .reaction-slot.drag-over {
+            border-color: #27ae60;
+            background: #f0fff4;
+            transform: scale(1.02);
+        }
+
+        .operator {
+            font-size: 36px;
+            font-weight: 700;
+            color: #34495e;
+        }
+
+        .arrow {
+            font-size: 40px;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-react {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-react:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-react:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc3545;
+            transform: translateY(-1px);
+        }
+
+        /* Results */
+        .results {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+        }
+
+        .results.success {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            animation: successGlow 1.5s ease-in-out;
+        }
+
+        .results.failure {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        }
+
+        @keyframes successGlow {
+            0%, 100% { box-shadow: 0 6px 20px rgba(39, 174, 96, 0.2); }
+            50% { box-shadow: 0 10px 40px rgba(39, 174, 96, 0.4); }
+        }
+
+        .result-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .result-equation {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .result-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .result-formula {
+            font-family: monospace;
+            font-size: 18px;
+            color: #6c757d;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        /* Discovered Reactions */
+        .discovered-section {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            display: none;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .discovered-section.visible {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .discovered-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 12px;
+        }
+
+        .discovered-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .discovered-reaction {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            animation: reactionAppear 0.6s ease-out;
+        }
+
+        .discovered-reaction:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            border-color: #3498db;
+        }
+
+        @keyframes reactionAppear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .discovered-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .discovered-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .mini-molecule {
+            transform: scale(0.5);
+        }
+
+        .mini-operator {
+            font-size: 16px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .mini-arrow {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .discovered-formula {
+            font-family: monospace;
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: center;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        /* Quiz Mode */
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .quiz-score {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 8px;
+        }
+
+        .quiz-question {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .quiz-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin: 32px 0;
+            flex-wrap: wrap;
+            min-height: 120px;
+        }
+
+        .quiz-slot {
+            width: 130px;
+            height: 110px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .quiz-slot::before {
+            content: '?';
+            font-size: 32px;
+            color: #9ca3af;
+            font-weight: 700;
+        }
+
+        .quiz-slot.filled::before {
+            display: none;
+        }
+
+        .quiz-slot.filled {
+            border-color: #3498db;
+            background: white;
+        }
+
+        .quiz-slot.correct {
+            border-color: #27ae60;
+            background: #f0fff4;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+        }
+
+        .quiz-slot.incorrect {
+            border-color: #e74c3c;
+            background: #fff5f5;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+        }
+
+        .quiz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .quiz-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-check { background: #3498db; color: white; }
+        .btn-reset { background: #f39c12; color: white; }
+        .btn-next { background: #27ae60; color: white; }
+        .btn-restart { background: #8e44ad; color: white; }
+
+        /* Credits */
+        .credits {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #ecf0f1;
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: 500;
+            font-style: italic;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container { 
+                padding: 20px; 
+                margin: 8px; 
+            }
+            
+            .title { 
+                font-size: 2.2rem; 
+            }
+            
+            .reaction-slots { 
+                flex-direction: column; 
+                gap: 16px; 
+            }
+            
+            .operator, .arrow { 
+                transform: rotate(90deg); 
+                margin: 8px 0; 
+            }
+            
+            .controls { 
+                flex-direction: column; 
+            }
+            
+            .btn { 
+                width: 100%; 
+                max-width: 300px; 
+            }
+            
+            .molecules-grid { 
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            }
+            
+            .discovered-grid { 
+                grid-template-columns: 1fr; 
+            }
+            
+            .discovered-visual { 
+                flex-direction: column; 
+                gap: 6px; 
+            }
+            
+            .mini-operator, .mini-arrow { 
+                transform: rotate(90deg); 
+                margin: 4px 0; 
+            }
+            
+            .credits {
+                margin-top: 24px;
+                padding-top: 16px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🧬 Biological Molecules Lab</h1>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchMode('react')">React Mode</button>
+                <button class="tab" onclick="switchMode('quiz')">Quiz Mode</button>
+            </div>
+        </div>
+
+        <!-- React Mode -->
+        <div id="react-mode" class="section active">
+            <div class="info-box">
+                <strong>React Mode:</strong> Drag exactly 2 molecules into the reaction slots, then click "React!" to discover biological reactions. Track your progress as you find all 6 reactions!
+            </div>
+
+            <div class="discovery-counter">
+                <div class="counter-badge" id="counter">🧪 Reactions Discovered: 0/6</div>
+            </div>
+
+            <div class="molecule-bank" id="molecule-bank">
+                <h3 class="bank-title">Available Molecules</h3>
+                <div class="molecules-grid">
+                    <div class="molecule sugar glucose" draggable="true" data-type="glucose">
+                        <div class="hexagon">Glucose</div>
+                    </div>
+                    <div class="molecule sugar fructose" draggable="true" data-type="fructose">
+                        <div class="hexagon">Fructose</div>
+                    </div>
+                    <div class="molecule sugar maltose" draggable="true" data-type="maltose">
+                        <div class="double-hexagon">
+                            <div class="hex-left">Glu</div>
+                            <div class="hex-right">Glu</div>
+                            <div class="double-hex-label">Maltose</div>
+                        </div>
+                    </div>
+                    <div class="molecule sugar sucrose" draggable="true" data-type="sucrose">
+                        <div class="double-hexagon">
+                            <div class="hex-left">Glu</div>
+                            <div class="hex-right">Fru</div>
+                            <div class="double-hex-label">Sucrose</div>
+                        </div>
+                    </div>
+                    <div class="molecule water" draggable="true" data-type="water"></div>
+                    <div class="molecule glycerol" draggable="true" data-type="glycerol">Glycerol</div>
+                    <div class="molecule fatty-acids" draggable="true" data-type="fatty-acids">
+                        <div class="fatty-chain"></div>
+                        <div class="fatty-chain"></div>
+                        <div class="fatty-chain"></div>
+                    </div>
+                    <div class="molecule fat" draggable="true" data-type="fat">Fat</div>
+                </div>
+            </div>
+
+            <div class="reaction-workspace">
+                <div class="reaction-slots">
+                    <div class="reaction-slot" id="slot1"></div>
+                    <span class="operator">+</span>
+                    <div class="reaction-slot" id="slot2"></div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-react" id="react-btn" onclick="processReaction()" disabled>React! ⚡</button>
+                    <button class="btn btn-secondary" onclick="clearReaction()">Clear 🗑️</button>
+                    <button class="btn btn-danger" onclick="resetProgress()">Reset Progress 🔄</button>
+                </div>
+            </div>
+
+            <div class="results" id="results">
+                <p style="color: #6c757d; font-style: italic; text-align: center;">
+                    Add 2 reactants above and click "React!" to discover biological reactions
+                </p>
+            </div>
+
+            <div class="discovered-section" id="discovered-section">
+                <h3 class="discovered-title">🔬 Discovered Reactions</h3>
+                <div class="discovered-grid" id="discovered-grid">
+                    <!-- Discovered reactions appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Mode -->
+        <div id="quiz-mode" class="section">
+            <div class="info-box">
+                <strong>Quiz Mode:</strong> Complete missing parts of biological reactions. You only get points on your first correct attempt per question!
+            </div>
+
+            <div class="quiz-header">
+                <div class="quiz-score" id="quiz-score">Score: 0/0 - Ready to start!</div>
+                <div class="quiz-question" id="quiz-question">Click "Restart Quiz" to begin testing all reactions!</div>
+            </div>
+
+            <div class="molecule-bank" id="quiz-bank">
+                <h3 class="bank-title">Available Molecules</h3>
+                <div class="molecules-grid">
+                    <div class="molecule sugar glucose" draggable="true" data-type="glucose">
+                        <div class="hexagon">Glucose</div>
+                    </div>
+                    <div class="molecule sugar fructose" draggable="true" data-type="fructose">
+                        <div class="hexagon">Fructose</div>
+                    </div>
+                    <div class="molecule sugar maltose" draggable="true" data-type="maltose">
+                        <div class="double-hexagon">
+                            <div class="hex-left">Glu</div>
+                            <div class="hex-right">Glu</div>
+                        </div>
+                    </div>
+                    <div class="molecule sugar sucrose" draggable="true" data-type="sucrose">
+                        <div class="double-hexagon">
+                            <div class="hex-left">Glu</div>
+                            <div class="hex-right">Fru</div>
+                        </div>
+                    </div>
+                    <div class="molecule water" draggable="true" data-type="water"></div>
+                    <div class="molecule glycerol" draggable="true" data-type="glycerol">Glycerol</div>
+                    <div class="molecule fatty-acids" draggable="true" data-type="fatty-acids">
+                        <div class="fatty-chain"></div>
+                        <div class="fatty-chain"></div>
+                        <div class="fatty-chain"></div>
+                    </div>
+                    <div class="molecule fat" draggable="true" data-type="fat">Fat</div>
+                </div>
+            </div>
+
+            <div class="reaction-workspace">
+                <div class="quiz-area" id="quiz-area">
+                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                        Ready to test your knowledge?<br>Click "Restart Quiz" below to begin!
+                    </div>
+                </div>
+
+                <div class="quiz-controls">
+                    <button class="quiz-btn btn-check" onclick="checkQuizAnswer()">Check Answer</button>
+                    <button class="quiz-btn btn-reset" onclick="resetQuizAnswers()">Reset</button>
+                    <button class="quiz-btn btn-next" onclick="nextQuestion()">Next Question</button>
+                    <button class="quiz-btn btn-restart" onclick="restartQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credits -->
+        <div class="credits">
+            Created by James Kua, Temasek Junior College
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const State = {
+            currentMode: 'react',
+            draggedElement: null,
+            dragSource: null,
+            
+            // React mode
+            discoveredReactions: new Set(),
+            
+            // Quiz mode
+            quizScore: 0,
+            totalQuestions: 0,
+            currentQuestion: null,
+            questionAttempted: false,
+            usedReactions: new Set(),
+            quizCompleted: false
+        };
+
+        // Biological reactions database
+        const REACTIONS = [
+            {
+                id: 'gluc-gluc-malt',
+                reactants: ['glucose', 'glucose'],
+                products: ['maltose', 'water'],
+                name: 'Glucose + Glucose → Maltose + Water',
+                formula: 'C₆H₁₂O₆ + C₆H₁₂O₆ → C₁₂H₂₂O₁₁ + H₂O'
+            },
+            {
+                id: 'gluc-fruc-sucr',
+                reactants: ['glucose', 'fructose'],
+                products: ['sucrose', 'water'],
+                name: 'Glucose + Fructose → Sucrose + Water',
+                formula: 'C₆H₁₂O₆ + C₆H₁₂O₆ → C₁₂H₂₂O₁₁ + H₂O'
+            },
+            {
+                id: 'malt-watr-gluc',
+                reactants: ['maltose', 'water'],
+                products: ['glucose', 'glucose'],
+                name: 'Maltose + Water → Glucose + Glucose',
+                formula: 'C₁₂H₂₂O₁₁ + H₂O → C₆H₁₂O₆ + C₆H₁₂O₆'
+            },
+            {
+                id: 'sucr-watr-gluc',
+                reactants: ['sucrose', 'water'],
+                products: ['glucose', 'fructose'],
+                name: 'Sucrose + Water → Glucose + Fructose',
+                formula: 'C₁₂H₂₂O₁₁ + H₂O → C₆H₁₂O₆ + C₆H₁₂O₆'
+            },
+            {
+                id: 'glyc-fatt-fat',
+                reactants: ['glycerol', 'fatty-acids'],
+                products: ['fat'],
+                name: 'Glycerol + Fatty Acids → Fat',
+                formula: 'C₃H₈O₃ + 3 C₁₆H₃₂O₂ → C₅₁H₉₈O₆'
+            },
+            {
+                id: 'fat-watr-glyc',
+                reactants: ['fat', 'water'],
+                products: ['glycerol', 'fatty-acids'],
+                name: 'Fat + Water → Glycerol + Fatty Acids',
+                formula: 'C₅₁H₉₈O₆ + H₂O → C₃H₈O₃ + 3 C₁₆H₃₂O₂'
+            }
+        ];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragAndDrop();
+            updateDiscoveryCounter();
+            updateQuizScore();
+        });
+
+        // Mode switching
+        function switchMode(mode) {
+            State.currentMode = mode;
+            
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`${mode}-mode`).classList.add('active');
+        }
+
+        // Drag and drop system
+        function setupDragAndDrop() {
+            document.querySelectorAll('.molecule[draggable="true"]').forEach(setupMolecule);
+            document.querySelectorAll('.reaction-slot').forEach(setupReactionSlot);
+            document.querySelectorAll('.quiz-slot').forEach(setupQuizSlot);
+            document.querySelectorAll('.molecule-bank').forEach(setupBankDropZone);
+        }
+
+        function setupMolecule(molecule) {
+            molecule.addEventListener('dragstart', function(e) {
+                State.draggedElement = this;
+                State.dragSource = this.closest('.reaction-slot, .quiz-slot') ? 'slot' : 'bank';
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            molecule.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                State.draggedElement = null;
+                State.dragSource = null;
+            });
+        }
+
+        function setupReactionSlot(slot) {
+            slot.addEventListener('dragover', allowDrop);
+            slot.addEventListener('dragenter', function() {
+                if (!this.classList.contains('filled')) {
+                    this.classList.add('drag-over');
+                }
+            });
+            slot.addEventListener('dragleave', function(e) {
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('drag-over');
+                }
+            });
+            slot.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                
+                if (State.draggedElement && !this.classList.contains('filled')) {
+                    placeMoleculeInSlot(this, State.draggedElement);
+                    updateReactButton();
+                }
+            });
+        }
+
+        function setupQuizSlot(slot) {
+            slot.addEventListener('dragover', allowDrop);
+            slot.addEventListener('drop', function(e) {
+                e.preventDefault();
+                
+                if (State.draggedElement && !this.classList.contains('filled')) {
+                    placeMoleculeInSlot(this, State.draggedElement);
+                }
+            });
+        }
+
+        function setupBankDropZone(bank) {
+            bank.addEventListener('dragover', allowDrop);
+            bank.addEventListener('dragenter', function() {
+                if (State.dragSource === 'slot') {
+                    this.classList.add('drop-target');
+                }
+            });
+            bank.addEventListener('dragleave', function(e) {
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('drop-target');
+                }
+            });
+            bank.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drop-target');
+                
+                if (State.draggedElement && State.dragSource === 'slot') {
+                    removeMoleculeFromSlot(State.draggedElement);
+                }
+            });
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function placeMoleculeInSlot(slot, originalMolecule) {
+            const moleculeCopy = createMoleculeElement(originalMolecule.dataset.type);
+            moleculeCopy.draggable = true;
+            setupMolecule(moleculeCopy);
+            
+            slot.appendChild(moleculeCopy);
+            slot.classList.add('filled');
+            slot.dataset.moleculeType = originalMolecule.dataset.type;
+
+            if (State.dragSource === 'slot') {
+                removeMoleculeFromSlot(originalMolecule);
+            }
+        }
+
+        function removeMoleculeFromSlot(molecule) {
+            const slot = molecule.closest('.reaction-slot, .quiz-slot');
+            if (slot) {
+                slot.innerHTML = '';
+                slot.classList.remove('filled', 'correct', 'incorrect');
+                delete slot.dataset.moleculeType;
+                
+                if (slot.classList.contains('reaction-slot')) {
+                    updateReactButton();
+                }
+            }
+        }
+
+        function createMoleculeElement(type) {
+            const molecule = document.createElement('div');
+            molecule.className = `molecule ${getMoleculeClasses(type)}`;
+            molecule.dataset.type = type;
+            molecule.innerHTML = getMoleculeHTML(type);
+            return molecule;
+        }
+
+        function getMoleculeClasses(type) {
+            const classMap = {
+                'glucose': 'sugar glucose',
+                'fructose': 'sugar fructose',
+                'maltose': 'sugar maltose',
+                'sucrose': 'sugar sucrose',
+                'water': 'water',
+                'glycerol': 'glycerol',
+                'fatty-acids': 'fatty-acids',
+                'fat': 'fat'
+            };
+            return classMap[type] || '';
+        }
+
+        function getMoleculeHTML(type) {
+            const htmlMap = {
+                'glucose': '<div class="hexagon">Glucose</div>',
+                'fructose': '<div class="hexagon">Fructose</div>',
+                'maltose': '<div class="double-hexagon"><div class="hex-left">Glu</div><div class="hex-right">Glu</div><div class="double-hex-label">Maltose</div></div>',
+                'sucrose': '<div class="double-hexagon"><div class="hex-left">Glu</div><div class="hex-right">Fru</div><div class="double-hex-label">Sucrose</div></div>',
+                'water': '',
+                'glycerol': 'Glycerol',
+                'fatty-acids': '<div class="fatty-chain"></div><div class="fatty-chain"></div><div class="fatty-chain"></div>',
+                'fat': 'Fat'
+            };
+            return htmlMap[type] || '';
+        }
+
+        // React mode functions
+        function updateReactButton() {
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            const reactBtn = document.getElementById('react-btn');
+            
+            const bothFilled = slot1.classList.contains('filled') && slot2.classList.contains('filled');
+            reactBtn.disabled = !bothFilled;
+        }
+
+        function processReaction() {
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            
+            const reactant1 = slot1.dataset.moleculeType;
+            const reactant2 = slot2.dataset.moleculeType;
+            
+            const reaction = findReaction([reactant1, reactant2]);
+            
+            if (reaction) {
+                const isNewDiscovery = !State.discoveredReactions.has(reaction.id);
+                
+                if (isNewDiscovery) {
+                    State.discoveredReactions.add(reaction.id);
+                    updateDiscoveryCounter();
+                    addReactionToDiscovered(reaction);
+                }
+                
+                displayReactionSuccess(reaction, isNewDiscovery);
+            } else {
+                displayReactionFailure();
+            }
+        }
+
+        function findReaction(inputReactants) {
+            const sortedInput = [...inputReactants].sort();
+            
+            return REACTIONS.find(reaction => {
+                const sortedReactants = [...reaction.reactants].sort();
+                return arraysEqual(sortedInput, sortedReactants);
+            });
+        }
+
+        function arraysEqual(a, b) {
+            return a.length === b.length && a.every((val, i) => val === b[i]);
+        }
+
+        function displayReactionSuccess(reaction, isNew) {
+            const results = document.getElementById('results');
+            results.className = 'results success';
+            
+            const title = isNew ? 'New Reaction Discovered! 🎉' : 'Reaction Successful! ✅';
+            const titleColor = isNew ? '#27ae60' : '#3498db';
+            
+            results.innerHTML = `
+                <div class="result-title" style="color: ${titleColor};">${title}</div>
+                <div class="result-equation">${reaction.name}</div>
+                <div class="result-visual" id="result-visual"></div>
+                <div class="result-formula">${reaction.formula}</div>
+            `;
+            
+            const visual = document.getElementById('result-visual');
+            
+            // Add reactants
+            reaction.reactants.forEach((reactant, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'operator';
+                    plus.textContent = '+';
+                    visual.appendChild(plus);
+                }
+                visual.appendChild(createMoleculeElement(reactant));
+            });
+            
+            // Add arrow
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.textContent = '→';
+            visual.appendChild(arrow);
+            
+            // Add products
+            reaction.products.forEach((product, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'operator';
+                    plus.textContent = '+';
+                    visual.appendChild(plus);
+                }
+                visual.appendChild(createMoleculeElement(product));
+            });
+
+            // Check if all reactions discovered
+            if (isNew && State.discoveredReactions.size === REACTIONS.length) {
+                setTimeout(() => {
+                    alert('🏆 Congratulations! You have discovered all 6 biological reactions! 🏆');
+                }, 1000);
+            }
+        }
+
+        function displayReactionFailure() {
+            const results = document.getElementById('results');
+            results.className = 'results failure';
+            
+            results.innerHTML = `
+                <div class="result-title" style="color: #e74c3c;">No Valid Reaction ❌</div>
+                <p style="color: #6c757d; text-align: center; margin: 0;">
+                    These molecules do not form a known biological reaction.<br>
+                    Try different combinations!
+                </p>
+            `;
+        }
+
+        function updateDiscoveryCounter() {
+            const counter = document.getElementById('counter');
+            const count = State.discoveredReactions.size;
+            const section = document.getElementById('discovered-section');
+            
+            if (count === REACTIONS.length) {
+                counter.textContent = '🎉 All Reactions Discovered: 6/6 🎉';
+                counter.classList.add('complete');
+            } else {
+                counter.textContent = `🧪 Reactions Discovered: ${count}/6`;
+                counter.classList.remove('complete');
+            }
+            
+            if (count > 0) {
+                section.classList.add('visible');
+            } else {
+                section.classList.remove('visible');
+            }
+        }
+
+        function addReactionToDiscovered(reaction) {
+            const grid = document.getElementById('discovered-grid');
+            
+            const reactionDiv = document.createElement('div');
+            reactionDiv.className = 'discovered-reaction';
+            reactionDiv.dataset.reactionId = reaction.id;
+            
+            reactionDiv.innerHTML = `
+                <div class="discovered-name">${reaction.name}</div>
+                <div class="discovered-visual" id="visual-${reaction.id}"></div>
+                <div class="discovered-formula">${reaction.formula}</div>
+            `;
+            
+            grid.appendChild(reactionDiv);
+            
+            // Build visual
+            const visual = document.getElementById(`visual-${reaction.id}`);
+            
+            reaction.reactants.forEach((reactant, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'mini-operator';
+                    plus.textContent = '+';
+                    visual.appendChild(plus);
+                }
+                
+                const miniMolecule = createMoleculeElement(reactant);
+                miniMolecule.classList.add('mini-molecule');
+                visual.appendChild(miniMolecule);
+            });
+            
+            const arrow = document.createElement('span');
+            arrow.className = 'mini-arrow';
+            arrow.textContent = '→';
+            visual.appendChild(arrow);
+            
+            reaction.products.forEach((product, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'mini-operator';
+                    plus.textContent = '+';
+                    visual.appendChild(plus);
+                }
+                
+                const miniMolecule = createMoleculeElement(product);
+                miniMolecule.classList.add('mini-molecule');
+                visual.appendChild(miniMolecule);
+            });
+        }
+
+        function clearReaction() {
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            const results = document.getElementById('results');
+            
+            slot1.innerHTML = '';
+            slot1.classList.remove('filled');
+            delete slot1.dataset.moleculeType;
+            
+            slot2.innerHTML = '';
+            slot2.classList.remove('filled');
+            delete slot2.dataset.moleculeType;
+            
+            results.className = 'results';
+            results.innerHTML = `
+                <p style="color: #6c757d; font-style: italic; text-align: center;">
+                    Add 2 reactants above and click "React!" to discover biological reactions
+                </p>
+            `;
+            
+            updateReactButton();
+        }
+
+        function resetProgress() {
+            if (confirm('Reset all discovery progress? This will clear all discovered reactions.')) {
+                State.discoveredReactions.clear();
+                updateDiscoveryCounter();
+                
+                const grid = document.getElementById('discovered-grid');
+                grid.innerHTML = '';
+                
+                clearReaction();
+            }
+        }
+
+        // Quiz mode functions
+        function generateQuizQuestion() {
+            if (State.usedReactions.size >= REACTIONS.length) {
+                displayQuizComplete();
+                return;
+            }
+
+            const unusedReactions = REACTIONS.filter((reaction, index) => 
+                !State.usedReactions.has(index)
+            );
+
+            if (unusedReactions.length === 0) {
+                displayQuizComplete();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * unusedReactions.length);
+            const selectedReaction = unusedReactions[randomIndex];
+            
+            const originalIndex = REACTIONS.findIndex(reaction => 
+                reaction.id === selectedReaction.id
+            );
+            
+            State.usedReactions.add(originalIndex);
+            State.currentQuestion = selectedReaction;
+            State.questionAttempted = false;
+            State.totalQuestions++;
+            State.quizCompleted = false;
+            
+            const hideProducts = Math.random() > 0.5;
+            const quizArea = document.getElementById('quiz-area');
+            const questionText = document.getElementById('quiz-question');
+            
+            quizArea.innerHTML = '';
+            
+            if (hideProducts) {
+                questionText.textContent = 'What are the products of this reaction?';
+                buildQuizEquation(quizArea, selectedReaction.reactants, selectedReaction.products, false, true);
+            } else {
+                questionText.textContent = 'What are the reactants of this reaction?';
+                buildQuizEquation(quizArea, selectedReaction.reactants, selectedReaction.products, true, false);
+            }
+            
+            updateQuizScore();
+            setupDragAndDrop();
+        }
+
+        function buildQuizEquation(container, reactants, products, hideReactants, hideProducts) {
+            reactants.forEach((reactant, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'operator';
+                    plus.textContent = '+';
+                    container.appendChild(plus);
+                }
+                
+                if (hideReactants) {
+                    const slot = document.createElement('div');
+                    slot.className = 'quiz-slot';
+                    slot.dataset.expectedType = reactant;
+                    container.appendChild(slot);
+                } else {
+                    container.appendChild(createMoleculeElement(reactant));
+                }
+            });
+            
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.textContent = '→';
+            container.appendChild(arrow);
+            
+            products.forEach((product, index) => {
+                if (index > 0) {
+                    const plus = document.createElement('span');
+                    plus.className = 'operator';
+                    plus.textContent = '+';
+                    container.appendChild(plus);
+                }
+                
+                if (hideProducts) {
+                    const slot = document.createElement('div');
+                    slot.className = 'quiz-slot';
+                    slot.dataset.expectedType = product;
+                    container.appendChild(slot);
+                } else {
+                    container.appendChild(createMoleculeElement(product));
+                }
+            });
+        }
+
+        function checkQuizAnswer() {
+            if (State.quizCompleted) return;
+
+            const quizSlots = document.querySelectorAll('#quiz-area .quiz-slot');
+            if (quizSlots.length === 0) return;
+            
+            let allFilled = true;
+            const userAnswers = [];
+            const expectedAnswers = [];
+            
+            quizSlots.forEach(slot => {
+                const expected = slot.dataset.expectedType;
+                const actual = slot.dataset.moleculeType;
+                
+                expectedAnswers.push(expected);
+                
+                if (!actual) {
+                    allFilled = false;
+                    return;
+                }
+                
+                userAnswers.push(actual);
+            });
+            
+            if (!allFilled) {
+                alert('Please fill in all the missing molecules first!');
+                return;
+            }
+            
+            const answersCorrect = arraysEqualUnordered(userAnswers, expectedAnswers);
+            
+            quizSlots.forEach(slot => {
+                if (answersCorrect) {
+                    slot.classList.add('correct');
+                    slot.classList.remove('incorrect');
+                } else {
+                    slot.classList.add('incorrect');
+                    slot.classList.remove('correct');
+                }
+            });
+            
+            if (answersCorrect) {
+                if (!State.questionAttempted) {
+                    State.quizScore++;
+                }
+                
+                updateQuizScore();
+                
+                const remainingReactions = REACTIONS.length - State.usedReactions.size;
+                
+                if (remainingReactions === 0) {
+                    setTimeout(() => {
+                        alert('Correct! 🎉 Quiz completed!');
+                        setTimeout(() => {
+                            displayQuizComplete();
+                        }, 800);
+                    }, 200);
+                } else {
+                    setTimeout(() => {
+                        alert(`Correct! 🎉 Moving to next question... (${remainingReactions} reactions remaining)`);
+                        setTimeout(() => {
+                            generateQuizQuestion();
+                        }, 800);
+                    }, 200);
+                }
+                
+            } else {
+                State.questionAttempted = true;
+                alert('Some answers are incorrect. Try again!\n(Note: You won\'t get points for this question now)');
+            }
+        }
+
+        function arraysEqualUnordered(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            
+            const count1 = {};
+            const count2 = {};
+            
+            arr1.forEach(item => {
+                count1[item] = (count1[item] || 0) + 1;
+            });
+            
+            arr2.forEach(item => {
+                count2[item] = (count2[item] || 0) + 1;
+            });
+            
+            for (let key in count1) {
+                if (count1[key] !== count2[key]) return false;
+            }
+            
+            for (let key in count2) {
+                if (count1[key] !== count2[key]) return false;
+            }
+            
+            return true;
+        }
+
+        function displayQuizComplete() {
+            State.quizCompleted = true;
+            const quizArea = document.getElementById('quiz-area');
+            const questionText = document.getElementById('quiz-question');
+            
+            questionText.textContent = 'Quiz Complete! 🎉';
+            
+            quizArea.innerHTML = `
+                <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #d4edda, #c3e6cb); border-radius: 16px; border: 2px solid #27ae60;">
+                    <div style="font-size: 24px; font-weight: 700; color: #27ae60; margin-bottom: 16px;">
+                        🏆 All Reactions Have Been Quizzed! 🏆
+                    </div>
+                    <div style="font-size: 18px; color: #2c3e50; margin-bottom: 12px;">
+                        Final Score: ${State.quizScore}/${State.totalQuestions}
+                    </div>
+                    <div style="font-size: 16px; color: #6c757d;">
+                        ${State.quizScore === State.totalQuestions ? 
+                            'Perfect score! You mastered all biological reactions! 🌟' : 
+                            'Great job! Click "Restart Quiz" to try again for a perfect score! 💪'
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetQuizAnswers() {
+            if (State.quizCompleted) return;
+
+            document.querySelectorAll('#quiz-area .quiz-slot').forEach(slot => {
+                slot.innerHTML = '';
+                slot.classList.remove('filled', 'correct', 'incorrect');
+                delete slot.dataset.moleculeType;
+            });
+        }
+
+        function nextQuestion() {
+            if (State.quizCompleted) return;
+            generateQuizQuestion();
+        }
+
+        function restartQuiz() {
+            State.quizScore = 0;
+            State.totalQuestions = 0;
+            State.currentQuestion = null;
+            State.questionAttempted = false;
+            State.usedReactions.clear();
+            State.quizCompleted = false;
+            
+            generateQuizQuestion();
+        }
+
+        function updateQuizScore() {
+            const scoreElement = document.getElementById('quiz-score');
+            
+            if (State.totalQuestions === 0) {
+                scoreElement.textContent = 'Score: 0/0 - Ready to start!';
+            } else if (State.quizCompleted) {
+                scoreElement.textContent = `Final Score: ${State.quizScore}/${State.totalQuestions}`;
+            } else {
+                const remaining = REACTIONS.length - State.usedReactions.size;
+                scoreElement.textContent = `Score: ${State.quizScore}/${State.totalQuestions} (${remaining} reactions remaining)`;
+            }
+        }
+
+        // Touch support for mobile devices
+        let touchElement = null;
+
+        document.addEventListener('touchstart', function(e) {
+            const molecule = e.target.closest('.molecule[draggable="true"]');
+            if (molecule) {
+                touchElement = molecule;
+                State.draggedElement = molecule;
+                State.dragSource = molecule.closest('.reaction-slot, .quiz-slot') ? 'slot' : 'bank';
+                
+                molecule.classList.add('dragging');
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            if (touchElement) {
+                const touch = e.touches[0];
+                touchElement.style.position = 'fixed';
+                touchElement.style.left = (touch.clientX - 40) + 'px';
+                touchElement.style.top = (touch.clientY - 40) + 'px';
+                touchElement.style.zIndex = '1000';
+                touchElement.style.pointerEvents = 'none';
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (touchElement) {
+                const touch = e.changedTouches[0];
+                const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                touchElement.style.position = '';
+                touchElement.style.left = '';
+                touchElement.style.top = '';
+                touchElement.style.zIndex = '';
+                touchElement.style.pointerEvents = '';
+                touchElement.classList.remove('dragging');
+                
+                if (elementBelow) {
+                    const slot = elementBelow.closest('.reaction-slot, .quiz-slot');
+                    const bank = elementBelow.closest('.molecule-bank');
+                    
+                    if (slot && !slot.classList.contains('filled')) {
+                        placeMoleculeInSlot(slot, touchElement);
+                        if (slot.classList.contains('reaction-slot')) {
+                            updateReactButton();
+                        }
+                    } else if (bank && State.dragSource === 'slot') {
+                        removeMoleculeFromSlot(touchElement);
+                    }
+                }
+                
+                touchElement = null;
+                State.draggedElement = null;
+                State.dragSource = null;
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
