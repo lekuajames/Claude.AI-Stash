@@ -1,0 +1,792 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydraulics System Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            min-height: 600px;
+        }
+
+        .simulation-panel {
+            padding: 40px;
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .controls-panel {
+            background: #edf2f7;
+            padding: 30px;
+            border-left: 3px solid #cbd5e0;
+            overflow-y: auto;
+        }
+
+        .hydraulic-system {
+            width: 100%;
+            max-width: 700px;
+            height: 450px;
+        }
+
+        .control-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .control-section h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #cbd5e0;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .switch.active {
+            background: #4299e1;
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .switch.active::after {
+            transform: translateX(28px);
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .input-group input, .input-group select {
+            width: 100px;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .action-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(66, 153, 225, 0.3);
+        }
+
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-panel {
+            background: linear-gradient(135deg, #e6fffa, #f0fff4);
+            border: 2px solid #38b2ac;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .results-panel h4 {
+            color: #234e52;
+            margin-bottom: 10px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .movement-results {
+            background: linear-gradient(135deg, #fef5e7, #fffbf0);
+            border: 2px solid #f6ad55;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .movement-results.active {
+            display: block;
+        }
+
+        .movement-results h4 {
+            color: #c05621;
+            margin-bottom: 10px;
+        }
+
+        .attribution {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .controls-panel {
+                border-left: none;
+                border-top: 3px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Hydraulics System Simulation</h1>
+            <p>Interactive Physics Learning Tool for O-Level Students</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="simulation-panel">
+                <svg class="hydraulic-system" viewBox="0 0 700 450">
+                    <!-- Pascal's Law display -->
+                    <text x="350" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#3182ce">Pascal's Law: P₁ = P₂</text>
+                    <text x="350" y="50" text-anchor="middle" font-size="16" font-weight="bold" fill="#4a5568">F₁/A₁ = F₂/A₂</text>
+                    
+                    <!-- U-shaped connecting tube -->
+                    <path d="M 200 350 L 200 400 L 500 400 L 500 350" 
+                          fill="none" stroke="#2d3748" stroke-width="8" stroke-linejoin="round"/>
+                    
+                    <!-- Hydraulic fluid in U-tube -->
+                    <path d="M 208 352 L 208 392 L 492 392 L 492 352" 
+                          fill="none" stroke="#4299e1" stroke-width="16" stroke-linejoin="round" opacity="0.8"/>
+                    
+                    <!-- Left cylinder container -->
+                    <rect id="leftCylinder" x="170" y="150" width="60" height="210" fill="#e2e8f0" stroke="#4a5568" stroke-width="3"/>
+                    
+                    <!-- Right cylinder container -->
+                    <rect id="rightCylinder" x="470" y="100" width="90" height="260" fill="#e2e8f0" stroke="#4a5568" stroke-width="3"/>
+                    
+                    <!-- Hydraulic fluid in cylinders (only below pistons) -->
+                    <rect id="leftFluid" x="175" y="255" width="50" height="100" fill="#4299e1" opacity="0.7"/>
+                    <rect id="rightFluid" x="475" y="205" width="80" height="150" fill="#4299e1" opacity="0.7"/>
+                    
+                    <!-- Left piston (red) -->
+                    <rect id="leftPiston" x="175" y="205" width="50" height="50" fill="#e53e3e" stroke="#c53030" stroke-width="2"/>
+                    
+                    <!-- Right piston (green) -->
+                    <rect id="rightPiston" x="475" y="155" width="80" height="50" fill="#38a169" stroke="#2f855a" stroke-width="2"/>
+                    
+                    <!-- Piston labels -->
+                    <text x="200" y="440" text-anchor="middle" font-size="16" font-weight="bold" fill="#2d3748">Piston 1</text>
+                    <text x="500" y="440" text-anchor="middle" font-size="16" font-weight="bold" fill="#2d3748">Piston 2</text>
+                    
+                    <!-- Area labels -->
+                    <text id="area1Label" x="200" y="290" text-anchor="middle" font-size="12" font-weight="bold" fill="#4a5568">A₁ = 20 cm²</text>
+                    <text id="area2Label" x="500" y="260" text-anchor="middle" font-size="12" font-weight="bold" fill="#4a5568">A₂ = 80 cm²</text>
+                    
+                    <!-- Movement popups (initially hidden) -->
+                    <g id="leftPopup" opacity="0">
+                        <rect x="260" y="190" width="120" height="40" fill="white" stroke="#e53e3e" stroke-width="2" rx="8" filter="url(#shadow)"/>
+                        <text id="leftPopupText" x="320" y="213" text-anchor="middle" font-size="12" font-weight="bold" fill="#e53e3e">Moved: 0 cm</text>
+                    </g>
+                    
+                    <g id="rightPopup" opacity="0">
+                        <rect x="330" y="140" width="120" height="40" fill="white" stroke="#38a169" stroke-width="2" rx="8" filter="url(#shadow)"/>
+                        <text id="rightPopupText" x="390" y="163" text-anchor="middle" font-size="12" font-weight="bold" fill="#38a169">Moved: 0 cm</text>
+                    </g>
+                    
+                    <!-- Shadow filter -->
+                    <defs>
+                        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.3)"/>
+                        </filter>
+                    </defs>
+                </svg>
+            </div>
+            
+            <div class="controls-panel">
+                <div class="control-section">
+                    <h3>⚙️ Calculation Mode</h3>
+                    <div class="toggle-switch">
+                        <span>Force Constant</span>
+                        <div class="switch" id="calcModeToggle"></div>
+                        <span>Area Constant</span>
+                    </div>
+                    <p id="calcModeDesc" style="font-size: 0.85rem; color: #718096; margin-top: 10px;">
+                        Forces remain constant when areas change
+                    </p>
+                </div>
+                
+                <div class="control-section">
+                    <h3>🎮 Movement Controls</h3>
+                    <div class="input-group">
+                        <label>Select Piston:</label>
+                        <select id="pistonSelect">
+                            <option value="1">Piston 1 (Red)</option>
+                            <option value="2">Piston 2 (Green)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Distance (cm):</label>
+                        <input type="number" id="moveDistance" value="2.0" min="0.1" max="12" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>Direction:</label>
+                        <select id="moveDirection">
+                            <option value="down">Down ↓</option>
+                            <option value="up">Up ↑</option>
+                        </select>
+                    </div>
+                    <button class="action-button" id="startMoveBtn">🎬 Start Movement</button>
+                    
+                    <div class="movement-results" id="movementResults">
+                        <h4>📊 Movement Analysis</h4>
+                        <div class="result-item">
+                            <span>Piston 1 moved:</span>
+                            <span class="result-value" id="piston1Move">0 cm</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Piston 2 moved:</span>
+                            <span class="result-value" id="piston2Move">0 cm</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Volume displaced:</span>
+                            <span class="result-value" id="volumeMove">0 cm³</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>📏 Piston 1 (Red)</h3>
+                    <div class="input-group">
+                        <label>Area (cm²):</label>
+                        <input type="number" id="area1" value="20" min="5" max="150" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Force (N):</label>
+                        <input type="number" id="force1" value="100" min="1" max="2000" step="1">
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>📏 Piston 2 (Green)</h3>
+                    <div class="input-group">
+                        <label>Area (cm²):</label>
+                        <input type="number" id="area2" value="80" min="5" max="150" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Force (N):</label>
+                        <input type="number" id="force2" value="400" min="1" max="2000" step="1">
+                    </div>
+                </div>
+                
+                <div class="results-panel">
+                    <h4>📊 Live Calculations</h4>
+                    <div class="result-item">
+                        <span>Pressure:</span>
+                        <span class="result-value" id="pressureValue">5.0 N/cm²</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Area Ratio (A₁:A₂):</span>
+                        <span class="result-value" id="areaRatio">1:4</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Force Ratio (F₁:F₂):</span>
+                        <span class="result-value" id="forceRatio">1:4</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Movement Ratio:</span>
+                        <span class="result-value" id="moveRatio">4:1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="attribution">
+            Made by James Kua, Temasek Junior College
+        </div>
+    </div>
+
+    <script>
+        class HydraulicsSimulation {
+            constructor() {
+                // State variables
+                this.isForceConstantMode = true;
+                this.isAnimating = false;
+                this.piston1Y = 205;  // Initial Y position for left piston (range: 160-260)
+                this.piston2Y = 155;  // Initial Y position for right piston (range: 110-200)
+                this.pixelsPerCm = 15; // Scale factor for movement
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.updateSystem();
+            }
+            
+            initializeElements() {
+                this.elements = {
+                    // Mode controls
+                    calcModeToggle: document.getElementById('calcModeToggle'),
+                    calcModeDesc: document.getElementById('calcModeDesc'),
+                    
+                    // Input controls
+                    area1: document.getElementById('area1'),
+                    area2: document.getElementById('area2'),
+                    force1: document.getElementById('force1'),
+                    force2: document.getElementById('force2'),
+                    
+                    // Movement controls
+                    pistonSelect: document.getElementById('pistonSelect'),
+                    moveDistance: document.getElementById('moveDistance'),
+                    moveDirection: document.getElementById('moveDirection'),
+                    startMoveBtn: document.getElementById('startMoveBtn'),
+                    
+                    // Display elements
+                    pressureValue: document.getElementById('pressureValue'),
+                    areaRatio: document.getElementById('areaRatio'),
+                    forceRatio: document.getElementById('forceRatio'),
+                    moveRatio: document.getElementById('moveRatio'),
+                    
+                    // Movement results
+                    movementResults: document.getElementById('movementResults'),
+                    piston1Move: document.getElementById('piston1Move'),
+                    piston2Move: document.getElementById('piston2Move'),
+                    volumeMove: document.getElementById('volumeMove'),
+                    
+                    // SVG elements
+                    leftCylinder: document.getElementById('leftCylinder'),
+                    rightCylinder: document.getElementById('rightCylinder'),
+                    leftFluid: document.getElementById('leftFluid'),
+                    rightFluid: document.getElementById('rightFluid'),
+                    leftPiston: document.getElementById('leftPiston'),
+                    rightPiston: document.getElementById('rightPiston'),
+                    area1Label: document.getElementById('area1Label'),
+                    area2Label: document.getElementById('area2Label'),
+                    
+                    // Popup elements
+                    leftPopup: document.getElementById('leftPopup'),
+                    rightPopup: document.getElementById('rightPopup'),
+                    leftPopupText: document.getElementById('leftPopupText'),
+                    rightPopupText: document.getElementById('rightPopupText')
+                };
+            }
+            
+            bindEvents() {
+                // Calculation mode toggle
+                this.elements.calcModeToggle.addEventListener('click', () => this.toggleCalculationMode());
+                
+                // Input change handlers
+                [this.elements.area1, this.elements.area2, this.elements.force1, this.elements.force2].forEach(input => {
+                    input.addEventListener('input', () => this.handleInputChange());
+                });
+                
+                // Movement button
+                this.elements.startMoveBtn.addEventListener('click', () => this.startMovement());
+            }
+            
+            toggleCalculationMode() {
+                this.isForceConstantMode = !this.isForceConstantMode;
+                this.elements.calcModeToggle.classList.toggle('active');
+                
+                if (this.isForceConstantMode) {
+                    this.elements.calcModeDesc.textContent = 'Forces remain constant when areas change';
+                } else {
+                    this.elements.calcModeDesc.textContent = 'Areas remain constant when forces change';
+                }
+                
+                this.handleInputChange();
+            }
+            
+            handleInputChange() {
+                const area1 = parseFloat(this.elements.area1.value);
+                const area2 = parseFloat(this.elements.area2.value);
+                const force1 = parseFloat(this.elements.force1.value);
+                const force2 = parseFloat(this.elements.force2.value);
+                
+                if (this.isForceConstantMode) {
+                    // Force constant mode: F1/A1 = F2/A2, so F2 = F1 * A2/A1
+                    const pressure = force1 / area1;
+                    const newForce2 = pressure * area2;
+                    this.elements.force2.value = Math.round(newForce2);
+                } else {
+                    // Area constant mode: adjust area2 based on pressure equality
+                    const pressure1 = force1 / area1;
+                    const newArea2 = force2 / pressure1;
+                    if (newArea2 >= 5 && newArea2 <= 150) {
+                        this.elements.area2.value = Math.round(newArea2);
+                    }
+                }
+                
+                this.updateSystem();
+            }
+            
+            startMovement() {
+                if (this.isAnimating) return;
+                
+                const selectedPiston = parseInt(this.elements.pistonSelect.value);
+                const distance = parseFloat(this.elements.moveDistance.value);
+                const direction = this.elements.moveDirection.value;
+                const area1 = parseFloat(this.elements.area1.value);
+                const area2 = parseFloat(this.elements.area2.value);
+                
+                // Calculate movement in pixels
+                const primaryMovement = distance * this.pixelsPerCm * (direction === 'down' ? 1 : -1);
+                
+                // Calculate secondary piston movement using volume conservation (A1*d1 = A2*d2)
+                let secondaryMovement;
+                if (selectedPiston === 1) {
+                    // Moving piston 1, calculate piston 2 movement
+                    secondaryMovement = -primaryMovement * (area1 / area2);
+                } else {
+                    // Moving piston 2, calculate piston 1 movement
+                    secondaryMovement = -primaryMovement * (area2 / area1);
+                }
+                
+                // Original positions
+                const originalY1 = 205;
+                const originalY2 = 155;
+                
+                // Calculate final positions after movement with boundary checking
+                let finalY1, finalY2;
+                if (selectedPiston === 1) {
+                    finalY1 = Math.max(160, Math.min(260, originalY1 + primaryMovement));
+                    finalY2 = Math.max(110, Math.min(200, originalY2 + secondaryMovement));
+                } else {
+                    finalY1 = Math.max(160, Math.min(260, originalY1 + secondaryMovement));
+                    finalY2 = Math.max(110, Math.min(200, originalY2 + primaryMovement));
+                }
+                
+                // Start with reset animation, then movement animation
+                this.animateReset(originalY1, originalY2, finalY1, finalY2);
+            }
+            
+            animateReset(originalY1, originalY2, finalY1, finalY2) {
+                this.isAnimating = true;
+                this.elements.startMoveBtn.disabled = true;
+                this.elements.startMoveBtn.textContent = '↺ Resetting...';
+                
+                // Store current positions
+                const currentY1 = this.piston1Y;
+                const currentY2 = this.piston2Y;
+                
+                // Only animate reset if pistons are not already at original positions
+                if (Math.abs(currentY1 - originalY1) < 1 && Math.abs(currentY2 - originalY2) < 1) {
+                    // Already at original positions, go straight to movement
+                    this.animateMovement(originalY1, finalY1, originalY2, finalY2);
+                    return;
+                }
+                
+                const resetDuration = 1500; // 1.5 seconds for reset
+                const startTime = Date.now();
+                
+                const animateReset = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / resetDuration, 1);
+                    
+                    // Smooth easing function
+                    const ease = 0.5 * (1 - Math.cos(Math.PI * progress));
+                    
+                    // Update piston positions toward original
+                    this.piston1Y = currentY1 + (originalY1 - currentY1) * ease;
+                    this.piston2Y = currentY2 + (originalY2 - currentY2) * ease;
+                    
+                    this.updatePistonPositions();
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateReset);
+                    } else {
+                        // Reset complete, now start movement animation
+                        this.piston1Y = originalY1;
+                        this.piston2Y = originalY2;
+                        this.updatePistonPositions();
+                        
+                        // Short pause before movement
+                        setTimeout(() => {
+                            this.animateMovement(originalY1, finalY1, originalY2, finalY2);
+                        }, 300);
+                    }
+                };
+                
+                animateReset();
+            }
+            
+            animateMovement(startY1, endY1, startY2, endY2) {
+                this.isAnimating = true;
+                this.elements.startMoveBtn.disabled = true;
+                this.elements.startMoveBtn.textContent = '🎬 Moving...';
+                
+                // Calculate actual distances moved
+                const distance1 = Math.abs(endY1 - startY1) / this.pixelsPerCm;
+                const distance2 = Math.abs(endY2 - startY2) / this.pixelsPerCm;
+                const dir1 = endY1 > startY1 ? ' ↓' : endY1 < startY1 ? ' ↑' : '';
+                const dir2 = endY2 > startY2 ? ' ↓' : endY2 < startY2 ? ' ↑' : '';
+                
+                // Update popup texts and show them
+                this.elements.leftPopupText.textContent = `Moved: ${distance1.toFixed(1)} cm${dir1}`;
+                this.elements.rightPopupText.textContent = `Moved: ${distance2.toFixed(1)} cm${dir2}`;
+                
+                this.elements.leftPopup.setAttribute('opacity', '1');
+                this.elements.rightPopup.setAttribute('opacity', '1');
+                
+                // Animation settings
+                const duration = 2500; // 2.5 seconds
+                const startTime = Date.now();
+                
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Smooth easing function
+                    const ease = 0.5 * (1 - Math.cos(Math.PI * progress));
+                    
+                    // Update piston positions
+                    this.piston1Y = startY1 + (endY1 - startY1) * ease;
+                    this.piston2Y = startY2 + (endY2 - startY2) * ease;
+                    
+                    this.updatePistonPositions();
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        // Animation complete
+                        this.isAnimating = false;
+                        this.elements.startMoveBtn.disabled = false;
+                        this.elements.startMoveBtn.textContent = '🎬 Start Movement';
+                        
+                        // Hide popups after 3 seconds
+                        setTimeout(() => {
+                            this.elements.leftPopup.setAttribute('opacity', '0');
+                            this.elements.rightPopup.setAttribute('opacity', '0');
+                        }, 3000);
+                        
+                        this.showMovementResults(startY1, endY1, startY2, endY2);
+                    }
+                };
+                
+                animate();
+            }
+            
+            showMovementResults(startY1, endY1, startY2, endY2) {
+                const area1 = parseFloat(this.elements.area1.value);
+                
+                // Calculate actual movements
+                const distance1 = Math.abs(endY1 - startY1) / this.pixelsPerCm;
+                const distance2 = Math.abs(endY2 - startY2) / this.pixelsPerCm;
+                const volume = area1 * distance1; // Volume displaced
+                
+                // Direction indicators
+                const dir1 = endY1 > startY1 ? ' ↓' : endY1 < startY1 ? ' ↑' : '';
+                const dir2 = endY2 > startY2 ? ' ↓' : endY2 < startY2 ? ' ↑' : '';
+                
+                // Update results display
+                this.elements.piston1Move.textContent = distance1.toFixed(2) + ' cm' + dir1;
+                this.elements.piston2Move.textContent = distance2.toFixed(2) + ' cm' + dir2;
+                this.elements.volumeMove.textContent = volume.toFixed(2) + ' cm³';
+                
+                this.elements.movementResults.classList.add('active');
+            }
+            
+            updatePistonPositions() {
+                // Update piston positions
+                this.elements.leftPiston.setAttribute('y', this.piston1Y);
+                this.elements.rightPiston.setAttribute('y', this.piston2Y);
+                
+                // Update fluid levels (only below pistons)
+                const fluidY1 = this.piston1Y + 50; // Start below piston (piston height = 50)
+                const fluidHeight1 = 360 - fluidY1; // To bottom of cylinder
+                this.elements.leftFluid.setAttribute('y', fluidY1);
+                this.elements.leftFluid.setAttribute('height', Math.max(0, fluidHeight1));
+                
+                const fluidY2 = this.piston2Y + 50; // Start below piston (piston height = 50)
+                const fluidHeight2 = 360 - fluidY2; // To bottom of cylinder
+                this.elements.rightFluid.setAttribute('y', fluidY2);
+                this.elements.rightFluid.setAttribute('height', Math.max(0, fluidHeight2));
+            }
+            
+            updateVisualization() {
+                const area1 = parseFloat(this.elements.area1.value);
+                const area2 = parseFloat(this.elements.area2.value);
+                
+                // Calculate cylinder widths based on area (with reasonable limits)
+                const width1 = Math.max(40, Math.min(120, Math.sqrt(area1) * 6));
+                const width2 = Math.max(60, Math.min(160, Math.sqrt(area2) * 6));
+                
+                // Update left cylinder (centered at x=200)
+                this.elements.leftCylinder.setAttribute('width', width1);
+                this.elements.leftCylinder.setAttribute('x', 200 - width1/2);
+                this.elements.leftCylinder.setAttribute('y', 150);
+                this.elements.leftCylinder.setAttribute('height', 210);
+                
+                // Update left fluid
+                const fluidWidth1 = width1 - 10;
+                this.elements.leftFluid.setAttribute('width', fluidWidth1);
+                this.elements.leftFluid.setAttribute('x', 200 - fluidWidth1/2);
+                
+                // Update left piston
+                this.elements.leftPiston.setAttribute('width', fluidWidth1);
+                this.elements.leftPiston.setAttribute('x', 200 - fluidWidth1/2);
+                
+                // Update right cylinder (centered at x=500)
+                this.elements.rightCylinder.setAttribute('width', width2);
+                this.elements.rightCylinder.setAttribute('x', 500 - width2/2);
+                this.elements.rightCylinder.setAttribute('y', 100);
+                this.elements.rightCylinder.setAttribute('height', 260);
+                
+                // Update right fluid
+                const fluidWidth2 = width2 - 10;
+                this.elements.rightFluid.setAttribute('width', fluidWidth2);
+                this.elements.rightFluid.setAttribute('x', 500 - fluidWidth2/2);
+                
+                // Update right piston
+                this.elements.rightPiston.setAttribute('width', fluidWidth2);
+                this.elements.rightPiston.setAttribute('x', 500 - fluidWidth2/2);
+                
+                // Update area labels
+                this.elements.area1Label.textContent = `A₁ = ${area1} cm²`;
+                this.elements.area2Label.textContent = `A₂ = ${area2} cm²`;
+                
+                this.updatePistonPositions();
+            }
+            
+            updateCalculations() {
+                const area1 = parseFloat(this.elements.area1.value);
+                const area2 = parseFloat(this.elements.area2.value);
+                const force1 = parseFloat(this.elements.force1.value);
+                const force2 = parseFloat(this.elements.force2.value);
+                
+                // Calculate pressure (should be equal by Pascal's Law)
+                const pressure1 = force1 / area1;
+                const pressure2 = force2 / area2;
+                const avgPressure = (pressure1 + pressure2) / 2;
+                
+                // Calculate ratios
+                const areaRatio = area1 <= area2 ? 
+                    `1:${(area2/area1).toFixed(1)}` : 
+                    `${(area1/area2).toFixed(1)}:1`;
+                    
+                const forceRatio = force1 <= force2 ? 
+                    `1:${(force2/force1).toFixed(1)}` : 
+                    `${(force1/force2).toFixed(1)}:1`;
+                    
+                const moveRatio = area1 <= area2 ? 
+                    `${(area2/area1).toFixed(1)}:1` : 
+                    `1:${(area1/area2).toFixed(1)}`;
+                
+                // Update display
+                this.elements.pressureValue.textContent = avgPressure.toFixed(2) + ' N/cm²';
+                this.elements.areaRatio.textContent = areaRatio;
+                this.elements.forceRatio.textContent = forceRatio;
+                this.elements.moveRatio.textContent = moveRatio;
+            }
+            
+            updateSystem() {
+                this.updateVisualization();
+                this.updateCalculations();
+            }
+        }
+        
+        // Initialize simulation when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new HydraulicsSimulation();
+        });
+    </script>
+</body>
+</html>
