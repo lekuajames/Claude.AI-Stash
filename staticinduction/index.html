@@ -1,0 +1,1740 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Electricity - Interactive Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 40px 20px;
+        }
+
+        .menu-button {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-button {
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #555;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .rod-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .rod-button {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .rod-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .rod-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .rod-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #e0e0e0;
+            color: #999;
+            border-color: #ccc;
+        }
+
+        .rod-button:disabled:hover {
+            transform: none;
+            background: #e0e0e0;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .slider-container {
+            margin-top: 20px;
+        }
+
+        .slider-label {
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .step-info {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .simulation-area {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 20px;
+            min-height: 450px;
+            position: relative;
+            border: 2px solid #e0e0e0;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .explanation-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .explanation-box h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .explanation-box p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .credit {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .menu-button {
+                font-size: 20px;
+                padding: 20px;
+            }
+
+            .rod-selection {
+                flex-direction: column;
+            }
+
+            canvas {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Menu -->
+        <div id="mainMenu">
+            <h1>Static Electricity</h1>
+            <p class="subtitle">An Interactive Simulation</p>
+            <div class="menu-container">
+                <button class="menu-button" onclick="showMode('induction')">
+                    Charging by Induction
+                </button>
+                <button class="menu-button" onclick="showMode('contact')">
+                    Charging by Contact
+                </button>
+                <button class="menu-button" onclick="showMode('freeplay')">
+                    Free Play Mode
+                </button>
+            </div>
+        </div>
+
+        <!-- Charging by Induction Mode -->
+        <div id="inductionMode" class="hidden">
+            <button class="back-button" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h1>Charging by Induction</h1>
+            <p class="subtitle">An Interactive Simulation for Static Electricity</p>
+
+            <div class="controls">
+                <div class="rod-selection">
+                    <button class="rod-button active" id="negativeBtn" onclick="selectRod('negative')">
+                        Start with Negatively Charged Rod
+                    </button>
+                    <button class="rod-button" id="positiveBtn" onclick="selectRod('positive')">
+                        Start with Positively Charged Rod
+                    </button>
+                </div>
+
+                <div class="checkbox-container">
+                    <input type="checkbox" id="noEarthingCheckbox" onchange="toggleEarthing()">
+                    <label for="noEarthingCheckbox">No Earthing Wire (Two Sphere Method)</label>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">Step Control</div>
+                    <input type="range" min="0" max="3" value="0" class="slider" id="stepSlider">
+                    <div class="step-info" id="stepInfo">Step 0: Neutral Sphere</div>
+                </div>
+            </div>
+
+            <div class="simulation-area">
+                <div class="canvas-container">
+                    <canvas id="inductionCanvas" width="700" height="400"></canvas>
+                </div>
+            </div>
+
+            <div class="explanation-box" id="explanationBox">
+                <h3>Initial State</h3>
+                <p>The sphere is initially neutral, with equal numbers of positive and negative charges distributed evenly throughout.</p>
+            </div>
+        </div>
+
+        <!-- Charging by Contact Mode -->
+        <div id="contactMode" class="hidden">
+            <button class="back-button" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h1>Charging by Contact</h1>
+            <p class="subtitle">An Interactive Simulation for Static Electricity</p>
+
+            <div class="controls">
+                <div class="rod-selection">
+                    <button class="rod-button active" id="negSphereBtn" onclick="selectContactSphere('negative')">
+                        Start with Negatively Charged Sphere
+                    </button>
+                    <button class="rod-button" id="posSphereBtn" onclick="selectContactSphere('positive')">
+                        Start with Positively Charged Sphere
+                    </button>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">Step Control</div>
+                    <input type="range" min="0" max="2" value="0" class="slider" id="contactSlider">
+                    <div class="step-info" id="contactStepInfo">Step 0: Before Contact</div>
+                </div>
+            </div>
+
+            <div class="simulation-area">
+                <div class="canvas-container">
+                    <canvas id="contactCanvas" width="700" height="400"></canvas>
+                </div>
+            </div>
+
+            <div class="explanation-box" id="contactExplanationBox">
+                <h3>Initial State</h3>
+                <p>One sphere is charged while the other is neutral.</p>
+            </div>
+        </div>
+
+        <!-- Free Play Mode -->
+        <div id="freeplayMode" class="hidden">
+            <button class="back-button" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h1>Free Play Mode</h1>
+            <p class="subtitle">Experiment with Static Electricity</p>
+
+            <div class="controls">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Number of Spheres:</label>
+                        <select id="numSpheresSelect" onchange="changeSphereCount()" style="width: 100%; padding: 8px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px;">
+                            <option value="1">1 Sphere</option>
+                            <option value="2">2 Spheres</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Place Rod:</label>
+                        <select id="rodTypeSelect" style="width: 100%; padding: 8px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px;">
+                            <option value="none">No Rod</option>
+                            <option value="pos-1">Positive Rod near Sphere 1</option>
+                            <option value="neg-1">Negative Rod near Sphere 1</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <button class="rod-button" id="earthBtn1" onclick="toggleEarth(1)">Earth Sphere 1</button>
+                    <button class="rod-button" id="contactBtn" onclick="toggleContact()" disabled>Bring Together</button>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="rod-button" style="background: #d32f2f; border-color: #d32f2f; color: white;" onclick="resetFreeplay()">Reset</button>
+                    <p id="resetInstruction" style="margin-top: 10px; color: #666; font-size: 13px; font-style: italic; display: none;">
+                        Reset first before selecting a different rod or rod position
+                    </p>
+                </div>
+            </div>
+
+            <div class="simulation-area">
+                <div class="canvas-container">
+                    <canvas id="freeplayCanvas" width="700" height="400"></canvas>
+                </div>
+            </div>
+
+            <div class="explanation-box" id="freeplayExplanationBox">
+                <h3>Free Play Mode</h3>
+                <p>Experiment by placing rods, earthing spheres, and bringing them into contact. Try to recreate the results from charging by induction or contact!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="credit">
+        Made by James Kua, Temasek Junior College
+    </div>
+
+    <script>
+        // Global variables
+        let currentMode = 'menu';
+        let currentRodType = 'negative';
+        let currentStep = 0;
+        let animationProgress = 0;
+        let animationRunning = false;
+        let animationComplete = false;
+        let noEarthing = false;
+        let contactSphereType = 'negative';
+        let contactStep = 0;
+
+        // Free play variables
+        let freeplayNumSpheres = 1;
+        let freeplaySphere1Electrons = 6;
+        let freeplaySphere2Electrons = 6;
+        let freeplayRodType = 'none';
+        let freeplayEarth1 = false;
+        let freeplayEarthed1Once = false;
+        let freeplayInContact = false;
+        let freeplayContactedOnce = false;
+
+        // Canvas contexts
+        let inductionCtx, contactCtx, freeplayCtx;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            inductionCtx = document.getElementById('inductionCanvas').getContext('2d');
+            contactCtx = document.getElementById('contactCanvas').getContext('2d');
+            freeplayCtx = document.getElementById('freeplayCanvas').getContext('2d');
+            
+            // Add change listener to rod dropdown
+            document.getElementById('rodTypeSelect').addEventListener('change', handleRodChange);
+        });
+
+        function showMode(mode) {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('inductionMode').classList.add('hidden');
+            document.getElementById('contactMode').classList.add('hidden');
+            document.getElementById('freeplayMode').classList.add('hidden');
+
+            if (mode === 'induction') {
+                document.getElementById('inductionMode').classList.remove('hidden');
+                currentMode = 'induction';
+                resetInduction();
+                updateInductionSimulation();
+            } else if (mode === 'contact') {
+                document.getElementById('contactMode').classList.remove('hidden');
+                currentMode = 'contact';
+                resetContact();
+                updateContactSimulation();
+            } else if (mode === 'freeplay') {
+                document.getElementById('freeplayMode').classList.remove('hidden');
+                currentMode = 'freeplay';
+                resetFreeplay();
+                drawFreeplay();
+            }
+        }
+
+        function showMainMenu() {
+            document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('inductionMode').classList.add('hidden');
+            document.getElementById('contactMode').classList.add('hidden');
+            document.getElementById('freeplayMode').classList.add('hidden');
+            currentMode = 'menu';
+        }
+
+        // ==================== DRAWING FUNCTIONS ====================
+
+        function drawCharge(ctx, x, y, radius, symbol, color) {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = color;
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(symbol, x, y);
+        }
+
+        function drawChargesOnSphere(ctx, x, y, radius, numPositive, numNegative, distribution) {
+            const chargeRadius = 8;
+            
+            const fixedPositivePositions = [
+                {angle: 0.5, distance: 0.5},
+                {angle: 1.5, distance: 0.5},
+                {angle: 2.5, distance: 0.5},
+                {angle: 3.5, distance: 0.5},
+                {angle: 4.5, distance: 0.5},
+                {angle: 5.5, distance: 0.5},
+                {angle: 1.0, distance: 0.7},
+                {angle: 3.0, distance: 0.7},
+                {angle: 5.0, distance: 0.7}
+            ];
+            
+            for (let i = 0; i < numPositive && i < fixedPositivePositions.length; i++) {
+                const pos = fixedPositivePositions[i];
+                const cx = x + Math.cos(pos.angle) * (radius * pos.distance);
+                const cy = y + Math.sin(pos.angle) * (radius * pos.distance);
+                drawCharge(ctx, cx, cy, chargeRadius, '+', '#d32f2f');
+            }
+            
+            if (distribution === 'even') {
+                for (let i = 0; i < numNegative; i++) {
+                    const angle = (i / numNegative) * Math.PI * 2 + Math.PI / numNegative;
+                    const cx = x + Math.cos(angle) * (radius * 0.6);
+                    const cy = y + Math.sin(angle) * (radius * 0.6);
+                    drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                }
+            } else if (distribution === 'repelled') {
+                for (let i = 0; i < numNegative; i++) {
+                    const angle = (i - numNegative/2) * 0.6;
+                    const cx = x + Math.cos(angle) * (radius * 0.65);
+                    const cy = y + Math.sin(angle) * (radius * 0.65);
+                    drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                }
+            } else if (distribution === 'attracted') {
+                for (let i = 0; i < numNegative; i++) {
+                    const angle = Math.PI + (i - numNegative/2) * 0.6;
+                    const cx = x + Math.cos(angle) * (radius * 0.65);
+                    const cy = y + Math.sin(angle) * (radius * 0.65);
+                    drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                }
+            } else if (distribution === 'repelled-right') {
+                for (let i = 0; i < numNegative; i++) {
+                    const angle = Math.PI + (i - numNegative/2) * 0.6;
+                    const cx = x + Math.cos(angle) * (radius * 0.65);
+                    const cy = y + Math.sin(angle) * (radius * 0.65);
+                    drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                }
+            } else if (distribution === 'attracted-right') {
+                for (let i = 0; i < numNegative; i++) {
+                    const angle = (i - numNegative/2) * 0.6;
+                    const cx = x + Math.cos(angle) * (radius * 0.65);
+                    const cy = y + Math.sin(angle) * (radius * 0.65);
+                    drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                }
+            } else {
+                if (numNegative > 0) {
+                    for (let i = 0; i < numNegative; i++) {
+                        const angle = (i / numNegative) * Math.PI * 2;
+                        const cx = x + Math.cos(angle) * (radius * 0.6);
+                        const cy = y + Math.sin(angle) * (radius * 0.6);
+                        drawCharge(ctx, cx, cy, chargeRadius, '-', '#1976d2');
+                    }
+                }
+            }
+        }
+
+        function drawSphere(ctx, x, y, radius, numPositive, numNegative, distribution) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            drawChargesOnSphere(ctx, x, y, radius, numPositive, numNegative, distribution);
+        }
+
+        function drawStand(ctx, x, y) {
+            ctx.fillStyle = '#8B4513';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            
+            const standWidth = 30;
+            const standHeight = 80;
+            ctx.fillRect(x - standWidth/2, y, standWidth, standHeight);
+            ctx.strokeRect(x - standWidth/2, y, standWidth, standHeight);
+            
+            const baseWidth = 80;
+            const baseHeight = 20;
+            ctx.fillRect(x - baseWidth/2, y + standHeight, baseWidth, baseHeight);
+            ctx.strokeRect(x - baseWidth/2, y + standHeight, baseWidth, baseHeight);
+        }
+
+        function drawRod(ctx, x, y, type, step) {
+            if (step === 0 || (step === 3 && !noEarthing)) return;
+            
+            const rodLength = 120;
+            const rodWidth = 25;
+            const angle = -0.3;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(0, -rodWidth/2, rodLength, rodWidth);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, -rodWidth/2, rodLength, rodWidth);
+            
+            const chargeSymbol = type === 'negative' ? '-' : '+';
+            const chargeColor = type === 'negative' ? '#1976d2' : '#d32f2f';
+            
+            for (let i = 0; i < 5; i++) {
+                const cx = 20 + i * 20;
+                const cy = 0;
+                drawCharge(ctx, cx, cy, 8, chargeSymbol, chargeColor);
+            }
+            
+            ctx.restore();
+        }
+
+        function drawElectron(ctx, ex, ey, size) {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(ex, ey, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = '#1976d2';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('-', ex, ey);
+        }
+
+        // ==================== CHARGING BY INDUCTION ====================
+
+        const inductionExplanations = {
+            negative: {
+                withEarthing: [
+                    {title: "Initial State", text: "The sphere is initially neutral, with equal numbers of positive and negative charges distributed evenly throughout."},
+                    {title: "Step 1: Rod Brought Near", text: "When negatively charged rod is placed near the neutral sphere, negative charges on the sphere move away from the side of sphere and further away from the rod as like charges repel."},
+                    {title: "Step 2: Sphere is Earthed", text: "When the sphere is earthed, negative charges from the sphere is repelled towards the ground due to the negatively charged rod."},
+                    {title: "Result", text: "This causes the sphere to lose negative charges, causing sphere to be net positively charged."}
+                ],
+                noEarthing: [
+                    {title: "Initial State", text: "Two neutral spheres are in contact with each other."},
+                    {title: "Step 1: Rod Brought Near", text: "When negatively charged rod is placed near the spheres, negative charges are repelled from the near sphere to the far sphere."},
+                    {title: "Step 2: Spheres Separated", text: "When the spheres are separated while the rod is still near, the charges remain separated."},
+                    {title: "Result", text: "The near sphere becomes positively charged and the far sphere becomes negatively charged."}
+                ]
+            },
+            positive: {
+                withEarthing: [
+                    {title: "Initial State", text: "The sphere is initially neutral, with equal numbers of positive and negative charges distributed evenly throughout."},
+                    {title: "Step 1: Rod Brought Near", text: "When positively charged rod is placed near the neutral sphere, negative charges on the sphere move closer to the side of sphere nearer to the rod as unlike charges attract."},
+                    {title: "Step 2: Sphere is Earthed", text: "When the sphere is earthed, negative charges from the ground is attracted towards the sphere due to the positively charged rod."},
+                    {title: "Result", text: "This causes the sphere to gain more negative charges, causing sphere to be net negatively charged."}
+                ],
+                noEarthing: [
+                    {title: "Initial State", text: "Two neutral spheres are in contact with each other."},
+                    {title: "Step 1: Rod Brought Near", text: "When positively charged rod is placed near the spheres, negative charges are attracted from the far sphere to the near sphere."},
+                    {title: "Step 2: Spheres Separated", text: "When the spheres are separated while the rod is still near, the charges remain separated."},
+                    {title: "Result", text: "The near sphere becomes negatively charged and the far sphere becomes positively charged."}
+                ]
+            }
+        };
+
+        function selectRod(type) {
+            currentRodType = type;
+            currentStep = 0;
+            document.getElementById('stepSlider').value = 0;
+            animationRunning = false;
+            animationProgress = 0;
+            animationComplete = false;
+            
+            document.getElementById('negativeBtn').classList.remove('active');
+            document.getElementById('positiveBtn').classList.remove('active');
+            
+            if (type === 'negative') {
+                document.getElementById('negativeBtn').classList.add('active');
+            } else {
+                document.getElementById('positiveBtn').classList.add('active');
+            }
+            
+            updateInductionSimulation();
+        }
+
+        function toggleEarthing() {
+            noEarthing = document.getElementById('noEarthingCheckbox').checked;
+            currentStep = 0;
+            document.getElementById('stepSlider').value = 0;
+            animationRunning = false;
+            animationProgress = 0;
+            animationComplete = false;
+            updateInductionSimulation();
+        }
+
+        function resetInduction() {
+            currentStep = 0;
+            currentRodType = 'negative';
+            noEarthing = false;
+            document.getElementById('stepSlider').value = 0;
+            document.getElementById('noEarthingCheckbox').checked = false;
+            document.getElementById('negativeBtn').classList.add('active');
+            document.getElementById('positiveBtn').classList.remove('active');
+            animationRunning = false;
+            animationProgress = 0;
+            animationComplete = false;
+        }
+
+        function drawWire(ctx, x, y, step) {
+            if (step !== 2) return;
+            
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 60, y);
+            ctx.lineTo(x + 60, y + 150);
+            ctx.lineTo(x + 120, y + 150);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#FF6B6B';
+            ctx.beginPath();
+            ctx.arc(x + 60, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            const gx = x + 120;
+            const gy = y + 150;
+            ctx.beginPath();
+            ctx.moveTo(gx, gy);
+            ctx.lineTo(gx, gy + 20);
+            ctx.stroke();
+            
+            for (let i = 0; i < 3; i++) {
+                const width = 30 - i * 8;
+                ctx.beginPath();
+                ctx.moveTo(gx - width/2, gy + 20 + i * 6);
+                ctx.lineTo(gx + width/2, gy + 20 + i * 6);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Ground', gx, gy + 55);
+            
+            const numElectrons = 4;
+            const electronSize = 6;
+            
+            if (animationComplete) {
+                if (currentRodType === 'negative') {
+                    for (let i = 0; i < numElectrons; i++) {
+                        const ex = gx - 30 + i * 20;
+                        const ey = gy + 35;
+                        drawElectron(ctx, ex, ey, electronSize);
+                    }
+                }
+            } else if (animationProgress > 0) {
+                const totalDistance = 180;
+                
+                for (let i = 0; i < numElectrons; i++) {
+                    const electronOffset = i * 45;
+                    const currentDistance = animationProgress * totalDistance + electronOffset;
+                    
+                    if (currentDistance <= totalDistance) {
+                        let ex, ey;
+                        
+                        if (currentRodType === 'negative') {
+                            if (currentDistance < 150) {
+                                ex = x + 60;
+                                ey = y + currentDistance;
+                            } else {
+                                ex = x + 60 + (currentDistance - 150);
+                                ey = y + 150;
+                            }
+                        } else {
+                            const reverseDistance = currentDistance;
+                            if (reverseDistance < 60) {
+                                ex = x + 120 - reverseDistance;
+                                ey = y + 150;
+                            } else {
+                                ex = x + 60;
+                                ey = y + 150 - (reverseDistance - 60);
+                            }
+                        }
+                        
+                        drawElectron(ctx, ex, ey, electronSize);
+                    }
+                }
+            }
+        }
+
+        function drawNetChargeLabel(ctx, x, y, step) {
+            let labelText = '';
+            let labelColor = '#333';
+            let bgColor = 'rgba(255, 255, 255, 0.9)';
+            
+            if (step === 0 || step === 1) {
+                labelText = 'Equal number of positive and negative charges';
+                labelColor = '#2e7d32';
+            } else if (step === 2) {
+                if (noEarthing) {
+                    labelText = 'Electrons moving between spheres...';
+                    labelColor = '#1976d2';
+                } else {
+                    if (currentRodType === 'negative') {
+                        labelText = 'Electrons flowing to ground...';
+                        labelColor = '#1976d2';
+                    } else {
+                        labelText = 'Electrons flowing from ground...';
+                        labelColor = '#1976d2';
+                    }
+                }
+            } else if (step === 3) {
+                if (currentRodType === 'negative') {
+                    labelText = 'More positive charges than negative charges';
+                    labelColor = '#d32f2f';
+                } else {
+                    labelText = 'More negative charges than positive charges';
+                    labelColor = '#1976d2';
+                }
+            }
+            
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = labelColor;
+            ctx.lineWidth = 2;
+            const labelWidth = 320;
+            const labelHeight = 35;
+            const labelX = x - labelWidth/2;
+            const labelY = y + 95;
+            
+            ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+            ctx.strokeRect(labelX, labelY, labelWidth, labelHeight);
+            
+            ctx.fillStyle = labelColor;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, x, labelY + labelHeight/2);
+        }
+
+        function drawNetChargeIndicator(ctx, x, y, step) {
+            if (step !== 3) return;
+            
+            let indicatorText = '';
+            let indicatorColor = '';
+            let bgColor = '';
+            
+            if (currentRodType === 'negative') {
+                indicatorText = 'NET POSITIVELY CHARGED';
+                indicatorColor = '#d32f2f';
+                bgColor = '#ffebee';
+            } else {
+                indicatorText = 'NET NEGATIVELY CHARGED';
+                indicatorColor = '#1976d2';
+                bgColor = '#e3f2fd';
+            }
+            
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = indicatorColor;
+            ctx.lineWidth = 3;
+            const boxWidth = 240;
+            const boxHeight = 40;
+            const boxX = x - boxWidth/2;
+            const boxY = y - 110;
+            
+            const radius = 8;
+            ctx.beginPath();
+            ctx.moveTo(boxX + radius, boxY);
+            ctx.lineTo(boxX + boxWidth - radius, boxY);
+            ctx.quadraticCurveTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + radius);
+            ctx.lineTo(boxX + boxWidth, boxY + boxHeight - radius);
+            ctx.quadraticCurveTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - radius, boxY + boxHeight);
+            ctx.lineTo(boxX + radius, boxY + boxHeight);
+            ctx.quadraticCurveTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - radius);
+            ctx.lineTo(boxX, boxY + radius);
+            ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = indicatorColor;
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(indicatorText, x, boxY + boxHeight/2);
+        }
+
+        function drawTwoSphereIndicators(ctx, leftX, leftY, rightX, rightY, step) {
+            if (step !== 3) return;
+            
+            let leftText = '';
+            let rightText = '';
+            let leftColor = '';
+            let rightColor = '';
+            let leftBg = '';
+            let rightBg = '';
+            
+            if (currentRodType === 'negative') {
+                leftText = 'NET POSITIVELY CHARGED';
+                leftColor = '#d32f2f';
+                leftBg = '#ffebee';
+                rightText = 'NET NEGATIVELY CHARGED';
+                rightColor = '#1976d2';
+                rightBg = '#e3f2fd';
+            } else {
+                leftText = 'NET NEGATIVELY CHARGED';
+                leftColor = '#1976d2';
+                leftBg = '#e3f2fd';
+                rightText = 'NET POSITIVELY CHARGED';
+                rightColor = '#d32f2f';
+                rightBg = '#ffebee';
+            }
+            
+            ctx.fillStyle = leftBg;
+            ctx.strokeStyle = leftColor;
+            ctx.lineWidth = 2;
+            const boxWidth = 180;
+            const boxHeight = 35;
+            ctx.fillRect(leftX - boxWidth/2, leftY - 100, boxWidth, boxHeight);
+            ctx.strokeRect(leftX - boxWidth/2, leftY - 100, boxWidth, boxHeight);
+            ctx.fillStyle = leftColor;
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(leftText, leftX, leftY - 100 + boxHeight/2);
+            
+            ctx.fillStyle = rightBg;
+            ctx.strokeStyle = rightColor;
+            ctx.fillRect(rightX - boxWidth/2, rightY - 100, boxWidth, boxHeight);
+            ctx.strokeRect(rightX - boxWidth/2, rightY - 100, boxWidth, boxHeight);
+            ctx.fillStyle = rightColor;
+            ctx.fillText(rightText, rightX, rightY - 100 + boxHeight/2);
+        }
+
+        function updateInductionSimulation() {
+            const canvas = document.getElementById('inductionCanvas');
+            const ctx = inductionCtx;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (noEarthing) {
+                const leftSphereX = 300;
+                const rightSphereX = 420;
+                const sphereY = 150;
+                const sphereRadius = 60;
+                
+                if (currentStep === 0) {
+                    drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 6, 'even');
+                    drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 6, 'even');
+                    drawStand(ctx, leftSphereX, sphereY + sphereRadius);
+                    drawStand(ctx, rightSphereX, sphereY + sphereRadius);
+                } else if (currentStep === 1) {
+                    drawRod(ctx, 80, 150, currentRodType, 1);
+                    
+                    if (currentRodType === 'negative') {
+                        drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 3, 'even');
+                        drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 9, 'even');
+                    } else {
+                        drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 9, 'even');
+                        drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 3, 'even');
+                    }
+                    drawStand(ctx, leftSphereX, sphereY + sphereRadius);
+                    drawStand(ctx, rightSphereX, sphereY + sphereRadius);
+                    
+                    if (animationProgress > 0 && !animationComplete) {
+                        const numElectrons = 3;
+                        for (let i = 0; i < numElectrons; i++) {
+                            const progress = Math.min(1, (animationProgress * 1.5 - i * 0.2));
+                            if (progress > 0 && progress < 1) {
+                                let ex, ey;
+                                if (currentRodType === 'negative') {
+                                    ex = leftSphereX + sphereRadius + (rightSphereX - leftSphereX - 2*sphereRadius) * progress;
+                                } else {
+                                    ex = rightSphereX - sphereRadius - (rightSphereX - leftSphereX - 2*sphereRadius) * progress;
+                                }
+                                ey = sphereY;
+                                drawElectron(ctx, ex, ey, 6);
+                            }
+                        }
+                    }
+                } else if (currentStep === 2) {
+                    drawRod(ctx, 80, 150, currentRodType, 1);
+                    const separation = 40;
+                    
+                    if (currentRodType === 'negative') {
+                        drawSphere(ctx, leftSphereX - separation/2, sphereY, sphereRadius, 6, 3, 'even');
+                        drawSphere(ctx, rightSphereX + separation/2, sphereY, sphereRadius, 6, 9, 'even');
+                        drawStand(ctx, leftSphereX - separation/2, sphereY + sphereRadius);
+                        drawStand(ctx, rightSphereX + separation/2, sphereY + sphereRadius);
+                    } else {
+                        drawSphere(ctx, leftSphereX - separation/2, sphereY, sphereRadius, 6, 9, 'even');
+                        drawSphere(ctx, rightSphereX + separation/2, sphereY, sphereRadius, 6, 3, 'even');
+                        drawStand(ctx, leftSphereX - separation/2, sphereY + sphereRadius);
+                        drawStand(ctx, rightSphereX + separation/2, sphereY + sphereRadius);
+                    }
+                } else if (currentStep === 3) {
+                    const separation = 80;
+                    
+                    if (currentRodType === 'negative') {
+                        drawSphere(ctx, leftSphereX - separation/2, sphereY, sphereRadius, 6, 3, 'even');
+                        drawSphere(ctx, rightSphereX + separation/2, sphereY, sphereRadius, 6, 9, 'even');
+                        drawStand(ctx, leftSphereX - separation/2, sphereY + sphereRadius);
+                        drawStand(ctx, rightSphereX + separation/2, sphereY + sphereRadius);
+                        drawTwoSphereIndicators(ctx, leftSphereX - separation/2, sphereY, rightSphereX + separation/2, sphereY, 3);
+                    } else {
+                        drawSphere(ctx, leftSphereX - separation/2, sphereY, sphereRadius, 6, 9, 'even');
+                        drawSphere(ctx, rightSphereX + separation/2, sphereY, sphereRadius, 6, 3, 'even');
+                        drawStand(ctx, leftSphereX - separation/2, sphereY + sphereRadius);
+                        drawStand(ctx, rightSphereX + separation/2, sphereY + sphereRadius);
+                        drawTwoSphereIndicators(ctx, leftSphereX - separation/2, sphereY, rightSphereX + separation/2, sphereY, 3);
+                    }
+                }
+            } else {
+                const sphereX = 400;
+                const sphereY = 150;
+                const sphereRadius = 70;
+                
+                if (currentStep === 0) {
+                    drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 6, 'even');
+                } else if (currentStep === 1) {
+                    if (currentRodType === 'negative') {
+                        drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 6, 'repelled');
+                    } else {
+                        drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 6, 'attracted');
+                    }
+                } else if (currentStep === 2) {
+                    if (currentRodType === 'negative') {
+                        if (animationComplete) {
+                            drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 2, 'even');
+                        } else {
+                            drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 6, 'even');
+                        }
+                    } else {
+                        if (animationComplete) {
+                            drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 10, 'even');
+                        } else {
+                            drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 6, 'even');
+                        }
+                    }
+                } else if (currentStep === 3) {
+                    if (currentRodType === 'negative') {
+                        drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 2, 'even');
+                    } else {
+                        drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, 10, 'even');
+                    }
+                }
+                
+                drawRod(ctx, 150, 150, currentRodType, currentStep);
+                drawStand(ctx, sphereX, sphereY + sphereRadius);
+                drawWire(ctx, sphereX, sphereY, currentStep);
+                drawNetChargeIndicator(ctx, sphereX, sphereY, currentStep);
+                drawNetChargeLabel(ctx, sphereX, sphereY, currentStep);
+            }
+            
+            const stepNames = noEarthing ? 
+                ['Step 0: Two Neutral Spheres in Contact', 'Step 1: Rod Brought Near', 'Step 2: Spheres Separated', 'Step 3: Final Result'] :
+                ['Step 0: Neutral Sphere', 'Step 1: Rod Brought Near', 'Step 2: Sphere Earthed', 'Step 3: Final Result'];
+            document.getElementById('stepInfo').textContent = stepNames[currentStep];
+            
+            const explanationKey = noEarthing ? 'noEarthing' : 'withEarthing';
+            const explanation = inductionExplanations[currentRodType][explanationKey][currentStep];
+            document.getElementById('explanationBox').innerHTML = `<h3>${explanation.title}</h3><p>${explanation.text}</p>`;
+        }
+
+        function animateInduction() {
+            if (currentStep === 2 && animationRunning) {
+                animationProgress += 0.01;
+                
+                if (animationProgress >= 1.3) {
+                    animationProgress = 1.3;
+                    animationRunning = false;
+                    animationComplete = true;
+                }
+                
+                updateInductionSimulation();
+                
+                if (animationRunning) {
+                    requestAnimationFrame(animateInduction);
+                }
+            } else if (currentStep === 1 && noEarthing && animationRunning) {
+                animationProgress += 0.015;
+                
+                if (animationProgress >= 1.0) {
+                    animationProgress = 1.0;
+                    animationRunning = false;
+                    animationComplete = true;
+                }
+                
+                updateInductionSimulation();
+                
+                if (animationRunning) {
+                    requestAnimationFrame(animateInduction);
+                }
+            }
+        }
+
+        document.getElementById('stepSlider').addEventListener('input', (e) => {
+            const newStep = parseInt(e.target.value);
+            
+            if (!noEarthing && newStep === 2 && currentStep !== 2) {
+                animationProgress = 0;
+                animationComplete = false;
+                animationRunning = true;
+                currentStep = newStep;
+                animateInduction();
+            } else if (noEarthing && newStep === 1 && currentStep !== 1) {
+                animationProgress = 0;
+                animationComplete = false;
+                animationRunning = true;
+                currentStep = newStep;
+                animateInduction();
+            } else if (newStep !== 2 && newStep !== 1) {
+                animationRunning = false;
+                animationComplete = false;
+                animationProgress = 0;
+                currentStep = newStep;
+            } else {
+                currentStep = newStep;
+            }
+            
+            updateInductionSimulation();
+        });
+
+        // ==================== CHARGING BY CONTACT ====================
+
+        const contactExplanations = {
+            negative: [
+                {title: "Initial State", text: "One sphere is negatively charged while the other sphere is neutral."},
+                {title: "Step 1: Spheres in Contact", text: "When the charged sphere touches the neutral sphere, electrons flow from the negatively charged sphere to the neutral sphere, distributing the charge equally."},
+                {title: "Result", text: "Both spheres are now negatively charged with equal amounts of charge."}
+            ],
+            positive: [
+                {title: "Initial State", text: "One sphere is positively charged (has deficit of electrons) while the other sphere is neutral."},
+                {title: "Step 1: Spheres in Contact", text: "When the charged sphere touches the neutral sphere, electrons flow from the neutral sphere to the positively charged sphere, distributing the charge deficit equally."},
+                {title: "Result", text: "Both spheres are now positively charged with equal amounts of charge."}
+            ]
+        };
+
+        function selectContactSphere(type) {
+            contactSphereType = type;
+            contactStep = 0;
+            document.getElementById('contactSlider').value = 0;
+            
+            document.getElementById('negSphereBtn').classList.remove('active');
+            document.getElementById('posSphereBtn').classList.remove('active');
+            
+            if (type === 'negative') {
+                document.getElementById('negSphereBtn').classList.add('active');
+            } else {
+                document.getElementById('posSphereBtn').classList.add('active');
+            }
+            
+            animationProgress = 0;
+            animationComplete = false;
+            animationRunning = false;
+            
+            updateContactSimulation();
+        }
+
+        function resetContact() {
+            contactStep = 0;
+            contactSphereType = 'negative';
+            document.getElementById('contactSlider').value = 0;
+            document.getElementById('negSphereBtn').classList.add('active');
+            document.getElementById('posSphereBtn').classList.remove('active');
+            animationProgress = 0;
+            animationComplete = false;
+            animationRunning = false;
+        }
+
+        function updateContactSimulation() {
+            const canvas = document.getElementById('contactCanvas');
+            const ctx = contactCtx;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const leftSphereX = 250;
+            const rightSphereX = 450;
+            const sphereY = 150;
+            const sphereRadius = 70;
+            
+            if (contactStep === 0) {
+                if (contactSphereType === 'negative') {
+                    drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 10, 'even');
+                    drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 6, 'even');
+                } else {
+                    drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 2, 'even');
+                    drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 6, 'even');
+                }
+                
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(contactSphereType === 'negative' ? 'Negatively Charged' : 'Positively Charged', leftSphereX, sphereY - 90);
+                ctx.fillText('Neutral', rightSphereX, sphereY - 90);
+                
+                drawStand(ctx, leftSphereX, sphereY + sphereRadius);
+                drawStand(ctx, rightSphereX, sphereY + sphereRadius);
+            } else if (contactStep === 1) {
+                if (animationComplete) {
+                    if (contactSphereType === 'negative') {
+                        drawSphere(ctx, leftSphereX + 30, sphereY, sphereRadius, 6, 8, 'even');
+                        drawSphere(ctx, rightSphereX - 30, sphereY, sphereRadius, 6, 8, 'even');
+                    } else {
+                        drawSphere(ctx, leftSphereX + 30, sphereY, sphereRadius, 6, 4, 'even');
+                        drawSphere(ctx, rightSphereX - 30, sphereY, sphereRadius, 6, 4, 'even');
+                    }
+                } else {
+                    if (contactSphereType === 'negative') {
+                        drawSphere(ctx, leftSphereX + 30, sphereY, sphereRadius, 6, 10, 'even');
+                        drawSphere(ctx, rightSphereX - 30, sphereY, sphereRadius, 6, 6, 'even');
+                        
+                        if (animationProgress > 0) {
+                            const numElectrons = 2;
+                            for (let i = 0; i < numElectrons; i++) {
+                                const progress = Math.min(1, (animationProgress * 1.5 - i * 0.3));
+                                if (progress > 0 && progress < 1) {
+                                    const ex = (leftSphereX + 30) + sphereRadius + ((rightSphereX - 30) - (leftSphereX + 30) - 2*sphereRadius) * progress;
+                                    const ey = sphereY + Math.sin(progress * Math.PI) * 20;
+                                    drawElectron(ctx, ex, ey, 6);
+                                }
+                            }
+                        }
+                    } else {
+                        drawSphere(ctx, leftSphereX + 30, sphereY, sphereRadius, 6, 2, 'even');
+                        drawSphere(ctx, rightSphereX - 30, sphereY, sphereRadius, 6, 6, 'even');
+                        
+                        if (animationProgress > 0) {
+                            const numElectrons = 2;
+                            for (let i = 0; i < numElectrons; i++) {
+                                const progress = Math.min(1, (animationProgress * 1.5 - i * 0.3));
+                                if (progress > 0 && progress < 1) {
+                                    const ex = (rightSphereX - 30) - sphereRadius - ((rightSphereX - 30) - (leftSphereX + 30) - 2*sphereRadius) * progress;
+                                    const ey = sphereY + Math.sin(progress * Math.PI) * 20;
+                                    drawElectron(ctx, ex, ey, 6);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                drawStand(ctx, leftSphereX + 30, sphereY + sphereRadius);
+                drawStand(ctx, rightSphereX - 30, sphereY + sphereRadius);
+            } else if (contactStep === 2) {
+                if (contactSphereType === 'negative') {
+                    drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 8, 'even');
+                    drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 8, 'even');
+                    
+                    ctx.fillStyle = '#1976d2';
+                    ctx.strokeStyle = '#1976d2';
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(leftSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.strokeRect(leftSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('NET NEGATIVELY CHARGED', leftSphereX, sphereY - 92);
+                    
+                    ctx.fillStyle = '#1976d2';
+                    ctx.fillRect(rightSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.strokeRect(rightSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('NET NEGATIVELY CHARGED', rightSphereX, sphereY - 92);
+                } else {
+                    drawSphere(ctx, leftSphereX, sphereY, sphereRadius, 6, 4, 'even');
+                    drawSphere(ctx, rightSphereX, sphereY, sphereRadius, 6, 4, 'even');
+                    
+                    ctx.fillStyle = '#d32f2f';
+                    ctx.strokeStyle = '#d32f2f';
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(leftSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.strokeRect(leftSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('NET POSITIVELY CHARGED', leftSphereX, sphereY - 92);
+                    
+                    ctx.fillStyle = '#d32f2f';
+                    ctx.fillRect(rightSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.strokeRect(rightSphereX - 100, sphereY - 110, 200, 35);
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('NET POSITIVELY CHARGED', rightSphereX, sphereY - 92);
+                }
+                
+                drawStand(ctx, leftSphereX, sphereY + sphereRadius);
+                drawStand(ctx, rightSphereX, sphereY + sphereRadius);
+            }
+            
+            const stepNames = ['Step 0: Before Contact', 'Step 1: Spheres in Contact', 'Step 2: Final Result'];
+            document.getElementById('contactStepInfo').textContent = stepNames[contactStep];
+            
+            const explanation = contactExplanations[contactSphereType][contactStep];
+            document.getElementById('contactExplanationBox').innerHTML = `<h3>${explanation.title}</h3><p>${explanation.text}</p>`;
+        }
+
+        function animateContact() {
+            if (contactStep === 1 && animationRunning) {
+                animationProgress += 0.015;
+                
+                if (animationProgress >= 1.0) {
+                    animationProgress = 1.0;
+                    animationRunning = false;
+                    animationComplete = true;
+                }
+                
+                updateContactSimulation();
+                
+                if (animationRunning) {
+                    requestAnimationFrame(animateContact);
+                }
+            }
+        }
+
+        document.getElementById('contactSlider').addEventListener('input', (e) => {
+            const newStep = parseInt(e.target.value);
+            
+            if (newStep === 1 && contactStep !== 1) {
+                animationProgress = 0;
+                animationComplete = false;
+                animationRunning = true;
+                contactStep = newStep;
+                animateContact();
+            } else {
+                animationRunning = false;
+                if (newStep !== 1) {
+                    animationComplete = false;
+                    animationProgress = 0;
+                }
+                contactStep = newStep;
+            }
+            
+            updateContactSimulation();
+        });
+
+        // ==================== FREE PLAY MODE ====================
+
+        function changeSphereCount() {
+            freeplayNumSpheres = parseInt(document.getElementById('numSpheresSelect').value);
+            freeplaySphere2Electrons = 6;
+            freeplayRodType = 'none';
+            freeplayEarth1 = false;
+            freeplayEarthed1Once = false;
+            freeplayContactedOnce = false;
+            document.getElementById('earthBtn1').classList.remove('active');
+            
+            const isTwoSpheres = freeplayNumSpheres === 2;
+            document.getElementById('earthBtn1').disabled = isTwoSpheres;
+            document.getElementById('contactBtn').disabled = !isTwoSpheres;
+            
+            // Show/hide instruction text
+            const instructionText = document.getElementById('resetInstruction');
+            if (isTwoSpheres) {
+                instructionText.style.display = 'block';
+            } else {
+                instructionText.style.display = 'none';
+            }
+            
+            updateRodDropdownOptions();
+            
+            freeplayInContact = false;
+            document.getElementById('contactBtn').textContent = 'Bring Together';
+            document.getElementById('rodTypeSelect').value = 'none';
+            
+            drawFreeplay();
+        }
+
+        function updateRodDropdownOptions() {
+            const rodSelect = document.getElementById('rodTypeSelect');
+            const currentValue = rodSelect.value;
+            
+            const options = [
+                { value: 'none', text: 'No Rod' },
+                { value: 'pos-1', text: 'Positive Rod near Sphere 1' },
+                { value: 'neg-1', text: 'Negative Rod near Sphere 1' }
+            ];
+            
+            if (freeplayNumSpheres === 2) {
+                options.push({ value: 'pos-2', text: 'Positive Rod near Sphere 2' });
+                options.push({ value: 'neg-2', text: 'Negative Rod near Sphere 2' });
+            }
+            
+            rodSelect.innerHTML = '';
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                rodSelect.appendChild(option);
+            });
+            
+            if (freeplayNumSpheres === 1 && (currentValue === 'pos-2' || currentValue === 'neg-2')) {
+                rodSelect.value = 'none';
+            } else {
+                rodSelect.value = currentValue;
+            }
+        }
+
+        function handleRodChange() {
+            const rodSelect = document.getElementById('rodTypeSelect');
+            const newValue = rodSelect.value;
+            const oldValue = freeplayRodType;
+            
+            // In 2-sphere mode, prevent changing rod after one is already selected
+            if (freeplayNumSpheres === 2 && oldValue !== 'none' && newValue !== 'none' && newValue !== oldValue) {
+                alert('Please reset first before changing to a different rod.');
+                rodSelect.value = oldValue;
+                return;
+            }
+            
+            // In 1-sphere mode with earth connected, handle rod swap
+            if (freeplayNumSpheres === 1 && freeplayEarth1 && newValue !== 'none' && oldValue !== 'none' && newValue !== oldValue) {
+                // Rod swap while earthed - reverse charge
+                const wasNegativeRod = oldValue === 'neg-1';
+                const isPositiveRod = newValue === 'pos-1';
+                
+                if (wasNegativeRod && isPositiveRod) {
+                    // Swap from negative to positive rod: sphere becomes negative
+                    freeplaySphere1Electrons = 10;
+                } else if (!wasNegativeRod && !isPositiveRod) {
+                    // Swap from positive to negative rod: sphere becomes positive
+                    freeplaySphere1Electrons = 2;
+                }
+                
+                freeplayEarthed1Once = true;
+            }
+            
+            // If earth is connected and rod is being added for first time
+            if (freeplayNumSpheres === 1 && freeplayEarth1 && oldValue === 'none' && newValue !== 'none' && !freeplayEarthed1Once) {
+                if (newValue === 'neg-1') {
+                    freeplaySphere1Electrons = 2;
+                } else if (newValue === 'pos-1') {
+                    freeplaySphere1Electrons = 10;
+                }
+                freeplayEarthed1Once = true;
+            }
+            
+            freeplayRodType = newValue;
+            
+            if (freeplayRodType === 'none' && freeplayInContact && freeplayNumSpheres === 2) {
+                freeplaySphere1Electrons = 6;
+                freeplaySphere2Electrons = 6;
+            }
+            
+            drawFreeplay();
+        }
+
+        function toggleEarth(sphereNum) {
+            freeplayEarth1 = !freeplayEarth1;
+            document.getElementById('earthBtn1').classList.toggle('active');
+            
+            if (freeplayEarth1 && !freeplayEarthed1Once) {
+                if (freeplayRodType === 'none') {
+                    freeplaySphere1Electrons = 6;
+                } else {
+                    if (freeplayRodType === 'neg-1') {
+                        const wasPositive = freeplaySphere1Electrons < 6;
+                        if (wasPositive) {
+                            freeplaySphere1Electrons = 10;
+                        } else {
+                            freeplaySphere1Electrons = Math.max(0, freeplaySphere1Electrons - 4);
+                        }
+                    } else if (freeplayRodType === 'pos-1') {
+                        const wasNegative = freeplaySphere1Electrons > 6;
+                        if (wasNegative) {
+                            freeplaySphere1Electrons = 2;
+                        } else {
+                            freeplaySphere1Electrons += 4;
+                        }
+                    }
+                    freeplayEarthed1Once = true;
+                    freeplayContactedOnce = false;
+                }
+            }
+            
+            drawFreeplay();
+        }
+
+        function toggleContact() {
+            freeplayInContact = !freeplayInContact;
+            document.getElementById('contactBtn').textContent = freeplayInContact ? 'Separate' : 'Bring Together';
+            
+            if (freeplayInContact && !freeplayContactedOnce) {
+                freeplayContactedOnce = true;
+                
+                if (freeplayRodType === 'none') {
+                    const totalElectrons = freeplaySphere1Electrons + freeplaySphere2Electrons;
+                    const avgElectrons = Math.round(totalElectrons / 2);
+                    freeplaySphere1Electrons = avgElectrons;
+                    freeplaySphere2Electrons = avgElectrons;
+                } else {
+                    const electronsToMove = 3;
+                    if (freeplayRodType === 'pos-1') {
+                        freeplaySphere1Electrons += electronsToMove;
+                        freeplaySphere2Electrons = Math.max(0, freeplaySphere2Electrons - electronsToMove);
+                    } else if (freeplayRodType === 'neg-1') {
+                        freeplaySphere2Electrons += electronsToMove;
+                        freeplaySphere1Electrons = Math.max(0, freeplaySphere1Electrons - electronsToMove);
+                    } else if (freeplayRodType === 'pos-2') {
+                        freeplaySphere2Electrons += electronsToMove;
+                        freeplaySphere1Electrons = Math.max(0, freeplaySphere1Electrons - electronsToMove);
+                    } else if (freeplayRodType === 'neg-2') {
+                        freeplaySphere1Electrons += electronsToMove;
+                        freeplaySphere2Electrons = Math.max(0, freeplaySphere2Electrons - electronsToMove);
+                    }
+                }
+            }
+            
+            drawFreeplay();
+        }
+
+        function resetFreeplay() {
+            const currentSphereCount = freeplayNumSpheres;
+            freeplaySphere1Electrons = 6;
+            freeplaySphere2Electrons = 6;
+            freeplayRodType = 'none';
+            freeplayEarth1 = false;
+            freeplayEarthed1Once = false;
+            freeplayInContact = false;
+            freeplayContactedOnce = false;
+            
+            document.getElementById('numSpheresSelect').value = currentSphereCount.toString();
+            document.getElementById('rodTypeSelect').value = 'none';
+            document.getElementById('earthBtn1').classList.remove('active');
+            
+            const isTwoSpheres = currentSphereCount === 2;
+            document.getElementById('earthBtn1').disabled = isTwoSpheres;
+            document.getElementById('contactBtn').disabled = !isTwoSpheres;
+            document.getElementById('contactBtn').textContent = 'Bring Together';
+            
+            // Maintain instruction text visibility
+            const instructionText = document.getElementById('resetInstruction');
+            if (isTwoSpheres) {
+                instructionText.style.display = 'block';
+            } else {
+                instructionText.style.display = 'none';
+            }
+            
+            updateRodDropdownOptions();
+            drawFreeplay();
+        }
+
+        function drawWireStatic(ctx, x, y) {
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 60, y);
+            ctx.lineTo(x + 60, y + 150);
+            ctx.lineTo(x + 120, y + 150);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#FF6B6B';
+            ctx.beginPath();
+            ctx.arc(x + 60, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            const gx = x + 120;
+            const gy = y + 150;
+            ctx.beginPath();
+            ctx.moveTo(gx, gy);
+            ctx.lineTo(gx, gy + 20);
+            ctx.stroke();
+            
+            for (let i = 0; i < 3; i++) {
+                const width = 30 - i * 8;
+                ctx.beginPath();
+                ctx.moveTo(gx - width/2, gy + 20 + i * 6);
+                ctx.lineTo(gx + width/2, gy + 20 + i * 6);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Ground', gx, gy + 55);
+        }
+
+        function drawFreeplayChargeIndicator(ctx, x, y, electrons) {
+            const protons = 6;
+            const netCharge = protons - electrons;
+            
+            let text = '';
+            let color = '';
+            let bgColor = '';
+            
+            if (netCharge === 0) {
+                text = 'NEUTRAL';
+                color = '#2e7d32';
+                bgColor = '#e8f5e9';
+            } else if (netCharge > 0) {
+                text = 'NET POSITIVE';
+                color = '#d32f2f';
+                bgColor = '#ffebee';
+            } else {
+                text = 'NET NEGATIVE';
+                color = '#1976d2';
+                bgColor = '#e3f2fd';
+            }
+            
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            const boxWidth = 160;
+            const boxHeight = 35;
+            const boxX = x - boxWidth/2;
+            const boxY = y - 100;
+            
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            
+            ctx.fillStyle = color;
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, boxY + boxHeight/2);
+        }
+
+        function drawFreeplay() {
+            const canvas = document.getElementById('freeplayCanvas');
+            const ctx = freeplayCtx;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const sphereRadius = 70;
+            const sphereY = 150;
+            
+            if (freeplayNumSpheres === 1) {
+                const sphereX = 350;
+                
+                let distribution = 'even';
+                if (freeplayRodType === 'neg-1') {
+                    distribution = 'repelled';
+                } else if (freeplayRodType === 'pos-1') {
+                    distribution = 'attracted';
+                }
+                
+                drawSphere(ctx, sphereX, sphereY, sphereRadius, 6, freeplaySphere1Electrons, distribution);
+                drawStand(ctx, sphereX, sphereY + sphereRadius);
+                
+                if (freeplayRodType === 'neg-1') {
+                    drawRod(ctx, 150, 150, 'negative', 1);
+                } else if (freeplayRodType === 'pos-1') {
+                    drawRod(ctx, 150, 150, 'positive', 1);
+                }
+                
+                if (freeplayEarth1) {
+                    drawWireStatic(ctx, sphereX, sphereY);
+                }
+                
+                drawFreeplayChargeIndicator(ctx, sphereX, sphereY, freeplaySphere1Electrons);
+                
+            } else {
+                let leftX = freeplayInContact ? 300 : 250;
+                let rightX = freeplayInContact ? 420 : 450;
+                
+                let dist1 = 'even';
+                let dist2 = 'even';
+                
+                if (freeplayInContact && freeplayRodType !== 'none') {
+                    dist1 = 'even';
+                    dist2 = 'even';
+                } else if (freeplayRodType !== 'none') {
+                    if (freeplayRodType === 'neg-1') {
+                        dist1 = 'repelled';
+                        dist2 = 'even';
+                    } else if (freeplayRodType === 'pos-1') {
+                        dist1 = 'attracted';
+                        dist2 = 'even';
+                    } else if (freeplayRodType === 'neg-2') {
+                        dist1 = 'even';
+                        dist2 = 'repelled-right';
+                    } else if (freeplayRodType === 'pos-2') {
+                        dist1 = 'even';
+                        dist2 = 'attracted-right';
+                    }
+                }
+                
+                drawSphere(ctx, leftX, sphereY, sphereRadius, 6, freeplaySphere1Electrons, dist1);
+                drawSphere(ctx, rightX, sphereY, sphereRadius, 6, freeplaySphere2Electrons, dist2);
+                drawStand(ctx, leftX, sphereY + sphereRadius);
+                drawStand(ctx, rightX, sphereY + sphereRadius);
+                
+                if (freeplayRodType === 'neg-1' || freeplayRodType === 'pos-1') {
+                    const rodType = freeplayRodType.includes('neg') ? 'negative' : 'positive';
+                    drawRod(ctx, 50, 150, rodType, 1);
+                } else if (freeplayRodType === 'neg-2' || freeplayRodType === 'pos-2') {
+                    const rodType = freeplayRodType.includes('neg') ? 'negative' : 'positive';
+                    drawRod(ctx, 550, 150, rodType, 1);
+                }
+                
+                drawFreeplayChargeIndicator(ctx, leftX, sphereY, freeplaySphere1Electrons);
+                drawFreeplayChargeIndicator(ctx, rightX, sphereY, freeplaySphere2Electrons);
+            }
+        }
+    </script>
+</body>
+</html>
