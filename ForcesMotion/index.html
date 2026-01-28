@@ -1,0 +1,624 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #canvas {
+            width: 600px;
+            height: 300px;
+            border: 2px solid #333;
+            position: relative;
+            background: #f5f5f5;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        #box {
+            width: 50px;
+            height: 50px;
+            background-color: black;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        .force-arrow {
+            position: absolute;
+            height: 3px;
+            background-color: red;
+            transform-origin: left center;
+            z-index: 10;
+        }
+        .arrow-head {
+            width: 0;
+            height: 0;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 10px solid red;
+            position: absolute;
+            right: -10px;
+            top: -4.5px;
+        }
+        .status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            width: 150px;
+        }
+        button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .force-item {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Motion Simulation</h1>
+    
+    <div id="canvas">
+        <div id="box"></div>
+        <div id="arrows-container"></div>
+        <div class="status" id="status"></div>
+    </div>
+    
+    <div style="max-width: 600px; margin: 20px auto;">
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+            Presets
+            <button id="togglePresetsBtn" onclick="togglePresets()">Show</button>
+        </h2>
+        <div id="presetsGrid" class="grid" style="display: none;">
+            <button onclick="applyPreset('a')">a) 10 N</button>
+            <button onclick="applyPreset('b')">b) 30 N = 30 N</button>
+            <button onclick="applyPreset('c')">c) 40 N = 40 N</button>
+            <button onclick="applyPreset('d')">d) 15 N < 40 N</button>
+            <button onclick="applyPreset('e')">e) 20 N < 60 N</button>
+            <button onclick="applyPreset('f')">f) 45 N > 30 N</button>
+        </div>
+        
+        <div style="display: flex;">
+            <div style="flex: 1;">
+                <h2>Add Forces (1 N)</h2>
+                <button onclick="addForce('leftwards')">← Leftwards</button>
+                <button onclick="addForce('rightwards')">Rightwards →</button>
+                <button onclick="addForce('upwards')">↑ Upwards</button>
+                <button onclick="addForce('downwards')">Downwards ↓</button>
+            </div>
+            
+            <div style="flex: 1;">
+                <h2>Controls</h2>
+                <div>
+                    <button id="startBtn" onclick="toggleSimulation()">Start Simulation</button>
+                    <button onclick="resetSimulation()">Reset</button>
+                    <button onclick="replaySimulation()">Replay</button>
+                </div>
+                <h3>Initial Motion</h3>
+                <div>
+                    <button class="motion-btn active" onclick="setMotion('rest')">At Rest</button>
+                    <button class="motion-btn" onclick="setMotion('rightwards')">Rightwards</button>
+                    <button class="motion-btn" onclick="setMotion('leftwards')">Leftwards</button>
+                    <button class="motion-btn" onclick="setMotion('upwards')">Upwards</button>
+                    <button class="motion-btn" onclick="setMotion('downwards')">Downwards</button>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Applied Forces</h2>
+        <div id="forcesList"></div>
+    </div>
+    
+    <div class="footer">Made by James Kua</div>
+    <div class="footer">Temasek Junior College</div>
+
+    <script>
+        // Elements
+        const box = document.getElementById('box');
+        const status = document.getElementById('status');
+        const forcesList = document.getElementById('forcesList');
+        const startBtn = document.getElementById('startBtn');
+        const arrowsContainer = document.getElementById('arrows-container');
+        const presetsGrid = document.getElementById('presetsGrid');
+        const togglePresetsBtn = document.getElementById('togglePresetsBtn');
+        
+        // Canvas dimensions
+        const CANVAS_WIDTH = 600;
+        const CANVAS_HEIGHT = 300;
+        
+        // State
+        let position = { x: CANVAS_WIDTH/2, y: CANVAS_HEIGHT/2 };
+        let velocity = { x: 0, y: 0 };
+        let forces = [];
+        let running = false;
+        let initialMotion = 'rest';
+        let motionState = 'at rest';
+        let forceBalance = 'balanced';
+        let simulationInterval;
+        
+        // Initialize
+        updateBoxPosition();
+        updateStatus();
+        
+        // Toggle presets function
+        function togglePresets() {
+            if (presetsGrid.style.display === 'none') {
+                presetsGrid.style.display = 'grid';
+                togglePresetsBtn.textContent = 'Hide';
+            } else {
+                presetsGrid.style.display = 'none';
+                togglePresetsBtn.textContent = 'Show';
+            }
+        }
+        
+        // Toggle simulation
+        function toggleSimulation() {
+            if (running) {
+                clearInterval(simulationInterval);
+                running = false;
+                startBtn.textContent = 'Start Simulation';
+            } else {
+                running = true;
+                startBtn.textContent = 'Stop Simulation';
+                simulationInterval = setInterval(updateSimulation, 30);
+            }
+            updateStatus();
+        }
+        
+        // Update simulation physics
+        function updateSimulation() {
+            // Calculate net force
+            let netX = 0;
+            let netY = 0;
+            
+            forces.forEach(force => {
+                if (force.direction === 'rightwards') netX += force.magnitude;
+                if (force.direction === 'leftwards') netX -= force.magnitude;
+                if (force.direction === 'upwards') netY -= force.magnitude;
+                if (force.direction === 'downwards') netY += force.magnitude;
+            });
+            
+            // Update force balance
+            const netMagnitude = Math.sqrt(netX * netX + netY * netY);
+            forceBalance = netMagnitude < 0.01 ? 'balanced' : 'unbalanced';
+            
+            // Update acceleration and velocity
+            const acceleration = { x: netX, y: netY }; // F=ma, m=1
+            velocity.x += acceleration.x * 0.005; // Reduced by another 80% (from 0.025 to 0.005)
+            velocity.y += acceleration.y * 0.005; // Reduced by another 80% (from 0.025 to 0.005)
+            
+            // Update position - no boundaries to allow indefinite movement
+            position.x += velocity.x;
+            position.y += velocity.y;
+            
+            // Update motion state
+            updateMotionState();
+            
+            // Update UI
+            updateBoxPosition();
+            updateStatus();
+            drawForceArrows();
+        }
+        
+        // Set motion type
+        function setMotion(type) {
+            if (running) return;
+            
+            initialMotion = type;
+            
+            // Update buttons
+            document.querySelectorAll('.motion-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.motion-btn[onclick*="${type}"]`).classList.add('active');
+            
+            // Set velocity based on motion type
+            if (type === 'rightwards') {
+                velocity = { x: 0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed rightwards';
+            } else if (type === 'leftwards') {
+                velocity = { x: -0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed leftwards';
+            } else if (type === 'upwards') {
+                velocity = { x: 0, y: -0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed upwards';
+            } else if (type === 'downwards') {
+                velocity = { x: 0, y: 0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed downwards';
+            } else {
+                velocity = { x: 0, y: 0 };
+                motionState = 'at rest';
+            }
+            
+            updateStatus();
+        }
+        
+        // Apply preset
+        function applyPreset(preset) {
+            // Stop simulation if running
+            if (running) {
+                toggleSimulation();
+            }
+            
+            // Reset position
+            position = { x: CANVAS_WIDTH/2, y: CANVAS_HEIGHT/2 };
+            
+            // Clear forces
+            forces = [];
+            
+            // Apply preset configuration
+            switch(preset) {
+                case 'a':
+                    initialMotion = 'rest';
+                    addForce('rightwards', 10);
+                    break;
+                case 'b':
+                    initialMotion = 'leftwards';
+                    addForce('rightwards', 30);
+                    addForce('leftwards', 30);
+                    break;
+                case 'c':
+                    initialMotion = 'rest';
+                    addForce('rightwards', 40);
+                    addForce('leftwards', 40);
+                    break;
+                case 'd':
+                    initialMotion = 'leftwards';
+                    addForce('rightwards', 40);
+                    addForce('leftwards', 15);
+                    break;
+                case 'e':
+                    initialMotion = 'rest';
+                    addForce('upwards', 20);
+                    addForce('downwards', 60);
+                    break;
+                case 'f':
+                    initialMotion = 'upwards';
+                    addForce('upwards', 45);
+                    addForce('downwards', 30);
+                    break;
+            }
+            
+            // Set motion buttons
+            document.querySelectorAll('.motion-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.motion-btn[onclick*="${initialMotion}"]`).classList.add('active');
+            
+            // Update velocity
+            if (initialMotion === 'rightwards') {
+                velocity = { x: 0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed rightwards';
+            } else if (initialMotion === 'leftwards') {
+                velocity = { x: -0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed leftwards';
+            } else if (initialMotion === 'upwards') {
+                velocity = { x: 0, y: -0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed upwards';
+            } else if (initialMotion === 'downwards') {
+                velocity = { x: 0, y: 0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed downwards';
+            } else {
+                velocity = { x: 0, y: 0 };
+                motionState = 'at rest';
+            }
+            
+            // Update UI
+            updateBoxPosition();
+            updateForcesList();
+            updateStatus();
+            drawForceArrows();
+        }
+        
+        // Add force
+        function addForce(direction, magnitude = 1) {
+            // Check if force in this direction already exists
+            const existingForce = forces.find(f => f.direction === direction);
+            
+            if (existingForce) {
+                existingForce.magnitude += magnitude;
+            } else {
+                forces.push({
+                    id: Date.now(),
+                    direction: direction,
+                    magnitude: magnitude
+                });
+            }
+            
+            updateForceBalance();
+            updateForcesList();
+            drawForceArrows();
+        }
+        
+        // Update force balance
+        function updateForceBalance() {
+            const netForce = calculateNetForce();
+            const netMagnitude = Math.sqrt(netForce.x * netForce.x + netForce.y * netForce.y);
+            forceBalance = netMagnitude < 0.01 ? 'balanced' : 'unbalanced';
+            updateStatus();
+        }
+        
+        // Calculate net force
+        function calculateNetForce() {
+            let netX = 0;
+            let netY = 0;
+            
+            forces.forEach(force => {
+                if (force.direction === 'rightwards') netX += force.magnitude;
+                if (force.direction === 'leftwards') netX -= force.magnitude;
+                if (force.direction === 'upwards') netY -= force.magnitude;
+                if (force.direction === 'downwards') netY += force.magnitude;
+            });
+            
+            return { x: netX, y: netY };
+        }
+        
+        // Adjust force magnitude
+        function adjustForce(id, change) {
+            id = Number(id);
+            const force = forces.find(f => f.id === id);
+            if (force) {
+                force.magnitude = Math.max(0, force.magnitude + change);
+                
+                if (force.magnitude === 0) {
+                    removeForce(id);
+                    return;
+                }
+                
+                updateForceBalance();
+                updateForcesList();
+                drawForceArrows();
+            }
+        }
+        
+        // Remove force
+        function removeForce(id) {
+            id = Number(id);
+            forces = forces.filter(f => f.id !== id);
+            updateForceBalance();
+            updateForcesList();
+            drawForceArrows();
+        }
+        
+        // Update motion state
+        function updateMotionState() {
+            const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+            
+            if (speed < 0.01) {
+                motionState = 'at rest';
+                return;
+            }
+            
+            // Determine direction
+            let direction = '';
+            if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
+                direction = velocity.x > 0 ? 'rightwards' : 'leftwards';
+            } else {
+                direction = velocity.y > 0 ? 'downwards' : 'upwards';
+            }
+            
+            // Check if speeding up or slowing down
+            const netForce = calculateNetForce();
+            const netForceMagnitude = Math.sqrt(netForce.x * netForce.x + netForce.y * netForce.y);
+            
+            if (netForceMagnitude < 0.01) {
+                motionState = `constant speed ${direction}`;
+            } else {
+                const dotProduct = velocity.x * netForce.x + velocity.y * netForce.y;
+                motionState = dotProduct > 0 ? `speeding up ${direction}` : `slowing down ${direction}`;
+            }
+        }
+        
+        // Reset simulation
+        function resetSimulation() {
+            if (running) {
+                toggleSimulation();
+            }
+            
+            position = { x: CANVAS_WIDTH/2, y: CANVAS_HEIGHT/2 };
+            forces = [];
+            initialMotion = 'rest';
+            velocity = { x: 0, y: 0 };
+            motionState = 'at rest';
+            forceBalance = 'balanced';
+            
+            // Reset motion buttons
+            document.querySelectorAll('.motion-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.motion-btn[onclick*="rest"]').classList.add('active');
+            
+            updateBoxPosition();
+            updateForcesList();
+            updateStatus();
+            drawForceArrows();
+        }
+        
+        // Replay simulation
+        function replaySimulation() {
+            if (running) {
+                toggleSimulation();
+            }
+            
+            // Reset position without changing forces or initial motion
+            position = { x: CANVAS_WIDTH/2, y: CANVAS_HEIGHT/2 };
+            
+            // Reset velocity to match initial motion
+            if (initialMotion === 'rightwards') {
+                velocity = { x: 0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed rightwards';
+            } else if (initialMotion === 'leftwards') {
+                velocity = { x: -0.15, y: 0 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed leftwards';
+            } else if (initialMotion === 'upwards') {
+                velocity = { x: 0, y: -0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed upwards';
+            } else if (initialMotion === 'downwards') {
+                velocity = { x: 0, y: 0.15 }; // Reduced by another 80% (from 0.75 to 0.15)
+                motionState = 'constant speed downwards';
+            } else {
+                velocity = { x: 0, y: 0 };
+                motionState = 'at rest';
+            }
+            
+            updateBoxPosition();
+            updateStatus();
+            drawForceArrows();
+        }
+        
+        // Update box position
+        function updateBoxPosition() {
+            box.style.left = position.x + 'px';
+            box.style.top = position.y + 'px';
+        }
+        
+        // Update status display
+        function updateStatus() {
+            // Convert initial motion to text
+            let initialMotionText = 'At Rest';
+            if (initialMotion === 'rightwards') initialMotionText = 'Moving Rightwards';
+            if (initialMotion === 'leftwards') initialMotionText = 'Moving Leftwards';
+            if (initialMotion === 'upwards') initialMotionText = 'Moving Upwards';
+            if (initialMotion === 'downwards') initialMotionText = 'Moving Downwards';
+            
+            // Create status html
+            let html = `
+                <strong>Initial Motion:</strong><br>
+                ${initialMotionText}<br><br>
+                
+                <strong>Forces:</strong><br>
+                ${forceBalance}<br>
+            `;
+            
+            // Add subsequent motion if running
+            if (running) {
+                html += `<br><strong>Subsequent Motion:</strong><br>${motionState}`;
+            }
+            
+            status.innerHTML = html;
+        }
+        
+        // Update forces list
+        function updateForcesList() {
+            if (forces.length === 0) {
+                forcesList.innerHTML = '<p>No forces applied</p>';
+                return;
+            }
+            
+            let html = '';
+            forces.forEach(force => {
+                html += `
+                    <div class="force-item">
+                        <div>${force.direction} force</div>
+                        <div>
+                            <button onclick="adjustForce(${force.id}, -1)">-</button>
+                            <span>${force.magnitude.toFixed(0)}N</span>
+                            <button onclick="adjustForce(${force.id}, 1)">+</button>
+                            <button onclick="removeForce(${force.id})">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            forcesList.innerHTML = html;
+        }
+        
+        // Draw force arrows
+        function drawForceArrows() {
+            // Clear existing arrows
+            while (arrowsContainer.firstChild) {
+                arrowsContainer.removeChild(arrowsContainer.firstChild);
+            }
+            
+            // Draw new arrows for each force
+            forces.forEach(force => {
+                // Create arrow container
+                const arrowContainer = document.createElement('div');
+                arrowContainer.style.position = 'absolute';
+                arrowContainer.style.left = position.x + 'px';
+                arrowContainer.style.top = position.y + 'px';
+                arrowContainer.style.zIndex = '5';
+                
+                // Create the arrow line
+                const arrow = document.createElement('div');
+                arrow.className = 'force-arrow';
+                
+                // Set width based on magnitude (with some scaling)
+                const arrowLength = Math.min(force.magnitude * 2, 150);
+                arrow.style.width = arrowLength + 'px';
+                
+                // Set rotation based on direction
+                let rotation = 0;
+                if (force.direction === 'rightwards') rotation = 0;
+                if (force.direction === 'leftwards') rotation = 180;
+                if (force.direction === 'upwards') rotation = 270;
+                if (force.direction === 'downwards') rotation = 90;
+                
+                arrow.style.transform = `rotate(${rotation}deg)`;
+                
+                // Create and add arrowhead
+                const arrowHead = document.createElement('div');
+                arrowHead.className = 'arrow-head';
+                arrow.appendChild(arrowHead);
+                
+                // Add force magnitude text separate from the arrow rotation
+                const text = document.createElement('div');
+                text.style.position = 'absolute';
+                text.style.color = 'red';
+                text.style.fontSize = '12px';
+                text.style.fontWeight = 'bold';
+                text.style.textAlign = 'center';
+                text.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                text.style.padding = '2px 4px';
+                text.style.borderRadius = '3px';
+                text.style.whiteSpace = 'nowrap';
+                text.textContent = force.magnitude + 'N';
+                
+                // Position text based on direction but always keep it upright
+                if (force.direction === 'rightwards') {
+                    text.style.left = (arrowLength / 2 - 15) + 'px';
+                    text.style.top = '-25px';
+                } else if (force.direction === 'leftwards') {
+                    text.style.right = (arrowLength / 2 - 15) + 'px';
+                    text.style.top = '-25px';
+                } else if (force.direction === 'upwards') {
+                    text.style.left = '15px';
+                    text.style.top = (-arrowLength / 2 - 10) + 'px';
+                } else { // downwards
+                    text.style.left = '15px';
+                    text.style.bottom = (-arrowLength / 2 - 10) + 'px';
+                }
+                
+                // Add elements to the container
+                arrowContainer.appendChild(arrow);
+                arrowContainer.appendChild(text);
+                arrowsContainer.appendChild(arrowContainer);
+            });
+        }
+    </script>
+</body>
+</html>
