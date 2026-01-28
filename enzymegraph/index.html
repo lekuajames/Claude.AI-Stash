@@ -1,0 +1,1444 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Energy Profile Diagram</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+
+        .advanced-toggle {
+            margin-bottom: 16px;
+        }
+
+        .toggle-button {
+            padding: 8px 16px;
+            background-color: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-button:hover {
+            background-color: #0284c7;
+        }
+
+        .toggle-button.active {
+            background-color: #dc2626;
+        }
+
+        .toggle-button.active:hover {
+            background-color: #b91c1c;
+        }
+
+        .advanced-controls {
+            background-color: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: #d1d5db;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .optimal-marker {
+            position: absolute;
+            top: -8px;
+            width: 3px;
+            height: 22px;
+            background-color: #059669;
+            border-radius: 2px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .optimal-marker::before {
+            content: 'OPT';
+            position: absolute;
+            top: -20px;
+            left: -8px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #059669;
+            white-space: nowrap;
+        }
+
+        .select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            accent-color: #2563eb;
+        }
+
+        .reaction-type-indicator {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .exothermic {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        .endothermic {
+            background-color: #dbeafe;
+            color: #2563eb;
+            border: 1px solid #93c5fd;
+        }
+
+        .neutral-reaction {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .diagram-container {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .description-box {
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #92400e;
+            max-width: 300px;
+        }
+
+        .graphs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 300px;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .rate-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rate-graph h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .rate-bar-container {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rate-bars-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+        }
+
+        .rate-bar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rate-bar {
+            width: 50px;
+            height: 200px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .rate-bar-fill {
+            width: 100%;
+            border-radius: 4px;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.3s ease;
+        }
+
+        .rate-bar-fill.with-catalyst {
+            background: linear-gradient(to top, #ef4444, #f59e0b, #10b981);
+        }
+
+        .rate-bar-fill.without-catalyst {
+            background: linear-gradient(to top, #6b7280, #9ca3af, #d1d5db);
+        }
+
+        .rate-value {
+            font-weight: bold;
+            font-size: 14px;
+            color: #374151;
+            margin-top: 8px;
+        }
+
+        .rate-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .info-panel {
+            margin-top: 24px;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .info-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            color: #374151;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .info-value {
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 2px;
+        }
+
+        .effectiveness-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .effectiveness-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .concepts-button {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            color: #422006;
+            font-weight: 500;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .concepts-button:hover {
+            background-color: #fef3c7;
+        }
+
+        .concepts-content {
+            margin-top: 8px;
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 16px;
+            display: none;
+        }
+
+        .concepts-content ul {
+            padding-left: 20px;
+            color: #374151;
+            margin: 0;
+        }
+
+        .concepts-content li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .credit {
+            text-align: center;
+            margin-top: 32px;
+            padding: 16px;
+            color: #6b7280;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .graphs-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="title">Interactive Energy Profile Diagram with Catalysts</h2>
+        
+        <div class="advanced-toggle">
+            <button id="advanced-mode-toggle" class="toggle-button">
+                Enable Advanced Mode (Optional for Y2 Science)
+            </button>
+        </div>
+
+        <div id="advanced-controls" class="advanced-controls">
+            <h3 style="margin: 0 0 16px 0; color: #0ea5e9; font-size: 16px;">Advanced Controls - Y2 Science</h3>
+            <div class="controls">
+                <div class="control-group">
+                    <label class="control-label">
+                        Reactant Energy: <span id="reactant-value">50</span> kJ/mol
+                    </label>
+                    <input type="range" id="reactant-energy" class="slider" min="10" max="90" value="50">
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Product Energy: <span id="product-value">30</span> kJ/mol
+                    </label>
+                    <input type="range" id="product-energy" class="slider" min="10" max="90" value="30">
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Base Activation Energy: <span id="activation-value">40</span> kJ/mol
+                    </label>
+                    <input type="range" id="activation-energy" class="slider" min="20" max="80" value="40">
+                </div>
+            </div>
+            <div id="reaction-type-indicator" class="reaction-type-indicator"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label class="control-label">Catalyst Type</label>
+                <select id="catalyst-type" class="select">
+                    <option value="none">No Catalyst</option>
+                    <option value="biological">Biological (Enzyme)</option>
+                    <option value="non-biological">Non-Biological</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Temperature: <span id="temperature-value">37</span>°C
+                </label>
+                <div class="slider-container">
+                    <input type="range" id="temperature" class="slider" min="0" max="100" value="37">
+                    <div class="optimal-marker" style="left: 37%;"></div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    pH: <span id="ph-value">7.4</span>
+                </label>
+                <div class="slider-container">
+                    <input type="range" id="ph" class="slider" min="0" max="14" step="0.1" value="7.4">
+                    <div class="optimal-marker" style="left: 52.86%;"></div>
+                </div>
+            </div>
+            
+            <div class="control-group" style="justify-content: end; padding-bottom: 4px;">
+                <label style="display: flex; align-items: center; color: #374151;">
+                    <input type="checkbox" id="show-labels" class="checkbox" checked>
+                    Show Labels
+                </label>
+            </div>
+        </div>
+        
+        <div class="diagram-container">
+            <div>
+                <svg id="energy-diagram" width="600" height="450"></svg>
+                <div id="catalyst-description" class="description-box" style="display: none;"></div>
+                <div id="enzyme-description" class="description-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="graphs-container">
+            <div class="rate-graph">
+                <h4>Rate of Reaction vs Temperature</h4>
+                <svg id="rate-temp-graph" width="200" height="150"></svg>
+            </div>
+            <div class="rate-graph">
+                <h4>Rate of Reaction vs pH</h4>
+                <svg id="rate-ph-graph" width="200" height="150"></svg>
+            </div>
+            <div class="rate-bar-container">
+                <h4>Current Rate of Reaction</h4>
+                <div class="rate-bars-wrapper">
+                    <div class="rate-bar-section">
+                        <div class="rate-label">With Catalyst</div>
+                        <div class="rate-bar">
+                            <div class="rate-bar-fill with-catalyst" id="rate-bar-fill-with"></div>
+                        </div>
+                        <div class="rate-value" id="rate-value-with">N/A</div>
+                    </div>
+                    <div class="rate-bar-section">
+                        <div class="rate-label">Without Catalyst</div>
+                        <div class="rate-bar">
+                            <div class="rate-bar-fill without-catalyst" id="rate-bar-fill-without"></div>
+                        </div>
+                        <div class="rate-value" id="rate-value-without">20%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3 class="info-title">Catalyst Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Catalyst Type</span>
+                    <span class="info-value" id="catalyst-display">None</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Base Activation Energy</span>
+                    <span class="info-value" id="base-ea-display">40 kJ/mol</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Effective Activation Energy</span>
+                    <span class="info-value" id="effective-ea-display">40 kJ/mol</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Energy Reduction</span>
+                    <span class="info-value" id="reduction-display">0 kJ/mol</span>
+                </div>
+                <div class="info-item" id="effectiveness-container" style="display: none;">
+                    <span class="info-label">Enzyme Effectiveness</span>
+                    <span class="info-value" id="effectiveness-display">100%</span>
+                    <div class="effectiveness-bar">
+                        <div class="effectiveness-fill" id="effectiveness-fill"></div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Environmental Conditions</span>
+                    <span class="info-value" id="conditions-display">T: 37°C, pH: 7.4</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 16px;">
+            <button class="concepts-button" id="concepts-toggle">
+                <span>Key Concepts</span>
+                <span id="concepts-arrow">▼</span>
+            </button>
+            
+            <div class="concepts-content" id="concepts-content">
+                <ul>
+                    <li><strong>Catalysts</strong> lower activation energy by providing an alternative reaction pathway.</li>
+                    <li><strong>Biological catalysts (enzymes)</strong> are protein-based and highly sensitive to temperature and pH changes. They work optimally at body temperature (~37°C) and physiological pH (~7.4).</li>
+                    <li><strong>Non-biological catalysts</strong> are typically metals or synthetic compounds that reduce activation energy but remain sensitive to temperature changes, unlike biological catalysts they are not affected by pH.</li>
+                    <li><strong>Rate of reaction</strong> is inversely related to activation energy - lower activation energy means faster reaction rates.</li>
+                    <li><strong>Temperature effects on all reactions</strong>: Higher temperatures increase rate of reaction exponentially as more molecules possess sufficient energy to overcome the activation barrier.</li>
+                    <li><strong>Temperature effects on enzymes</strong>: Enzymes show optimal activity at specific temperatures; too low reduces activity, too high causes denaturation.</li>
+                    <li><strong>pH effects</strong>: Only affect biological catalysts - changes in pH can alter enzyme shape and active site functionality.</li>
+                    <li><strong>Rate comparison</strong>: The bar graph shows current rate of reaction with and without catalyst, demonstrating the catalytic advantage.</li>
+                    <li><strong>Rate of reaction graphs</strong>: Show how rate of reaction varies with temperature (exponential for all reactions, but enzymes also show denaturation) and pH (flat for uncatalyzed and non-biological catalysts, bell curve for enzymes).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="credit">
+            Made by James Kua and Tan Xiang Yeow, Temasek Junior College
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let reactantEnergy = 50;
+        let productEnergy = 30;
+        let baseActivationEnergy = 40;
+        let catalystType = 'none';
+        let temperature = 37;
+        let pH = 7.4;
+        let showLabels = true;
+        let showKeyConcepts = false;
+        let advancedMode = false;
+
+        // Constants
+        const width = 600;
+        const height = 450;
+        const margin = { top: 50, right: 50, bottom: 80, left: 80 };
+        const graphWidth = width - margin.left - margin.right;
+        const graphHeight = height - margin.top - margin.bottom;
+        const OPTIMAL_TEMP = 37;
+        const OPTIMAL_PH = 7.4;
+        const CATALYST_REDUCTION = 15;
+
+        // Event listeners
+        document.getElementById('advanced-mode-toggle').addEventListener('click', toggleAdvancedMode);
+        document.getElementById('reactant-energy').addEventListener('input', handleReactantChange);
+        document.getElementById('product-energy').addEventListener('input', handleProductChange);
+        document.getElementById('activation-energy').addEventListener('input', handleActivationChange);
+        document.getElementById('catalyst-type').addEventListener('change', handleCatalystChange);
+        document.getElementById('temperature').addEventListener('input', handleTemperatureChange);
+        document.getElementById('ph').addEventListener('input', handlePHChange);
+        document.getElementById('show-labels').addEventListener('change', handleLabelsChange);
+        document.getElementById('concepts-toggle').addEventListener('click', toggleConcepts);
+
+        function toggleAdvancedMode() {
+            advancedMode = !advancedMode;
+            const controls = document.getElementById('advanced-controls');
+            const button = document.getElementById('advanced-mode-toggle');
+            
+            if (advancedMode) {
+                controls.style.display = 'block';
+                button.textContent = 'Disable Advanced Mode';
+                button.classList.add('active');
+            } else {
+                controls.style.display = 'none';
+                button.textContent = 'Enable Advanced Mode (Optional for Y2 Science)';
+                button.classList.remove('active');
+                resetToDefaults();
+            }
+            updateReactionTypeIndicator();
+        }
+
+        function resetToDefaults() {
+            reactantEnergy = 50;
+            productEnergy = 30;
+            baseActivationEnergy = 40;
+            document.getElementById('reactant-energy').value = 50;
+            document.getElementById('product-energy').value = 30;
+            document.getElementById('activation-energy').value = 40;
+            document.getElementById('reactant-value').textContent = 50;
+            document.getElementById('product-value').textContent = 30;
+            document.getElementById('activation-value').textContent = 40;
+            updateDiagram();
+        }
+
+        function handleReactantChange(e) {
+            if (advancedMode) {
+                reactantEnergy = parseInt(e.target.value);
+                document.getElementById('reactant-value').textContent = reactantEnergy;
+                updateReactionTypeIndicator();
+                updateDiagram();
+            }
+        }
+
+        function handleProductChange(e) {
+            if (advancedMode) {
+                productEnergy = parseInt(e.target.value);
+                document.getElementById('product-value').textContent = productEnergy;
+                updateReactionTypeIndicator();
+                updateDiagram();
+            }
+        }
+
+        function handleActivationChange(e) {
+            if (advancedMode) {
+                baseActivationEnergy = parseInt(e.target.value);
+                document.getElementById('activation-value').textContent = baseActivationEnergy;
+                updateDiagram();
+            }
+        }
+
+        function handleCatalystChange(e) {
+            catalystType = e.target.value;
+            updateDiagram();
+        }
+
+        function handleTemperatureChange(e) {
+            temperature = parseInt(e.target.value);
+            document.getElementById('temperature-value').textContent = temperature;
+            updateDiagram();
+        }
+
+        function handlePHChange(e) {
+            pH = parseFloat(e.target.value);
+            document.getElementById('ph-value').textContent = pH;
+            updateDiagram();
+        }
+
+        function handleLabelsChange(e) {
+            showLabels = e.target.checked;
+            updateDiagram();
+        }
+
+        function toggleConcepts() {
+            showKeyConcepts = !showKeyConcepts;
+            const content = document.getElementById('concepts-content');
+            const arrow = document.getElementById('concepts-arrow');
+            
+            if (showKeyConcepts) {
+                content.style.display = 'block';
+                arrow.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▼';
+            }
+        }
+
+        function updateReactionTypeIndicator() {
+            const indicator = document.getElementById('reaction-type-indicator');
+            if (!advancedMode) {
+                indicator.style.display = 'none';
+                return;
+            }
+            
+            indicator.style.display = 'block';
+            const enthalpyChange = reactantEnergy - productEnergy;
+            
+            if (enthalpyChange > 0) {
+                indicator.className = 'reaction-type-indicator exothermic';
+                indicator.textContent = `EXOTHERMIC REACTION (ΔH = -${enthalpyChange} kJ/mol) - Energy is released`;
+            } else if (enthalpyChange < 0) {
+                indicator.className = 'reaction-type-indicator endothermic';
+                indicator.textContent = `ENDOTHERMIC REACTION (ΔH = +${Math.abs(enthalpyChange)} kJ/mol) - Energy is absorbed`;
+            } else {
+                indicator.className = 'reaction-type-indicator neutral-reaction';
+                indicator.textContent = 'NEUTRAL REACTION (ΔH = 0 kJ/mol) - No net energy change';
+            }
+        }
+
+        function calculateEnzymeEffectiveness() {
+            if (catalystType !== 'biological') return 1.0;
+            
+            const tempDiff = temperature - OPTIMAL_TEMP; // Use signed difference for temperature
+            let tempEffectiveness;
+            if (Math.abs(tempDiff) <= 5) {
+                tempEffectiveness = 1.0;
+            } else if (Math.abs(tempDiff) <= 15) {
+                tempEffectiveness = 1.0 - (Math.abs(tempDiff) - 5) * 0.05;
+            } else if (Math.abs(tempDiff) <= 30) {
+                tempEffectiveness = 0.5 - (Math.abs(tempDiff) - 15) * 0.02;
+            } else if (tempDiff > 30) {
+                // Only high temperatures cause complete denaturation
+                tempEffectiveness = Math.max(0.0, 0.2 - (tempDiff - 30) * 0.02);
+            } else {
+                // Low temperatures just reduce activity, don't denature
+                tempEffectiveness = 0.2;
+            }
+            
+            const pHDiff = Math.abs(pH - OPTIMAL_PH);
+            let pHEffectiveness;
+            if (pHDiff <= 0.5) {
+                pHEffectiveness = 1.0;
+            } else if (pHDiff <= 2.0) {
+                pHEffectiveness = 1.0 - (pHDiff - 0.5) * 0.2;
+            } else if (pHDiff <= 4.0) {
+                pHEffectiveness = 0.7 - (pHDiff - 2.0) * 0.15;
+            } else if (pHDiff <= 5.0) {
+                pHEffectiveness = 0.4 - (pHDiff - 4.0) * 0.4;
+            } else {
+                pHEffectiveness = 0.0; // Irreversibly denatured at extreme pH
+            }
+            
+            return Math.max(0.0, Math.min(1.0, tempEffectiveness * pHEffectiveness));
+        }
+
+        function getEffectiveActivationEnergy() {
+            if (catalystType === 'none') {
+                return baseActivationEnergy;
+            }
+            
+            let reduction = CATALYST_REDUCTION;
+            if (catalystType === 'biological') {
+                reduction = reduction * calculateEnzymeEffectiveness();
+            }
+            
+            return Math.max(5, baseActivationEnergy - reduction);
+        }
+
+        function calculateReactionRateWithoutCatalyst() {
+            const tempFactor = Math.exp((temperature - 25) / 50);
+            const baseRate = Math.exp(-baseActivationEnergy / 20) * tempFactor;
+            const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+            return Math.min(100, (baseRate / maxRate) * 100);
+        }
+
+        function calculateReactionRate() {
+            if (catalystType === 'none') {
+                return calculateReactionRateWithoutCatalyst();
+            }
+            
+            if (catalystType === 'biological') {
+                const effectiveness = calculateEnzymeEffectiveness();
+                if (effectiveness === 0) {
+                    // Completely denatured enzyme = no catalysis
+                    return calculateReactionRateWithoutCatalyst();
+                }
+                const effectiveEa = getEffectiveActivationEnergy();
+                const baseRate = Math.exp(-effectiveEa / 20);
+                const maxRate = Math.exp(-5 / 20);
+                return Math.min(100, (baseRate / maxRate) * 100);
+            }
+            
+            if (catalystType === 'non-biological') {
+                const effectiveEa = Math.max(5, baseActivationEnergy - CATALYST_REDUCTION);
+                const tempFactor = Math.exp((temperature - 25) / 50);
+                const baseRate = Math.exp(-effectiveEa / 20) * tempFactor;
+                const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+                return Math.min(100, (baseRate / maxRate) * 100);
+            }
+        }
+
+        function updateDescriptions() {
+            const catalystDesc = document.getElementById('catalyst-description');
+            const enzymeDesc = document.getElementById('enzyme-description');
+            
+            if (catalystType !== 'none') {
+                const effectiveness = catalystType === 'biological' ? calculateEnzymeEffectiveness() : 1.0;
+                
+                if (catalystType === 'biological' && effectiveness === 0) {
+                    // Enzyme is completely denatured - no catalyst message
+                    catalystDesc.style.display = 'none';
+                } else {
+                    catalystDesc.style.display = 'block';
+                    const catalystLabel = catalystType === 'biological' ? 'Catalyst (enzyme)' : 'Catalyst';
+                    catalystDesc.textContent = `${catalystLabel} is present, activation energy is reduced`;
+                }
+            } else {
+                catalystDesc.style.display = 'none';
+            }
+            
+            if (catalystType === 'biological') {
+                const effectiveness = calculateEnzymeEffectiveness();
+                if (effectiveness === 0) {
+                    enzymeDesc.style.display = 'block';
+                    let reason = '';
+                    const tempDiff = temperature - OPTIMAL_TEMP;
+                    if (tempDiff > 40) {
+                        reason += `extreme high temperature (${temperature}°C)`;
+                    }
+                    if (Math.abs(pH - OPTIMAL_PH) > 5.0) {
+                        if (reason) reason += ' and ';
+                        reason += `extreme pH (${pH})`;
+                    }
+                    enzymeDesc.textContent = `Enzyme is irreversibly denatured due to ${reason} and no longer catalyzes reaction`;
+                } else if (effectiveness < 0.8) {
+                    enzymeDesc.style.display = 'block';
+                    let reason = '';
+                    if (temperature > OPTIMAL_TEMP && Math.abs(temperature - OPTIMAL_TEMP) > 5) {
+                        reason += 'high temperature';
+                    }
+                    if (Math.abs(pH - OPTIMAL_PH) > 0.5) {
+                        if (reason) reason += ' and ';
+                        reason += 'non-optimal pH';
+                    }
+                    if (reason) {
+                        enzymeDesc.textContent = `Enzyme effectiveness is reduced due to ${reason}`;
+                    } else {
+                        // Low temperature case - no message shown
+                        enzymeDesc.style.display = 'none';
+                    }
+                } else {
+                    enzymeDesc.style.display = 'none';
+                }
+            } else {
+                enzymeDesc.style.display = 'none';
+            }
+        }
+
+        function getCoordinates() {
+            const effectiveEa = getEffectiveActivationEnergy();
+            const reactantsX = graphWidth * 0.3;
+            const productsX = graphWidth * 0.7;
+            const peakX = graphWidth * 0.5;
+            const baseY = graphHeight * 0.8;
+            const scaleFactor = 2.2; // Increased from 1.3 to make humps bigger
+            
+            const reactantsY = baseY - reactantEnergy * scaleFactor;
+            const productsY = baseY - productEnergy * scaleFactor;
+            const higherEnergyY = Math.min(reactantsY, productsY);
+            const peakY = higherEnergyY - effectiveEa * scaleFactor;
+            
+            let uncatalyzedPeakY = null;
+            if (catalystType !== 'none') {
+                uncatalyzedPeakY = higherEnergyY - baseActivationEnergy * scaleFactor;
+            }
+            
+            return {
+                reactants: { x: reactantsX, y: reactantsY },
+                products: { x: productsX, y: productsY },
+                peak: { x: peakX, y: peakY },
+                uncatalyzedPeak: uncatalyzedPeakY ? { x: peakX, y: uncatalyzedPeakY } : null,
+                eaStart: { x: reactantsX + 50, y: reactantsY },
+                reactantLine: { x1: reactantsX - 20, x2: reactantsX + 20 },
+                productLine: { x1: productsX - 20, x2: productsX + 20 }
+            };
+        }
+
+        function getPathData(coords, isUncatalyzed = false) {
+            const startX = 0;
+            const endX = graphWidth;
+            const reactantX = coords.reactants.x;
+            const reactantY = coords.reactants.y;
+            const productX = coords.products.x;
+            const productY = coords.products.y;
+            const peakX = isUncatalyzed ? coords.uncatalyzedPeak.x : coords.peak.x;
+            const peakY = isUncatalyzed ? coords.uncatalyzedPeak.y : coords.peak.y;
+            
+            return `
+                M ${startX},${reactantY}
+                L ${coords.reactantLine.x1 - 10},${reactantY}
+                C ${reactantX + (peakX - reactantX) * 0.4},${reactantY} 
+                  ${peakX - (peakX - reactantX) * 0.4},${peakY} 
+                  ${peakX},${peakY}
+                C ${peakX + (productX - peakX) * 0.4},${peakY} 
+                  ${productX - (productX - peakX) * 0.4},${productY} 
+                  ${coords.productLine.x2 + 10},${productY}
+                L ${endX},${productY}
+            `;
+        }
+
+        function updateDiagram() {
+            const svg = document.getElementById('energy-diagram');
+            const coords = getCoordinates();
+            
+            svg.innerHTML = `
+                <defs>
+                    <marker id="axisArrow" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+                        <polygon points="0 0, 10 4, 0 8" fill="black" />
+                    </marker>
+                </defs>
+            `;
+            
+            const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            mainGroup.setAttribute('transform', `translate(${margin.left}, ${margin.top})`);
+            
+            // Axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '0');
+            xAxis.setAttribute('y1', graphHeight);
+            xAxis.setAttribute('x2', graphWidth);
+            xAxis.setAttribute('y2', graphHeight);
+            xAxis.setAttribute('stroke', 'black');
+            xAxis.setAttribute('stroke-width', '2');
+            xAxis.setAttribute('marker-end', 'url(#axisArrow)');
+            mainGroup.appendChild(xAxis);
+            
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', '0');
+            yAxis.setAttribute('y1', graphHeight);
+            yAxis.setAttribute('x2', '0');
+            yAxis.setAttribute('y2', '0');
+            yAxis.setAttribute('stroke', 'black');
+            yAxis.setAttribute('stroke-width', '2');
+            yAxis.setAttribute('marker-end', 'url(#axisArrow)');
+            mainGroup.appendChild(yAxis);
+            
+            // Axis labels
+            const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabel.setAttribute('x', graphWidth / 2);
+            xLabel.setAttribute('y', graphHeight + 40);
+            xLabel.setAttribute('text-anchor', 'middle');
+            xLabel.setAttribute('font-size', '16');
+            xLabel.setAttribute('font-weight', 'bold');
+            xLabel.textContent = 'Progress of Reaction';
+            mainGroup.appendChild(xLabel);
+            
+            const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabel.setAttribute('x', -50);
+            yLabel.setAttribute('y', graphHeight / 2);
+            yLabel.setAttribute('text-anchor', 'middle');
+            yLabel.setAttribute('transform', `rotate(-90, ${-50}, ${graphHeight / 2})`);
+            yLabel.setAttribute('font-size', '16');
+            yLabel.setAttribute('font-weight', 'bold');
+            yLabel.textContent = 'Energy';
+            mainGroup.appendChild(yLabel);
+            
+            // Uncatalyzed curve
+            if (catalystType !== 'none' && coords.uncatalyzedPeak) {
+                const uncatalyzedCurve = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                uncatalyzedCurve.setAttribute('d', getPathData(coords, true));
+                uncatalyzedCurve.setAttribute('fill', 'none');
+                uncatalyzedCurve.setAttribute('stroke', '#9ca3af');
+                uncatalyzedCurve.setAttribute('stroke-width', '2');
+                uncatalyzedCurve.setAttribute('stroke-dasharray', '5,5');
+                mainGroup.appendChild(uncatalyzedCurve);
+                
+                if (showLabels) {
+                    const uncatalyzedLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    uncatalyzedLabel.setAttribute('x', coords.uncatalyzedPeak.x + 20);
+                    uncatalyzedLabel.setAttribute('y', coords.uncatalyzedPeak.y - 10);
+                    uncatalyzedLabel.setAttribute('font-size', '12');
+                    uncatalyzedLabel.setAttribute('fill', '#6b7280');
+                    uncatalyzedLabel.textContent = 'Without catalyst';
+                    mainGroup.appendChild(uncatalyzedLabel);
+                }
+            }
+            
+            // Main curve
+            const curve = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            curve.setAttribute('d', getPathData(coords));
+            curve.setAttribute('fill', 'none');
+            curve.setAttribute('stroke', catalystType === 'biological' ? '#059669' : catalystType === 'non-biological' ? '#dc2626' : '#ef4444');
+            curve.setAttribute('stroke-width', '3');
+            mainGroup.appendChild(curve);
+            
+            // Reactant and product lines
+            const reactantLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            reactantLine.setAttribute('x1', coords.reactantLine.x1);
+            reactantLine.setAttribute('y1', coords.reactants.y);
+            reactantLine.setAttribute('x2', coords.reactantLine.x2);
+            reactantLine.setAttribute('y2', coords.reactants.y);
+            reactantLine.setAttribute('stroke', 'black');
+            reactantLine.setAttribute('stroke-width', '2');
+            mainGroup.appendChild(reactantLine);
+            
+            const productLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            productLine.setAttribute('x1', coords.productLine.x1);
+            productLine.setAttribute('y1', coords.products.y);
+            productLine.setAttribute('x2', coords.productLine.x2);
+            productLine.setAttribute('y2', coords.products.y);
+            productLine.setAttribute('stroke', 'black');
+            productLine.setAttribute('stroke-width', '2');
+            mainGroup.appendChild(productLine);
+            
+            if (showLabels) {
+                // Horizontal dotted lines at peak heights
+                const peakDottedLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                peakDottedLine.setAttribute('x1', '0');
+                peakDottedLine.setAttribute('y1', coords.peak.y);
+                peakDottedLine.setAttribute('x2', coords.peak.x);
+                peakDottedLine.setAttribute('y2', coords.peak.y);
+                peakDottedLine.setAttribute('stroke', 'blue');
+                peakDottedLine.setAttribute('stroke-width', '1');
+                peakDottedLine.setAttribute('stroke-dasharray', '3,3');
+                mainGroup.appendChild(peakDottedLine);
+                
+                if (coords.uncatalyzedPeak) {
+                    const uncatalyzedPeakLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    uncatalyzedPeakLine.setAttribute('x1', '0');
+                    uncatalyzedPeakLine.setAttribute('y1', coords.uncatalyzedPeak.y);
+                    uncatalyzedPeakLine.setAttribute('x2', coords.uncatalyzedPeak.x);
+                    uncatalyzedPeakLine.setAttribute('y2', coords.uncatalyzedPeak.y);
+                    uncatalyzedPeakLine.setAttribute('stroke', '#9ca3af');
+                    uncatalyzedPeakLine.setAttribute('stroke-width', '1');
+                    uncatalyzedPeakLine.setAttribute('stroke-dasharray', '3,3');
+                    mainGroup.appendChild(uncatalyzedPeakLine);
+                }
+                
+                // Activation energy arrow
+                const eaLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                eaLine.setAttribute('x1', coords.eaStart.x);
+                eaLine.setAttribute('y1', coords.eaStart.y);
+                eaLine.setAttribute('x2', coords.eaStart.x);
+                eaLine.setAttribute('y2', coords.peak.y);
+                eaLine.setAttribute('stroke', 'blue');
+                eaLine.setAttribute('stroke-width', '2');
+                mainGroup.appendChild(eaLine);
+                
+                const eaArrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                eaArrowhead.setAttribute('points', `${coords.eaStart.x},${coords.peak.y} ${coords.eaStart.x - 5},${coords.peak.y + 10} ${coords.eaStart.x + 5},${coords.peak.y + 10}`);
+                eaArrowhead.setAttribute('fill', 'blue');
+                mainGroup.appendChild(eaArrowhead);
+                
+                const eaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                eaLabel.setAttribute('x', coords.eaStart.x);
+                eaLabel.setAttribute('y', coords.peak.y + 30);
+                eaLabel.setAttribute('text-anchor', 'middle');
+                eaLabel.setAttribute('font-size', '14');
+                eaLabel.setAttribute('fill', 'blue');
+                eaLabel.setAttribute('font-weight', 'bold');
+                eaLabel.textContent = 'Activation Energy';
+                mainGroup.appendChild(eaLabel);
+                
+                // Labels
+                const reactantsLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                reactantsLabel.setAttribute('x', coords.reactants.x);
+                reactantsLabel.setAttribute('y', coords.reactants.y + 20);
+                reactantsLabel.setAttribute('text-anchor', 'middle');
+                reactantsLabel.setAttribute('font-size', '14');
+                reactantsLabel.setAttribute('font-weight', 'bold');
+                reactantsLabel.textContent = 'Reactants';
+                mainGroup.appendChild(reactantsLabel);
+                
+                const productsLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                productsLabel.setAttribute('x', coords.products.x);
+                productsLabel.setAttribute('y', coords.products.y + 20);
+                productsLabel.setAttribute('text-anchor', 'middle');
+                productsLabel.setAttribute('font-size', '14');
+                productsLabel.setAttribute('font-weight', 'bold');
+                productsLabel.textContent = 'Products';
+                mainGroup.appendChild(productsLabel);
+                
+                if (catalystType !== 'none') {
+                    const catalystLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    catalystLabel.setAttribute('x', coords.peak.x - 20);
+                    catalystLabel.setAttribute('y', coords.peak.y - 10);
+                    catalystLabel.setAttribute('font-size', '12');
+                    catalystLabel.setAttribute('fill', catalystType === 'biological' ? '#059669' : '#dc2626');
+                    catalystLabel.setAttribute('font-weight', 'bold');
+                    catalystLabel.textContent = 'With catalyst';
+                    mainGroup.appendChild(catalystLabel);
+                }
+            }
+            
+            svg.appendChild(mainGroup);
+            updateDescriptions();
+            updateCatalystInfo();
+            updateRateGraphs();
+        }
+
+        function drawRateGraph(svgId, xMax, xLabel, calculateRateFunc, calculateRateWithoutFunc) {
+            const svg = document.getElementById(svgId);
+            const width = 200, height = 150;
+            const margin = { top: 20, right: 20, bottom: 30, left: 30 };
+            const graphWidth = width - margin.left - margin.right;
+            const graphHeight = height - margin.top - margin.bottom;
+            
+            svg.innerHTML = '';
+            
+            const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            mainGroup.setAttribute('transform', `translate(${margin.left}, ${margin.top})`);
+            
+            // Axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '0');
+            xAxis.setAttribute('y1', graphHeight);
+            xAxis.setAttribute('x2', graphWidth);
+            xAxis.setAttribute('y2', graphHeight);
+            xAxis.setAttribute('stroke', 'black');
+            xAxis.setAttribute('stroke-width', '1');
+            mainGroup.appendChild(xAxis);
+            
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', '0');
+            yAxis.setAttribute('y1', graphHeight);
+            yAxis.setAttribute('x2', '0');
+            yAxis.setAttribute('y2', '0');
+            yAxis.setAttribute('stroke', 'black');
+            yAxis.setAttribute('stroke-width', '1');
+            mainGroup.appendChild(yAxis);
+            
+            // Labels
+            const xLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabelEl.setAttribute('x', graphWidth / 2);
+            xLabelEl.setAttribute('y', graphHeight + 25);
+            xLabelEl.setAttribute('text-anchor', 'middle');
+            xLabelEl.setAttribute('font-size', '10');
+            xLabelEl.textContent = xLabel;
+            mainGroup.appendChild(xLabelEl);
+            
+            const yLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabelEl.setAttribute('x', -15);
+            yLabelEl.setAttribute('y', graphHeight / 2);
+            yLabelEl.setAttribute('text-anchor', 'middle');
+            yLabelEl.setAttribute('transform', `rotate(-90, ${-15}, ${graphHeight / 2})`);
+            yLabelEl.setAttribute('font-size', '10');
+            yLabelEl.textContent = 'Rate of Reaction (%)';
+            mainGroup.appendChild(yLabelEl);
+            
+            // Without catalyst curve/line
+            if (svgId === 'rate-temp-graph') {
+                let pathDataWithout = 'M ';
+                for (let val = 0; val <= xMax; val += xMax/50) {
+                    const rate = calculateRateWithoutFunc(val);
+                    const x = (val / xMax) * graphWidth;
+                    const y = graphHeight - (rate / 100) * graphHeight;
+                    pathDataWithout += `${x},${y} `;
+                }
+                const curveWithout = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                curveWithout.setAttribute('d', pathDataWithout);
+                curveWithout.setAttribute('fill', 'none');
+                curveWithout.setAttribute('stroke', '#9ca3af');
+                curveWithout.setAttribute('stroke-width', '2');
+                curveWithout.setAttribute('stroke-dasharray', '5,5');
+                mainGroup.appendChild(curveWithout);
+            } else {
+                const rateWithout = calculateRateWithoutFunc();
+                const yWithout = graphHeight - (rateWithout / 100) * graphHeight;
+                const lineWithout = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                lineWithout.setAttribute('x1', '0');
+                lineWithout.setAttribute('y1', yWithout);
+                lineWithout.setAttribute('x2', graphWidth);
+                lineWithout.setAttribute('y2', yWithout);
+                lineWithout.setAttribute('stroke', '#9ca3af');
+                lineWithout.setAttribute('stroke-width', '2');
+                lineWithout.setAttribute('stroke-dasharray', '5,5');
+                mainGroup.appendChild(lineWithout);
+            }
+            
+            // With catalyst curve
+            if (catalystType !== 'none') {
+                let pathDataWith = 'M ';
+                for (let val = 0; val <= xMax; val += xMax/50) {
+                    const rate = calculateRateFunc(val);
+                    const x = (val / xMax) * graphWidth;
+                    const y = graphHeight - (rate / 100) * graphHeight;
+                    pathDataWith += `${x},${y} `;
+                }
+                
+                const curveWith = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                curveWith.setAttribute('d', pathDataWith);
+                curveWith.setAttribute('fill', 'none');
+                curveWith.setAttribute('stroke', catalystType === 'biological' ? '#059669' : '#dc2626');
+                curveWith.setAttribute('stroke-width', '2');
+                mainGroup.appendChild(curveWith);
+            }
+            
+            // Current points
+            const currentVal = svgId === 'rate-temp-graph' ? temperature : pH;
+            const currentX = (currentVal / xMax) * graphWidth;
+            
+            // Without catalyst point
+            const currentRateWithout = svgId === 'rate-temp-graph' ? calculateRateWithoutFunc(currentVal) : calculateRateWithoutFunc();
+            const currentYWithout = graphHeight - (currentRateWithout / 100) * graphHeight;
+            
+            const pointWithout = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            pointWithout.setAttribute('cx', currentX);
+            pointWithout.setAttribute('cy', currentYWithout);
+            pointWithout.setAttribute('r', '3');
+            pointWithout.setAttribute('fill', '#6b7280');
+            pointWithout.setAttribute('stroke', 'white');
+            pointWithout.setAttribute('stroke-width', '1');
+            mainGroup.appendChild(pointWithout);
+            
+            // With catalyst point
+            if (catalystType !== 'none') {
+                const currentRateWith = calculateRateFunc(currentVal);
+                const currentYWith = graphHeight - (currentRateWith / 100) * graphHeight;
+                
+                const pointWith = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                pointWith.setAttribute('cx', currentX);
+                pointWith.setAttribute('cy', currentYWith);
+                pointWith.setAttribute('r', '3');
+                pointWith.setAttribute('fill', catalystType === 'biological' ? '#059669' : '#dc2626');
+                pointWith.setAttribute('stroke', 'white');
+                pointWith.setAttribute('stroke-width', '1');
+                mainGroup.appendChild(pointWith);
+            }
+            
+            svg.appendChild(mainGroup);
+        }
+
+        function calculateRateAtTemperature(temp) {
+            if (catalystType === 'none') {
+                const tempFactor = Math.exp((temp - 25) / 50);
+                const baseRate = Math.exp(-baseActivationEnergy / 20) * tempFactor;
+                const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+                return Math.min(100, (baseRate / maxRate) * 100);
+            }
+            
+            if (catalystType === 'non-biological') {
+                const effectiveEa = Math.max(5, baseActivationEnergy - CATALYST_REDUCTION);
+                const tempFactor = Math.exp((temp - 25) / 50);
+                const baseRate = Math.exp(-effectiveEa / 20) * tempFactor;
+                const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+                return Math.min(100, (baseRate / maxRate) * 100);
+            }
+            
+            if (catalystType === 'biological') {
+                // Calculate effectiveness at this specific temperature
+                const tempDiff = temp - OPTIMAL_TEMP;
+                let tempEffectiveness;
+                if (Math.abs(tempDiff) <= 5) {
+                    tempEffectiveness = 1.0;
+                } else if (Math.abs(tempDiff) <= 15) {
+                    tempEffectiveness = 1.0 - (Math.abs(tempDiff) - 5) * 0.05;
+                } else if (Math.abs(tempDiff) <= 30) {
+                    tempEffectiveness = 0.5 - (Math.abs(tempDiff) - 15) * 0.02;
+                } else if (tempDiff > 30) {
+                    tempEffectiveness = Math.max(0.0, 0.2 - (tempDiff - 30) * 0.02);
+                } else {
+                    tempEffectiveness = 0.2;
+                }
+                
+                // Include current pH effectiveness
+                const pHDiff = Math.abs(pH - OPTIMAL_PH);
+                let pHEffectiveness;
+                if (pHDiff <= 0.5) {
+                    pHEffectiveness = 1.0;
+                } else if (pHDiff <= 2.0) {
+                    pHEffectiveness = 1.0 - (pHDiff - 0.5) * 0.2;
+                } else if (pHDiff <= 4.0) {
+                    pHEffectiveness = 0.7 - (pHDiff - 2.0) * 0.15;
+                } else if (pHDiff <= 5.0) {
+                    pHEffectiveness = 0.4 - (pHDiff - 4.0) * 0.4;
+                } else {
+                    pHEffectiveness = 0.0;
+                }
+                
+                const effectiveness = Math.max(0.0, Math.min(1.0, tempEffectiveness * pHEffectiveness));
+                
+                if (effectiveness === 0) {
+                    // Completely denatured = same as uncatalyzed
+                    const tempFactor = Math.exp((temp - 25) / 50);
+                    const baseRate = Math.exp(-baseActivationEnergy / 20) * tempFactor;
+                    const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+                    return Math.min(100, (baseRate / maxRate) * 100);
+                }
+                
+                const effectiveEa = Math.max(5, baseActivationEnergy - (CATALYST_REDUCTION * effectiveness));
+                const rate = Math.exp(-effectiveEa / 20);
+                const maxRate = Math.exp(-5 / 20);
+                return Math.min(100, (rate / maxRate) * 100);
+            }
+        }
+
+        function calculateRateAtPH(ph) {
+            if (catalystType === 'none' || catalystType === 'non-biological') {
+                return calculateReactionRateWithoutCatalyst();
+            }
+            
+            if (catalystType === 'biological') {
+                // Calculate effectiveness at this specific pH
+                const pHDiff = Math.abs(ph - OPTIMAL_PH);
+                let pHEffectiveness;
+                if (pHDiff <= 0.5) {
+                    pHEffectiveness = 1.0;
+                } else if (pHDiff <= 2.0) {
+                    pHEffectiveness = 1.0 - (pHDiff - 0.5) * 0.2;
+                } else if (pHDiff <= 4.0) {
+                    pHEffectiveness = 0.7 - (pHDiff - 2.0) * 0.15;
+                } else if (pHDiff <= 5.0) {
+                    pHEffectiveness = 0.4 - (pHDiff - 4.0) * 0.4;
+                } else {
+                    pHEffectiveness = 0.0;
+                }
+                
+                // Include current temperature effectiveness
+                const tempDiff = temperature - OPTIMAL_TEMP;
+                let tempEffectiveness;
+                if (Math.abs(tempDiff) <= 5) {
+                    tempEffectiveness = 1.0;
+                } else if (Math.abs(tempDiff) <= 15) {
+                    tempEffectiveness = 1.0 - (Math.abs(tempDiff) - 5) * 0.05;
+                } else if (Math.abs(tempDiff) <= 30) {
+                    tempEffectiveness = 0.5 - (Math.abs(tempDiff) - 15) * 0.02;
+                } else if (tempDiff > 30) {
+                    tempEffectiveness = Math.max(0.0, 0.2 - (tempDiff - 30) * 0.02);
+                } else {
+                    tempEffectiveness = 0.2;
+                }
+                
+                const effectiveness = Math.max(0.0, Math.min(1.0, tempEffectiveness * pHEffectiveness));
+                
+                if (effectiveness === 0) {
+                    // Completely denatured = same as uncatalyzed
+                    return calculateReactionRateWithoutCatalyst();
+                }
+                
+                const effectiveEa = Math.max(5, baseActivationEnergy - (CATALYST_REDUCTION * effectiveness));
+                const rate = Math.exp(-effectiveEa / 20);
+                const maxRate = Math.exp(-5 / 20);
+                return Math.min(100, (rate / maxRate) * 100);
+            }
+        }
+
+        function calculateRateAtTemperatureWithoutCatalyst(temp) {
+            const tempFactor = Math.exp((temp - 25) / 50);
+            const baseRate = Math.exp(-baseActivationEnergy / 20) * tempFactor;
+            const maxRate = Math.exp(-5 / 20) * Math.exp((100 - 25) / 50);
+            return Math.min(100, (baseRate / maxRate) * 100);
+        }
+
+        function updateRateGraphs() {
+            drawRateGraph('rate-temp-graph', 100, 'Temperature (°C)', calculateRateAtTemperature, calculateRateAtTemperatureWithoutCatalyst);
+            drawRateGraph('rate-ph-graph', 14, 'pH', calculateRateAtPH, () => calculateReactionRateWithoutCatalyst());
+            updateRateBar();
+        }
+
+        function updateRateBar() {
+            const rateWith = catalystType !== 'none' ? calculateReactionRate() : 0;
+            const rateWithout = calculateReactionRateWithoutCatalyst();
+            
+            const rateFillWith = document.getElementById('rate-bar-fill-with');
+            const rateValueWith = document.getElementById('rate-value-with');
+            const rateFillWithout = document.getElementById('rate-bar-fill-without');
+            const rateValueWithout = document.getElementById('rate-value-without');
+            
+            if (catalystType !== 'none') {
+                rateFillWith.style.height = `${rateWith * 2}px`;
+                rateValueWith.textContent = `${rateWith.toFixed(1)}%`;
+                rateFillWith.style.opacity = '1';
+            } else {
+                rateFillWith.style.height = '0px';
+                rateValueWith.textContent = 'N/A';
+                rateFillWith.style.opacity = '0.3';
+            }
+            
+            rateFillWithout.style.height = `${rateWithout * 2}px`;
+            rateValueWithout.textContent = `${rateWithout.toFixed(1)}%`;
+        }
+
+        function updateCatalystInfo() {
+            const effectiveEa = getEffectiveActivationEnergy();
+            const reduction = baseActivationEnergy - effectiveEa;
+            const effectiveness = calculateEnzymeEffectiveness();
+            
+            document.getElementById('catalyst-display').textContent = 
+                catalystType === 'none' ? 'None' :
+                catalystType === 'biological' ? 'Biological (Enzyme)' :
+                'Non-Biological';
+            
+            // Show/hide energy-related info based on advanced mode
+            const baseEaItem = document.getElementById('base-ea-display').parentElement;
+            const effectiveEaItem = document.getElementById('effective-ea-display').parentElement;
+            const reductionItem = document.getElementById('reduction-display').parentElement;
+            
+            if (advancedMode) {
+                baseEaItem.style.display = 'flex';
+                effectiveEaItem.style.display = 'flex';
+                reductionItem.style.display = 'flex';
+                
+                document.getElementById('base-ea-display').textContent = `${baseActivationEnergy} kJ/mol`;
+                document.getElementById('effective-ea-display').textContent = `${effectiveEa.toFixed(1)} kJ/mol`;
+                document.getElementById('reduction-display').textContent = `${reduction.toFixed(1)} kJ/mol`;
+            } else {
+                baseEaItem.style.display = 'none';
+                effectiveEaItem.style.display = 'none';
+                reductionItem.style.display = 'none';
+            }
+            
+            document.getElementById('conditions-display').textContent = `T: ${temperature}°C, pH: ${pH}`;
+            
+            const effectivenessContainer = document.getElementById('effectiveness-container');
+            if (catalystType === 'biological') {
+                effectivenessContainer.style.display = 'block';
+                document.getElementById('effectiveness-display').textContent = effectiveness < 1.0 ? 'Reduced' : 'Optimal';
+                // Hide the effectiveness bar
+                const effectivenessBar = effectivenessContainer.querySelector('.effectiveness-bar');
+                if (effectivenessBar) {
+                    effectivenessBar.style.display = 'none';
+                }
+            } else {
+                effectivenessContainer.style.display = 'none';
+            }
+        }
+
+        // Initialize
+        updateReactionTypeIndicator();
+        updateDiagram();
+    </script>
+</body>
+</html>
