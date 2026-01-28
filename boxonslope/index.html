@@ -1,0 +1,1098 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work and Energy on a Slope</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .main-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .simulation-panel {
+            flex: 5;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        
+        .controls-panel {
+            flex: 2.5;
+            min-width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        
+        .energy-panel {
+            flex: 2.5;
+            min-width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .slider-container {
+            margin-top: 10px;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
+        
+        .param-toggle {
+            margin-bottom: 12px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .param-toggle label {
+            display: inline-block;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        #paramSet2 {
+            display: none;
+        }
+        
+        .buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        #startBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #pauseBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        #resetBtn {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        /* Energy visualization */
+        .bar-chart {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bar-container {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            padding: 5px 2px 0;
+            position: relative;
+        }
+        
+        .bar-labels {
+            display: flex;
+            margin-top: 35px;
+            padding: 0 2px;
+        }
+        
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+            position: relative;
+        }
+        
+        .bar {
+            width: 100%;
+            height: 150px;
+            position: relative;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            transition: height 0.3s;
+            border-radius: 4px 4px 0 0;
+            min-height: 2px;
+        }
+        
+        /* Separate KE bars for initial and gained KE */
+        .initial-ke-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #BF360C;
+            border: 1px solid #7f1e00;
+            transition: height 0.3s;
+            border-radius: 4px 4px 0 0;
+            min-height: 2px;
+            z-index: 2;
+        }
+        
+        .push-work { 
+            background-color: #4CAF50; 
+            border: 1px solid #2E7D32;
+        }
+        
+        .friction-work { 
+            background-color: #F44336; 
+            border: 1px solid #C62828;
+        }
+        
+        .gpe { 
+            background-color: #2196F3; 
+            border: 1px solid #1565C0;
+        }
+        
+        .ke { 
+            background-color: #FF9800; 
+            border: 1px solid #EF6C00;
+        }
+        
+        .bar-label {
+            font-size: 9px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+            margin-bottom: 3px;
+            word-wrap: break-word;
+            width: 100%;
+        }
+        
+        .bar-value {
+            font-size: 10px;
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+        }
+        
+        .calculations {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+        }
+        
+        .calculations p {
+            margin: 3px 0;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .metric-item {
+            background-color: #f5f5f5;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .ke-legend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 3px;
+            font-size: 9px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 5px;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            margin-right: 3px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 11px;
+            font-style: italic;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .simulation-panel, .controls-panel, .energy-panel {
+                flex: 1;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="simulation-panel">
+            <h2>Work and Energy on a Slope</h2>
+            <canvas id="simulationCanvas" width="600" height="400"></canvas>
+            <div class="slider-container">
+                <label for="positionSlider">Box Position:</label>
+                <input type="range" id="positionSlider" min="0" max="100" value="0" disabled>
+            </div>
+        </div>
+        
+        <div class="controls-panel">
+            <h2>Parameters</h2>
+            <div class="param-toggle">
+                <label>
+                    <input type="radio" name="paramSet" value="set1" checked> Standard Mode
+                </label>
+                <label>
+                    <input type="radio" name="paramSet" value="set2"> Time & Speed Mode
+                </label>
+            </div>
+            
+            <!-- Standard Parameter Set -->
+            <div id="paramSet1">
+                <div class="control-group">
+                    <label for="mass">Mass (kg):</label>
+                    <input type="number" id="mass" min="0.1" step="0.1" value="1">
+                </div>
+                <div class="control-group">
+                    <label for="initialSpeed">Initial Speed (m/s):</label>
+                    <input type="number" id="initialSpeed" min="0" step="0.1" value="0">
+                </div>
+                <div class="control-group">
+                    <label for="slopeLength">Slope Length (m):</label>
+                    <input type="number" id="slopeLength" min="1" step="0.1" value="10">
+                </div>
+                <div class="control-group">
+                    <label for="height">Height (m):</label>
+                    <input type="number" id="height" min="0.1" step="0.1" value="5">
+                </div>
+                <div class="control-group">
+                    <label for="pushForce">Push Force (N):</label>
+                    <input type="number" id="pushForce" min="0" step="0.1" value="20">
+                </div>
+                <div class="control-group">
+                    <label for="frictionForce">Friction Force (N):</label>
+                    <input type="number" id="frictionForce" min="0" step="0.1" value="5">
+                </div>
+            </div>
+            
+            <!-- Time & Speed Parameter Set -->
+            <div id="paramSet2">
+                <div class="control-group">
+                    <label for="mass2">Mass (kg):</label>
+                    <input type="number" id="mass2" min="0.1" step="0.1" value="1">
+                </div>
+                <div class="control-group">
+                    <label for="initialSpeed2">Initial Speed (m/s):</label>
+                    <input type="number" id="initialSpeed2" min="0" step="0.1" value="0">
+                </div>
+                <div class="control-group">
+                    <label for="frictionForce2">Friction Force (N):</label>
+                    <input type="number" id="frictionForce2" min="0" step="0.1" value="5">
+                </div>
+                <div class="control-group">
+                    <label for="timeTaken">Time to Top (s):</label>
+                    <input type="number" id="timeTaken" min="0.1" step="0.1" value="5">
+                </div>
+                <div class="control-group">
+                    <label for="finalSpeed">Final Speed (m/s):</label>
+                    <input type="number" id="finalSpeed" min="0" step="0.1" value="2">
+                </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #666;">
+                    <p id="calcLength">Slope Length: 10.00 m</p>
+                    <p id="calcHeight">Height: 5.00 m</p>
+                    <p id="calcForce">Push Force: 20.00 N</p>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label style="display: inline-flex; align-items: center;">
+                    <input type="checkbox" id="slowMotion" style="margin-right: 5px;"> Slow Motion (0.5x)
+                </label>
+            </div>
+            
+            <div class="buttons">
+                <button id="startBtn">Start</button>
+                <button id="pauseBtn" disabled>Pause</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+        </div>
+        
+        <div class="energy-panel">
+            <h2>Energy Analysis</h2>
+            
+            <!-- Bar chart with separate labels section -->
+            <div class="bar-chart">
+                <div class="bar-container">
+                    <div class="bar-wrapper">
+                        <div class="bar">
+                            <div class="bar-fill push-work" id="pushWorkBar" style="height: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar">
+                            <div class="bar-fill friction-work" id="frictionWorkBar" style="height: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar">
+                            <div class="bar-fill gpe" id="gpeBar" style="height: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar">
+                            <div class="bar-fill ke" id="keBar" style="height: 0%;"></div>
+                            <div class="initial-ke-bar-fill" id="initialKEBar" style="height: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bar-labels">
+                    <div class="bar-wrapper">
+                        <div class="bar-label">Work Done by Push Force</div>
+                        <div class="bar-value" id="pushWorkValue">0 J</div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar-label">Work Done Against Friction</div>
+                        <div class="bar-value" id="frictionWorkValue">0 J</div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar-label">GPE</div>
+                        <div class="bar-value" id="gpeValue">0 J</div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar-label">KE</div>
+                        <div class="bar-value" id="keValue">0 J</div>
+                        <div class="ke-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #BF360C;"></div>
+                                <span>Initial</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #FF9800;"></div>
+                                <span>Gained</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="calculations">
+                <p><strong>Calculations:</strong></p>
+                <p>Work Done by Push Force = F×s = <span id="pushWorkCalc">0 J</span></p>
+                <p>Work Done Against Friction = -F×s = <span id="frictionWorkCalc">0 J</span></p>
+                <p>GPE = m×g×h = <span id="gpeCalc">0 J</span></p>
+                <p>KE = ½m×v² = <span id="keCalc">0 J</span></p>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric-item">
+                    <strong>Position:</strong> <span id="positionValue">0 m</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Velocity:</strong> <span id="velocityValue">0 m/s</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Distance:</strong> <span id="distanceValue">0 m</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Height:</strong> <span id="heightValue">0 m</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Made by James Kua | Temasek Junior College
+    </div>
+    
+    <script>
+        // Constants
+        const GRAVITY = 9.81;
+        
+        // DOM Elements
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const positionSlider = document.getElementById('positionSlider');
+        const slowMotionCheckbox = document.getElementById('slowMotion');
+        const paramSet1 = document.getElementById('paramSet1');
+        const paramSet2 = document.getElementById('paramSet2');
+        const radioButtons = document.querySelectorAll('input[name="paramSet"]');
+        
+        // Standard Mode Inputs
+        const massInput = document.getElementById('mass');
+        const initialSpeedInput = document.getElementById('initialSpeed');
+        const slopeLengthInput = document.getElementById('slopeLength');
+        const heightInput = document.getElementById('height');
+        const pushForceInput = document.getElementById('pushForce');
+        const frictionForceInput = document.getElementById('frictionForce');
+        
+        // Time & Speed Mode Inputs
+        const massInput2 = document.getElementById('mass2');
+        const initialSpeedInput2 = document.getElementById('initialSpeed2');
+        const frictionForceInput2 = document.getElementById('frictionForce2');
+        const timeTakenInput = document.getElementById('timeTaken');
+        const finalSpeedInput = document.getElementById('finalSpeed');
+        const calcLengthDisplay = document.getElementById('calcLength');
+        const calcHeightDisplay = document.getElementById('calcHeight');
+        const calcForceDisplay = document.getElementById('calcForce');
+        
+        // Energy Display Elements
+        const pushWorkBar = document.getElementById('pushWorkBar');
+        const frictionWorkBar = document.getElementById('frictionWorkBar');
+        const gpeBar = document.getElementById('gpeBar');
+        const keBar = document.getElementById('keBar');
+        const initialKEBar = document.getElementById('initialKEBar');
+        const pushWorkValue = document.getElementById('pushWorkValue');
+        const frictionWorkValue = document.getElementById('frictionWorkValue');
+        const gpeValue = document.getElementById('gpeValue');
+        const keValue = document.getElementById('keValue');
+        const pushWorkCalc = document.getElementById('pushWorkCalc');
+        const frictionWorkCalc = document.getElementById('frictionWorkCalc');
+        const gpeCalc = document.getElementById('gpeCalc');
+        const keCalc = document.getElementById('keCalc');
+        
+        // Metrics Display Elements
+        const positionValue = document.getElementById('positionValue');
+        const velocityValue = document.getElementById('velocityValue');
+        const distanceValue = document.getElementById('distanceValue');
+        const heightValue = document.getElementById('heightValue');
+        
+        // Simulation state
+        let simRunning = false;
+        let simPaused = false;
+        let slowMotion = false;
+        let animationFrameId = null;
+        let lastTimestamp = 0;
+        
+        const state = {
+            mass: 1,
+            initialSpeed: 0,
+            currentSpeed: 0,
+            slopeLength: 10,
+            height: 5,
+            pushForce: 20,
+            frictionForce: 5,
+            boxPosition: 0, // 0 to 1 (normalized position along slope)
+            time: 0
+        };
+        
+        // Derived values
+        let angle = 0;
+        let maxPushWork = 0;
+        let maxFrictionWork = 0;
+        let maxGPE = 0;
+        let maxKE = 0;
+        let maxTotalKE = 0;
+        
+        // Initialize the simulation
+        function initSimulation() {
+            // Check which parameter set is active
+            const useParamSet2 = document.querySelector('input[name="paramSet"]:checked').value === 'set2';
+            
+            if (useParamSet2) {
+                // Get values from Time & Speed mode
+                state.mass = parseFloat(massInput2.value);
+                state.initialSpeed = parseFloat(initialSpeedInput2.value);
+                state.frictionForce = parseFloat(frictionForceInput2.value);
+                
+                const timeTaken = parseFloat(timeTakenInput.value);
+                const finalSpeed = parseFloat(finalSpeedInput.value);
+                
+                // Calculate acceleration from initial speed, final speed and time
+                const acceleration = (finalSpeed - state.initialSpeed) / timeTaken;
+                
+                // Calculate distance traveled using kinematic equation: s = ut + 0.5at²
+                state.slopeLength = state.initialSpeed * timeTaken + 0.5 * acceleration * timeTaken * timeTaken;
+                
+                // Calculate net force needed: F = ma
+                const netForce = state.mass * acceleration;
+                
+                // Set a reasonable height (e.g., half the slope length) to calculate angle
+                state.height = state.slopeLength * 0.5;
+                angle = Math.atan(state.height / state.slopeLength);
+                
+                // Calculate gravitational component: mg*sin(θ)
+                const gravityComponent = state.mass * GRAVITY * Math.sin(angle);
+                
+                // Calculate required push force: F_push = F_net + F_friction + F_gravity
+                state.pushForce = netForce + state.frictionForce + gravityComponent;
+                
+                // Update calculated values display
+                calcLengthDisplay.textContent = `Slope Length: ${state.slopeLength.toFixed(2)} m`;
+                calcHeightDisplay.textContent = `Height: ${state.height.toFixed(2)} m`;
+                calcForceDisplay.textContent = `Push Force: ${state.pushForce.toFixed(2)} N`;
+                
+                // Keep standard inputs in sync
+                slopeLengthInput.value = state.slopeLength.toFixed(1);
+                heightInput.value = state.height.toFixed(1);
+                pushForceInput.value = state.pushForce.toFixed(1);
+            } else {
+                // Get values from Standard mode
+                state.mass = parseFloat(massInput.value);
+                state.initialSpeed = parseFloat(initialSpeedInput.value);
+                state.slopeLength = parseFloat(slopeLengthInput.value);
+                state.height = parseFloat(heightInput.value);
+                state.pushForce = parseFloat(pushForceInput.value);
+                state.frictionForce = parseFloat(frictionForceInput.value);
+            }
+            
+            // Reset simulation state
+            state.currentSpeed = state.initialSpeed;
+            state.boxPosition = 0;
+            state.time = 0;
+            
+            // Calculate angle and related values
+            angle = Math.atan(state.height / state.slopeLength);
+            
+            // Calculate initial KE
+            const initialKE = 0.5 * state.mass * state.initialSpeed * state.initialSpeed;
+            
+            // Calculate maximum energy values for scaling the bars
+            maxPushWork = state.pushForce * state.slopeLength;
+            maxFrictionWork = state.frictionForce * state.slopeLength;
+            maxGPE = state.mass * GRAVITY * state.height;
+            
+            // Estimate max KE - either at start or end depending on forces
+            const netForce = state.pushForce - state.frictionForce - state.mass * GRAVITY * Math.sin(angle);
+            const acceleration = netForce / state.mass;
+            const finalSpeed = Math.sqrt(Math.max(0, state.initialSpeed * state.initialSpeed + 2 * acceleration * state.slopeLength));
+            const finalKE = 0.5 * state.mass * finalSpeed * finalSpeed;
+            
+            // Set max values for KE bars
+            maxKE = Math.max(initialKE, finalKE);
+            maxTotalKE = maxKE;
+            
+            // Reset position slider
+            positionSlider.max = 100;
+            positionSlider.value = 0;
+            positionSlider.disabled = true;
+            
+            // Update checkbox state
+            slowMotion = slowMotionCheckbox.checked;
+            
+            // Draw initial state
+            draw();
+            updateEnergy();
+        }
+        
+        // Draw the simulation
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set dimensions and padding
+            const padding = 40;
+            const baseY = canvas.height - padding;
+            const baseX = padding;
+            
+            // Calculate angle
+            angle = Math.atan(state.height / state.slopeLength);
+            
+            // Make triangle fill more of the canvas
+            const canvasWidth = canvas.width - 2 * padding;
+            const canvasHeight = canvas.height - 2 * padding;
+            
+            // Make triangle use more of the available width
+            const widthUsage = 0.8; // Use 80% of available width
+            const scaledWidth = canvasWidth * widthUsage;
+            
+            // Calculate height based on the angle and the state parameters
+            const heightToWidthRatio = state.height / state.slopeLength * Math.cos(angle);
+            const scaledHeight = scaledWidth * heightToWidthRatio;
+            
+            // Ensure it doesn't get too tall
+            const maxHeightRatio = 0.8; // Maximum 80% of available height
+            const maxHeight = canvasHeight * maxHeightRatio;
+            
+            // Adjust if needed
+            let finalHeight = scaledHeight;
+            let finalWidth = scaledWidth;
+            
+            if (scaledHeight > maxHeight) {
+                finalHeight = maxHeight;
+                finalWidth = finalHeight / heightToWidthRatio;
+            }
+            
+            // Calculate coordinates of the triangle vertices
+            const bottomLeftX = baseX;
+            const bottomLeftY = baseY;
+            const bottomRightX = baseX + finalWidth;
+            const bottomRightY = baseY;
+            const topX = bottomRightX;
+            const topY = baseY - finalHeight;
+            
+            // Draw ground (base line)
+            ctx.beginPath();
+            ctx.moveTo(baseX - 20, baseY);
+            ctx.lineTo(canvas.width - padding, baseY);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw slope as a proper right triangle
+            ctx.beginPath();
+            ctx.moveTo(bottomLeftX, bottomLeftY);     // Start at bottom left
+            ctx.lineTo(topX, topY);                   // Draw to top right
+            ctx.lineTo(bottomRightX, bottomRightY);   // Draw to bottom right
+            ctx.closePath();
+            
+            // Fill the triangle
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fill();
+            
+            // Draw triangle outline
+            ctx.beginPath();
+            ctx.moveTo(bottomLeftX, bottomLeftY);
+            ctx.lineTo(topX, topY);
+            ctx.lineTo(bottomRightX, bottomRightY);
+            ctx.lineTo(bottomLeftX, bottomLeftY);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw height line
+            ctx.beginPath();
+            ctx.moveTo(topX, topY);
+            ctx.lineTo(topX, baseY);
+            ctx.setLineDash([5, 3]);
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Calculate box position on the hypotenuse (slope)
+            const boxDistance = state.boxPosition * Math.sqrt(Math.pow(topX - bottomLeftX, 2) + Math.pow(topY - bottomLeftY, 2));
+            const slopeAngle = Math.atan2(bottomLeftY - topY, topX - bottomLeftX);
+            
+            const boxPositionX = bottomLeftX + boxDistance * Math.cos(slopeAngle);
+            const boxPositionY = bottomLeftY - boxDistance * Math.sin(slopeAngle);
+            
+            // Box size - make slightly larger for better visibility
+            const boxSize = 24;
+            
+            // Draw box
+            ctx.save();
+            ctx.translate(boxPositionX, boxPositionY);
+            ctx.rotate(-slopeAngle); // Rotate to align with slope
+            ctx.fillStyle = '#3f51b5';
+            ctx.fillRect(-boxSize/2, -boxSize, boxSize, boxSize); // Box sits on slope
+            ctx.strokeStyle = '#1a237e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-boxSize/2, -boxSize, boxSize, boxSize);
+            ctx.restore();
+            
+            // Draw labels
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#333';
+            
+            // Length label
+            ctx.fillText(`Slope Length: ${state.slopeLength.toFixed(1)} m`, 
+                (bottomLeftX + topX) / 2 - 70, baseY + 25);
+            
+            // Height label
+            ctx.fillText(`Height: ${state.height.toFixed(1)} m`, 
+                topX + 5, (baseY + topY) / 2);
+        }
+        
+        // Update energy values and display
+        function updateEnergy() {
+            // Calculate current position along the slope
+            const currentDistance = state.boxPosition * state.slopeLength;
+            const currentHeight = state.boxPosition * state.height;
+            
+            // Calculate initial KE (based on initial speed)
+            const initialKE = 0.5 * state.mass * state.initialSpeed * state.initialSpeed;
+            
+            // Calculate energies
+            const pushWork = state.pushForce * currentDistance;
+            const frictionWork = state.frictionForce * currentDistance;
+            const gpe = state.mass * GRAVITY * currentHeight;
+            
+            // Calculate total KE based on energy conservation
+            const totalEnergy = initialKE + pushWork - frictionWork;
+            const availableEnergy = totalEnergy - gpe;
+            const totalKE = Math.max(0, availableEnergy);
+            
+            // Calculate additional KE (gained during motion)
+            const additionalKE = Math.max(0, totalKE - initialKE);
+            
+            // Find max value for scaling
+            const maxValue = Math.max(maxPushWork, maxFrictionWork, maxGPE, maxTotalKE, initialKE);
+            
+            // Update bar heights
+            pushWorkBar.style.height = `${Math.max(2, (pushWork / maxValue) * 100)}%`;
+            frictionWorkBar.style.height = `${Math.max(2, (frictionWork / maxValue) * 100)}%`;
+            gpeBar.style.height = `${Math.max(2, (gpe / maxValue) * 100)}%`;
+            
+            // Update KE bars - total KE in orange
+            keBar.style.height = `${Math.max(2, (totalKE / maxValue) * 100)}%`;
+            
+            // Only show initial KE when there is some (darker color on top)
+            if (initialKE > 0) {
+                initialKEBar.style.height = `${Math.max(2, (initialKE / maxValue) * 100)}%`;
+                initialKEBar.style.display = 'block';
+            } else {
+                initialKEBar.style.display = 'none';
+            }
+            
+            // Update energy values
+            pushWorkValue.textContent = `${Math.round(pushWork)} J`;
+            frictionWorkValue.textContent = `${Math.round(frictionWork)} J`;
+            gpeValue.textContent = `${Math.round(gpe)} J`;
+            keValue.textContent = `${Math.round(totalKE)} J`;
+            
+            // Update calculation details
+            pushWorkCalc.textContent = `${Math.round(state.pushForce)}N × ${Math.round(currentDistance)}m = ${Math.round(pushWork)}J`;
+            frictionWorkCalc.textContent = `${Math.round(state.frictionForce)}N × ${Math.round(currentDistance)}m = ${Math.round(frictionWork)}J`;
+            gpeCalc.textContent = `${Math.round(state.mass)}kg × 9.81m/s² × ${Math.round(currentHeight)}m = ${Math.round(gpe)}J`;
+            
+            // Show KE details with initial and total values
+            if (initialKE > 0) {
+                keCalc.textContent = `Total: ${Math.round(totalKE)}J (Initial: ${Math.round(initialKE)}J, Gained: ${Math.round(additionalKE)}J)`;
+            } else {
+                keCalc.textContent = `${Math.round(totalKE)}J`;
+            }
+            
+            // Update metrics
+            positionValue.textContent = `${Math.round(currentDistance)} m`;
+            velocityValue.textContent = `${Math.round(state.currentSpeed)} m/s`;
+            distanceValue.textContent = `${Math.round(currentDistance)} m`;
+            heightValue.textContent = `${Math.round(currentHeight)} m`;
+        }
+        
+        // Update simulation state
+        function updateSimulation(timestamp) {
+            if (!simRunning || simPaused) return;
+            
+            // Calculate time delta in seconds
+            const deltaTime = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+            
+            // Skip if delta is too large (first frame or lag)
+            if (deltaTime > 0.1) {
+                animationFrameId = requestAnimationFrame(updateSimulation);
+                return;
+            }
+            
+            // Apply slow motion if enabled
+            const adjustedDeltaTime = slowMotion ? deltaTime * 0.5 : deltaTime;
+            
+            // Add time to simulation
+            state.time += adjustedDeltaTime;
+            
+            // Calculate forces and acceleration
+            const gravityParallel = state.mass * GRAVITY * Math.sin(angle);
+            const netForce = state.pushForce - state.frictionForce - gravityParallel;
+            const acceleration = netForce / state.mass;
+            
+            // Calculate position increment using current speed
+            const oldPosition = state.boxPosition;
+            
+            // Include acceleration in position update for cases with zero initial velocity
+            const deltaPosition = (state.currentSpeed * adjustedDeltaTime + 
+                                  0.5 * acceleration * adjustedDeltaTime * adjustedDeltaTime) / state.slopeLength;
+            state.boxPosition += deltaPosition;
+            
+            // Recalculate speed based on energy conservation
+            const initialKE = 0.5 * state.mass * state.initialSpeed * state.initialSpeed;
+            const currentDistance = state.boxPosition * state.slopeLength;
+            const currentHeight = state.boxPosition * state.height;
+            
+            const pushWork = state.pushForce * currentDistance;
+            const frictionWork = state.frictionForce * currentDistance;
+            const gpe = state.mass * GRAVITY * currentHeight;
+            
+            // Total energy = initial KE + push work - friction work
+            const totalEnergy = initialKE + pushWork - frictionWork;
+            
+            // Available energy for KE = total energy - GPE
+            const availableEnergy = totalEnergy - gpe;
+            
+            // Calculate current speed based on available energy
+            if (availableEnergy > 0) {
+                state.currentSpeed = Math.sqrt(2 * availableEnergy / state.mass);
+            } else {
+                state.currentSpeed = 0;
+                state.boxPosition = Math.min(state.boxPosition, oldPosition); // Don't let box continue if no energy
+            }
+            
+            // Check if box reached top of slope
+            if (state.boxPosition >= 1) {
+                state.boxPosition = 1;
+                simRunning = false;
+                pauseBtn.disabled = true;
+                startBtn.disabled = false;
+                positionSlider.disabled = false; // Enable slider when box reaches top
+            }
+            
+            // Update position slider
+            positionSlider.value = state.boxPosition * 100;
+            
+            // Update display
+            draw();
+            updateEnergy();
+            
+            // Schedule next frame
+            if (simRunning && !simPaused) {
+                animationFrameId = requestAnimationFrame(updateSimulation);
+            }
+        }
+        
+        // Start simulation
+        function startSimulation() {
+            if (!simRunning) {
+                simRunning = true;
+                simPaused = false;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                positionSlider.disabled = true;
+                
+                // Apply slow motion setting
+                slowMotion = slowMotionCheckbox.checked;
+                
+                // Start animation loop
+                lastTimestamp = performance.now();
+                animationFrameId = requestAnimationFrame(updateSimulation);
+            }
+        }
+        
+        // Pause simulation
+        function pauseSimulation() {
+            if (simRunning && !simPaused) {
+                simPaused = true;
+                pauseBtn.textContent = 'Resume';
+                positionSlider.disabled = false;
+            } else if (simRunning && simPaused) {
+                simPaused = false;
+                pauseBtn.textContent = 'Pause';
+                positionSlider.disabled = true;
+                lastTimestamp = performance.now();
+                animationFrameId = requestAnimationFrame(updateSimulation);
+            }
+        }
+        
+        // Reset simulation
+        function resetSimulation() {
+            simRunning = false;
+            simPaused = false;
+            pauseBtn.textContent = 'Pause';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            positionSlider.disabled = true;
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            initSimulation();
+        }
+        
+        // Handle position slider changes
+        function handleSliderChange() {
+            if (simPaused || !simRunning) { // Allow slider to work when paused OR completed
+                state.boxPosition = positionSlider.value / 100;
+                
+                // Recalculate speed based on energy conservation
+                const initialKE = 0.5 * state.mass * state.initialSpeed * state.initialSpeed;
+                const currentDistance = state.boxPosition * state.slopeLength;
+                const currentHeight = state.boxPosition * state.height;
+                
+                const pushWork = state.pushForce * currentDistance;
+                const frictionWork = state.frictionForce * currentDistance;
+                const gpe = state.mass * GRAVITY * currentHeight;
+                
+                // Total energy = initial KE + push work - friction work
+                const totalEnergy = initialKE + pushWork - frictionWork;
+                
+                // Available energy for KE = total energy - GPE
+                const availableEnergy = totalEnergy - gpe;
+                
+                if (availableEnergy > 0) {
+                    state.currentSpeed = Math.sqrt(2 * availableEnergy / state.mass);
+                } else {
+                    state.currentSpeed = 0;
+                }
+                
+                // Update display
+                draw();
+                updateEnergy();
+            }
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startSimulation);
+        pauseBtn.addEventListener('click', pauseSimulation);
+        resetBtn.addEventListener('click', resetSimulation);
+        positionSlider.addEventListener('input', handleSliderChange);
+        
+        slowMotionCheckbox.addEventListener('change', function() {
+            slowMotion = this.checked;
+        });
+        
+        // Parameter set radio buttons
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'set1') {
+                    paramSet1.style.display = 'block';
+                    paramSet2.style.display = 'none';
+                } else {
+                    paramSet1.style.display = 'none';
+                    paramSet2.style.display = 'block';
+                    
+                    // Copy values from set 1 to set 2
+                    massInput2.value = massInput.value;
+                    initialSpeedInput2.value = initialSpeedInput.value;
+                    frictionForceInput2.value = frictionForceInput.value;
+                    
+                    // Calculate corresponding time and final speed
+                    const currAngle = Math.atan(parseFloat(heightInput.value) / parseFloat(slopeLengthInput.value));
+                    const netForce = parseFloat(pushForceInput.value) - parseFloat(frictionForceInput.value) - 
+                                    parseFloat(massInput.value) * GRAVITY * Math.sin(currAngle);
+                    const acceleration = netForce / parseFloat(massInput.value);
+                    const distance = parseFloat(slopeLengthInput.value);
+                    const initialVelocity = parseFloat(initialSpeedInput.value);
+                    
+                    // Calculate final velocity using v² = u² + 2as
+                    const finalVelocitySquared = initialVelocity * initialVelocity + 2 * acceleration * distance;
+                    const finalVelocity = finalVelocitySquared > 0 ? Math.sqrt(finalVelocitySquared) : 0;
+                    
+                    // Calculate time: if acceleration is close to zero, use distance/velocity
+                    const timeTaken = Math.abs(acceleration) > 0.001 ? 
+                        (finalVelocity - initialVelocity) / acceleration : 
+                        distance / (initialVelocity > 0 ? initialVelocity : 1);
+                    
+                    // Update Time & Speed mode inputs
+                    timeTakenInput.value = Math.max(0.1, timeTaken).toFixed(1);
+                    finalSpeedInput.value = Math.max(0, finalVelocity).toFixed(1);
+                    
+                    // Update calculated values display
+                    calcLengthDisplay.textContent = `Slope Length: ${slopeLengthInput.value} m`;
+                    calcHeightDisplay.textContent = `Height: ${heightInput.value} m`;
+                    calcForceDisplay.textContent = `Push Force: ${pushForceInput.value} N`;
+                }
+                
+                resetSimulation();
+            });
+        });
+        
+        // Input change handlers
+        const standardInputs = [massInput, initialSpeedInput, slopeLengthInput, heightInput, pushForceInput, frictionForceInput];
+        standardInputs.forEach(input => {
+            input.addEventListener('change', resetSimulation);
+        });
+        
+        const timeSpeedInputs = [massInput2, initialSpeedInput2, frictionForceInput2, timeTakenInput, finalSpeedInput];
+        timeSpeedInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                if (document.querySelector('input[name="paramSet"]:checked').value === 'set2') {
+                    resetSimulation();
+                }
+            });
+        });
+        
+        // Initialize the simulation when page loads
+        window.addEventListener('load', initSimulation);
+    </script>
+</body>
+</html>
