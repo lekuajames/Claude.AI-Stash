@@ -1,0 +1,1435 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecosystem Food Web Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .simulation-area {
+            flex: 7;
+            position: relative;
+            min-height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            overflow: hidden;
+        }
+        .controls {
+            flex: 3;
+            padding-left: 20px;
+        }
+        .control-panel {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.active {
+            background-color: #2196F3;
+        }
+        button.remove {
+            background-color: #f44336;
+        }
+        button.remove:hover {
+            background-color: #d32f2f;
+        }
+        button.apply {
+            background-color: #2196F3;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button.apply:hover {
+            background-color: #0b7dda;
+        }
+        .toggle-btn {
+            background-color: #9E9E9E;
+        }
+        .toggle-btn.active {
+            background-color: #2196F3;
+        }
+        .species-box {
+            position: absolute;
+            width: 170px;
+            height: 90px; /* Increased height for all indicators */
+            background-color: white;
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+            z-index: 1;
+            padding: 5px;
+        }
+        .species-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+            width: 100%;
+        }
+        .energy-indicator {
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        .population-indicator {
+            font-size: 12px;
+            margin-top: 2px;
+            font-weight: bold;
+        }
+        .population-status {
+            font-size: 10px;
+            font-style: italic;
+            color: #666;
+            margin-top: 3px;
+            text-align: center;
+            background-color: #f9f9f9;
+            padding: 2px 5px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .population-bar-container {
+            position: absolute;
+            left: -15px;
+            top: 0;
+            height: 100%;
+            width: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px 0 0 4px;
+            overflow: hidden;
+        }
+        .population-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #4CAF50;
+        }
+        .population-bar-label {
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 9px;
+            font-weight: bold;
+            color: #333;
+            background-color: rgba(255,255,255,0.7);
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+        .population-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #4CAF50;
+        }
+        .arrow {
+            position: absolute;
+            pointer-events: none;
+            z-index: 0;
+            height: 2px;
+            background-color: #333;
+            transform-origin: 0 0;
+        }
+        .arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 10px solid #333;
+            position: absolute;
+            transform: rotate(90deg);
+        }
+        .bar-graph {
+            height: 200px;
+            margin-bottom: 30px; /* Increased bottom margin for labels */
+            position: relative;
+        }
+        .bar {
+            position: absolute;
+            bottom: 0;
+            width: 30px;
+            background-color: #4CAF50;
+            transition: height 0.5s;
+            display: flex;
+            justify-content: center;
+        }
+        .bar-label {
+            position: absolute;
+            bottom: -25px; /* Move labels lower for better visibility */
+            text-align: center;
+            font-size: 11px;
+            width: 40px; /* Wider to fit text */
+            overflow: visible; /* Allow text to flow outside boundaries */
+            white-space: nowrap;
+            transform: rotate(-30deg); /* Rotate for better spacing */
+            transform-origin: left top;
+            color: #333; /* Darker color for better contrast */
+            font-weight: bold;
+        }
+        .bar-value {
+            position: absolute;
+            top: -20px;
+            color: white;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        .species-controls {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .slider {
+            flex: 1;
+            margin: 0 10px;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="simulation-area" id="simulation-area"></div>
+        <div class="controls">
+            <div class="control-panel">
+                <h3>Species Controls</h3>
+                <button id="add-species-btn">Add Species</button>
+                <button id="draw-arrow-btn">Connect Energy Flow</button>
+                <button id="remove-species-btn" class="remove">Remove Species</button>
+            </div>
+            <div class="control-panel">
+                <h3>Display Options</h3>
+                <button id="toggle-population-btn" class="toggle-btn">Show Population Graph</button>
+                <button id="toggle-energy-btn" class="toggle-btn">Show Energy Indicators</button>
+                <button id="toggle-population-bars-btn" class="toggle-btn">Show Population Bars</button>
+                <div id="population-graph" class="bar-graph" style="display: none;"></div>
+            </div>
+            <div class="control-panel" id="species-adjustments">
+                <h3>Species Adjustments</h3>
+                <p>Select a species to adjust its values</p>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        Created by James Kua, Temasek Junior College
+    </div>
+
+    <script>
+        // Global variables
+        const species = [];
+        const arrows = [];
+        let speciesCounter = {
+            producer: 0,
+            primaryConsumer: 0,
+            secondaryConsumer: 0,
+            tertiaryConsumer: 0
+        };
+        let selectedSpecies = null;
+        let mode = "none"; // none, addSpecies, drawArrow, removeSpecies
+        let arrowStartSpecies = null;
+        let showPopulationGraph = false;
+        let showEnergyIndicators = false;
+        let showPopulationBars = false;
+        
+        // DOM Elements
+        const simulationArea = document.getElementById("simulation-area");
+        const addSpeciesBtn = document.getElementById("add-species-btn");
+        const drawArrowBtn = document.getElementById("draw-arrow-btn");
+        const removeSpeciesBtn = document.getElementById("remove-species-btn");
+        const togglePopulationBtn = document.getElementById("toggle-population-btn");
+        const toggleEnergyBtn = document.getElementById("toggle-energy-btn");
+        const togglePopulationBarsBtn = document.getElementById("toggle-population-bars-btn");
+        const populationGraph = document.getElementById("population-graph");
+        const speciesAdjustments = document.getElementById("species-adjustments");
+        
+        // Set up event listeners
+        addSpeciesBtn.onclick = function() {
+            setMode("addSpecies");
+        };
+        
+        drawArrowBtn.onclick = function() {
+            setMode("drawArrow");
+        };
+        
+        removeSpeciesBtn.onclick = function() {
+            setMode("removeSpecies");
+        };
+        
+        togglePopulationBtn.onclick = function() {
+            showPopulationGraph = !showPopulationGraph;
+            togglePopulationBtn.classList.toggle("active");
+            populationGraph.style.display = showPopulationGraph ? "block" : "none";
+            updatePopulationGraph();
+        };
+        
+        toggleEnergyBtn.onclick = function() {
+            showEnergyIndicators = !showEnergyIndicators;
+            toggleEnergyBtn.classList.toggle("active");
+            updateEnergyIndicators();
+        };
+        
+        togglePopulationBarsBtn.onclick = function() {
+            showPopulationBars = !showPopulationBars;
+            togglePopulationBarsBtn.classList.toggle("active");
+            updatePopulationBars();
+        };
+        
+        simulationArea.onclick = function(e) {
+            if (mode === "addSpecies" && e.target === simulationArea) {
+                addSpecies(e.offsetX, e.offsetY);
+            }
+        };
+        
+        // Functions
+        function setMode(newMode) {
+            // Reset previous mode
+            mode = "none";
+            addSpeciesBtn.classList.remove("active");
+            drawArrowBtn.classList.remove("active");
+            removeSpeciesBtn.classList.remove("active");
+            arrowStartSpecies = null;
+            simulationArea.style.cursor = "default";
+            
+            // Reset any highlighted boxes
+            document.querySelectorAll('.species-box').forEach(box => {
+                box.style.border = "2px solid #333";
+            });
+            
+            // Remove any status message
+            const existingMsg = document.getElementById("status-message");
+            if (existingMsg) {
+                existingMsg.remove();
+            }
+            
+            // Set new mode
+            if (newMode !== "none") {
+                mode = newMode;
+                if (mode === "addSpecies") {
+                    addSpeciesBtn.classList.add("active");
+                    simulationArea.style.cursor = "crosshair";
+                } else if (mode === "drawArrow") {
+                    drawArrowBtn.classList.add("active");
+                    simulationArea.style.cursor = "help";
+                    // Update status message
+                    const statusMsg = document.createElement("div");
+                    statusMsg.id = "status-message";
+                    statusMsg.textContent = "Select prey first";
+                    statusMsg.style.position = "absolute";
+                    statusMsg.style.bottom = "10px";
+                    statusMsg.style.left = "10px";
+                    statusMsg.style.backgroundColor = "rgba(0,0,0,0.7)";
+                    statusMsg.style.color = "white";
+                    statusMsg.style.padding = "5px 10px";
+                    statusMsg.style.borderRadius = "3px";
+                    simulationArea.appendChild(statusMsg);
+                } else if (mode === "removeSpecies") {
+                    removeSpeciesBtn.classList.add("active");
+                    simulationArea.style.cursor = "not-allowed";
+                }
+            }
+        }
+        
+        function addSpecies(x, y) {
+            const id = "species-" + Date.now(); // Unique ID using timestamp
+            const newSpecies = {
+                id: id,
+                x: x,
+                y: y,
+                name: "Producer A",
+                trophicLevel: 1,
+                population: 100,
+                energy: 1000,
+                prey: [],
+                predators: []
+            };
+            
+            species.push(newSpecies);
+            createSpeciesElement(newSpecies);
+            updateSpeciesLabels();
+            
+            if (showPopulationGraph) {
+                updatePopulationGraph();
+            }
+            
+            setMode("none");
+            updateSpeciesAdjustmentPanel(newSpecies);
+        }
+        
+        function createSpeciesElement(speciesData) {
+            const speciesElement = document.createElement("div");
+            speciesElement.id = speciesData.id;
+            speciesElement.className = "species-box";
+            speciesElement.style.left = speciesData.x + "px";
+            speciesElement.style.top = speciesData.y + "px";
+            
+            const nameElement = document.createElement("div");
+            nameElement.className = "species-name";
+            nameElement.textContent = speciesData.name;
+            
+            const energyElement = document.createElement("div");
+            energyElement.className = "energy-indicator";
+            energyElement.textContent = speciesData.energy + " kJ";
+            energyElement.style.display = showEnergyIndicators ? "block" : "none";
+            
+            // Create population bar
+            const popBarContainer = document.createElement("div");
+            popBarContainer.className = "population-bar-container";
+            popBarContainer.style.display = showPopulationBars ? "block" : "none";
+            
+            const popBar = document.createElement("div");
+            popBar.className = "population-bar";
+            // Height based on population (0-100%)
+            const barHeight = (speciesData.population / 200) * 100;
+            popBar.style.height = barHeight + "%";
+            
+            popBarContainer.appendChild(popBar);
+            
+            speciesElement.appendChild(nameElement);
+            speciesElement.appendChild(energyElement);
+            speciesElement.appendChild(popBarContainer);
+            
+            speciesElement.onmousedown = function(e) {
+                if (mode === "none") {
+                    // Start dragging
+                    selectedSpecies = speciesData;
+                    const offsetX = e.clientX - speciesElement.getBoundingClientRect().left;
+                    const offsetY = e.clientY - speciesElement.getBoundingClientRect().top;
+                    
+                    const onMouseMove = function(e) {
+                        const containerRect = simulationArea.getBoundingClientRect();
+                        let newX = e.clientX - containerRect.left - offsetX;
+                        let newY = e.clientY - containerRect.top - offsetY;
+                        
+                        // Keep within bounds
+                        newX = Math.max(0, Math.min(simulationArea.clientWidth - speciesElement.clientWidth, newX));
+                        newY = Math.max(0, Math.min(simulationArea.clientHeight - speciesElement.clientHeight, newY));
+                        
+                        speciesElement.style.left = newX + "px";
+                        speciesElement.style.top = newY + "px";
+                        
+                        speciesData.x = newX;
+                        speciesData.y = newY;
+                        
+                        updateArrows();
+                    };
+                    
+                    const onMouseUp = function() {
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
+                    };
+                    
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                    
+                    updateSpeciesAdjustmentPanel(speciesData);
+                } else if (mode === "drawArrow") {
+                    if (arrowStartSpecies === null) {
+                        // Select prey first
+                        arrowStartSpecies = speciesData;
+                        simulationArea.style.cursor = "crosshair";
+                        // Show visual feedback
+                        document.querySelectorAll('.species-box').forEach(box => {
+                            box.style.border = "2px solid #333";
+                        });
+                        document.getElementById(speciesData.id).style.border = "2px solid #4CAF50";
+                        
+                        // Update status message
+                        const statusMsg = document.getElementById("status-message");
+                        if (statusMsg) {
+                            statusMsg.textContent = "Now select the predator";
+                        }
+                    } else if (arrowStartSpecies !== speciesData) {
+                        // Select predator and create relationship
+                        // First one selected is prey, second is predator
+                        createRelationship(arrowStartSpecies, speciesData);
+                        arrowStartSpecies = null;
+                        setMode("none");
+                        // Reset visual feedback
+                        document.querySelectorAll('.species-box').forEach(box => {
+                            box.style.border = "2px solid #333";
+                        });
+                    }
+                } else if (mode === "removeSpecies") {
+                    removeSpeciesById(speciesData.id);
+                    setMode("none");
+                }
+                
+                e.stopPropagation();
+            };
+            
+            simulationArea.appendChild(speciesElement);
+            return speciesElement;
+        }
+        
+        function createRelationship(prey, predator) {
+            // Check if relationship already exists
+            if (prey.predators.includes(predator.id) || predator.prey.includes(prey.id)) {
+                return;
+            }
+            
+            // Check if prey is already a tertiary consumer
+            if (prey.trophicLevel === 4) {
+                // Create and show alert message
+                const alertMsg = document.createElement("div");
+                alertMsg.textContent = "Cannot add predator to tertiary consumer. Maximum trophic level is tertiary consumer.";
+                alertMsg.style.position = "absolute";
+                alertMsg.style.top = "50%";
+                alertMsg.style.left = "50%";
+                alertMsg.style.transform = "translate(-50%, -50%)";
+                alertMsg.style.backgroundColor = "#f44336";
+                alertMsg.style.color = "white";
+                alertMsg.style.padding = "15px 20px";
+                alertMsg.style.borderRadius = "5px";
+                alertMsg.style.zIndex = "100";
+                alertMsg.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+                
+                simulationArea.appendChild(alertMsg);
+                
+                // Remove the alert after 3 seconds
+                setTimeout(function() {
+                    alertMsg.remove();
+                }, 3000);
+                
+                return;
+            }
+            
+            // Check if creating this relationship would exceed tertiary consumer level
+            if (prey.trophicLevel === 3 && predator.trophicLevel >= 3) {
+                // Create and show alert message
+                const alertMsg = document.createElement("div");
+                alertMsg.textContent = "Maximum trophic level (tertiary consumer) reached. Cannot create higher level consumers.";
+                alertMsg.style.position = "absolute";
+                alertMsg.style.top = "50%";
+                alertMsg.style.left = "50%";
+                alertMsg.style.transform = "translate(-50%, -50%)";
+                alertMsg.style.backgroundColor = "#f44336";
+                alertMsg.style.color = "white";
+                alertMsg.style.padding = "15px 20px";
+                alertMsg.style.borderRadius = "5px";
+                alertMsg.style.zIndex = "100";
+                alertMsg.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+                
+                simulationArea.appendChild(alertMsg);
+                
+                // Remove the alert after 3 seconds
+                setTimeout(function() {
+                    alertMsg.remove();
+                }, 3000);
+                
+                return;
+            }
+            
+            // Keep track of original trophic level
+            const originalPredatorLevel = predator.trophicLevel;
+            
+            // Update species relationships
+            prey.predators.push(predator.id);
+            predator.prey.push(prey.id);
+            
+            // Create visual arrow - arrow goes FROM prey TO predator
+            createArrow(prey, predator);
+            
+            // Update trophic levels
+            updateTrophicLevels();
+            
+            // If trophic level changed from producer to consumer, reset energy
+            if (originalPredatorLevel === 1 && predator.trophicLevel > 1 && !predator.manualEnergy) {
+                predator.energy = 0;
+            }
+            
+            // Automatically increase predator population when adding a prey
+            if (!predator.manualPopulation) {
+                // Increase by a percentage based on prey's population
+                predator.population = Math.min(200, predator.population + (prey.population * 0.2));
+            }
+            
+            // Update species labels
+            updateSpeciesLabels();
+            
+            // Update energy distribution
+            calculateEnergy();
+            
+            // Update population
+            calculatePopulation();
+            
+            // Update visuals
+            updateEnergyIndicators();
+            updatePopulationGraph();
+            updatePopulationBars();
+        }
+        
+        function createArrow(fromSpecies, toSpecies) {
+            const arrowId = `arrow-${fromSpecies.id}-${toSpecies.id}`;
+            const arrow = {
+                id: arrowId,
+                from: fromSpecies.id,
+                to: toSpecies.id
+            };
+            
+            arrows.push(arrow);
+            
+            // Create the visual arrow element
+            const arrowElement = document.createElement("div");
+            arrowElement.id = arrowId;
+            arrowElement.className = "arrow";
+            
+            // Create arrow head
+            const arrowHead = document.createElement("div");
+            arrowHead.className = "arrow-head";
+            
+            arrowElement.appendChild(arrowHead);
+            simulationArea.appendChild(arrowElement);
+            
+            updateArrowPosition(arrow);
+        }
+        
+        function updateArrowPosition(arrow) {
+            const fromSpecies = findSpeciesById(arrow.from);
+            const toSpecies = findSpeciesById(arrow.to);
+            
+            if (!fromSpecies || !toSpecies) return;
+            
+            const fromElement = document.getElementById(fromSpecies.id);
+            const toElement = document.getElementById(toSpecies.id);
+            
+            if (!fromElement || !toElement) return;
+            
+            // Calculate center points
+            const fromX = fromSpecies.x + fromElement.offsetWidth / 2;
+            const fromY = fromSpecies.y + fromElement.offsetHeight / 2;
+            const toX = toSpecies.x + toElement.offsetWidth / 2;
+            const toY = toSpecies.y + toElement.offsetHeight / 2;
+            
+            // Calculate angle
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            
+            // Calculate length
+            const length = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+            
+            // Get arrow element
+            const arrowElement = document.getElementById(arrow.id);
+            if (!arrowElement) return;
+            
+            // Position the arrow container
+            arrowElement.style.position = "absolute";
+            arrowElement.style.left = fromX + "px";
+            arrowElement.style.top = fromY + "px";
+            arrowElement.style.width = length + "px";
+            arrowElement.style.height = "2px";
+            arrowElement.style.transform = `rotate(${angle}rad)`;
+            arrowElement.style.transformOrigin = "0 0";
+            arrowElement.style.backgroundColor = "#333";
+            
+            // Remove any existing arrow head
+            const existingArrowHead = arrowElement.querySelector(".arrow-head");
+            if (existingArrowHead) {
+                arrowElement.removeChild(existingArrowHead);
+            }
+            
+            // Create arrow head
+            const arrowHead = document.createElement("div");
+            arrowHead.className = "arrow-head";
+            arrowElement.appendChild(arrowHead);
+            
+            // Position arrow head 80px from the end, pointing to the predator (toSpecies)
+            arrowHead.style.position = "absolute";
+            arrowHead.style.left = (length - 80) + "px";
+            arrowHead.style.top = "-5px";
+            // Rotate to point toward the prey (reverse direction)
+            arrowHead.style.transform = "rotate(90deg)";
+        }
+        
+        function updateArrows() {
+            for (let i = 0; i < arrows.length; i++) {
+                updateArrowPosition(arrows[i]);
+            }
+        }
+        
+        function updateTrophicLevels() {
+            // Track species that change trophic level
+            const changedSpecies = [];
+            
+            // Reset all species to producers first
+            for (let i = 0; i < species.length; i++) {
+                const oldLevel = species[i].trophicLevel;
+                species[i].trophicLevel = 1;
+                if (oldLevel != 1) {
+                    changedSpecies.push(species[i]);
+                }
+            }
+            
+            // Iteratively update trophic levels
+            let changed = true;
+            while (changed) {
+                changed = false;
+                
+                for (let i = 0; i < species.length; i++) {
+                    const s = species[i];
+                    if (s.prey.length > 0) {
+                        // Find the highest trophic level among prey
+                        let maxPreyLevel = 0;
+                        for (let j = 0; j < s.prey.length; j++) {
+                            const prey = findSpeciesById(s.prey[j]);
+                            if (prey) {
+                                maxPreyLevel = Math.max(maxPreyLevel, prey.trophicLevel);
+                            }
+                        }
+                        
+                        // Set trophic level to one higher than max prey level
+                        const newLevel = maxPreyLevel + 1;
+                        if (s.trophicLevel !== newLevel) {
+                            // Record change in trophic level
+                            if (s.trophicLevel === 1 && newLevel > 1 && !changedSpecies.includes(s)) {
+                                changedSpecies.push(s);
+                            }
+                            s.trophicLevel = newLevel;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            
+            // Recalculate energy for species that changed from producer to consumer
+            for (let i = 0; i < changedSpecies.length; i++) {
+                const s = changedSpecies[i];
+                if (s.trophicLevel > 1 && !s.manualEnergy) {
+                    s.energy = 0; // Reset energy to recalculate from prey
+                }
+            }
+        }
+        
+        function updateSpeciesLabels() {
+            // Reset counters
+            speciesCounter = {
+                producer: 0,
+                primaryConsumer: 0,
+                secondaryConsumer: 0,
+                tertiaryConsumer: 0
+            };
+            
+            // Assign names based on trophic levels and consumed trophic levels
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                let name = "";
+                const element = document.getElementById(s.id);
+                if (!element) continue;
+                
+                if (s.trophicLevel === 1) {
+                    // Producer
+                    speciesCounter.producer++;
+                    name = `Producer ${String.fromCharCode(64 + speciesCounter.producer)}`;
+                } else if (s.trophicLevel === 2) {
+                    // Primary Consumer
+                    speciesCounter.primaryConsumer++;
+                    name = `Primary Consumer ${String.fromCharCode(64 + speciesCounter.primaryConsumer)}`;
+                } else if (s.trophicLevel === 3) {
+                    // Check if it consumes producers
+                    let consumesProducer = false;
+                    let consumesPrimary = false;
+                    
+                    for (let j = 0; j < s.prey.length; j++) {
+                        const prey = findSpeciesById(s.prey[j]);
+                        if (prey) {
+                            if (prey.trophicLevel === 1) consumesProducer = true;
+                            if (prey.trophicLevel === 2) consumesPrimary = true;
+                        }
+                    }
+                    
+                    speciesCounter.secondaryConsumer++;
+                    if (consumesProducer && consumesPrimary) {
+                        name = `Primary/Secondary Consumer ${String.fromCharCode(64 + speciesCounter.secondaryConsumer)}`;
+                    } else {
+                        name = `Secondary Consumer ${String.fromCharCode(64 + speciesCounter.secondaryConsumer)}`;
+                    }
+                } else if (s.trophicLevel === 4) {
+                    // Check what it consumes
+                    let consumesPrimary = false;
+                    let consumesSecondary = false;
+                    
+                    for (let j = 0; j < s.prey.length; j++) {
+                        const prey = findSpeciesById(s.prey[j]);
+                        if (prey) {
+                            if (prey.trophicLevel === 2) consumesPrimary = true;
+                            if (prey.trophicLevel === 3) consumesSecondary = true;
+                        }
+                    }
+                    
+                    speciesCounter.tertiaryConsumer++;
+                    if (consumesPrimary && consumesSecondary) {
+                        name = `Secondary/Tertiary Consumer ${String.fromCharCode(64 + speciesCounter.tertiaryConsumer)}`;
+                    } else {
+                        name = `Tertiary Consumer ${String.fromCharCode(64 + speciesCounter.tertiaryConsumer)}`;
+                    }
+                }
+                
+                s.name = name;
+                element.querySelector(".species-name").textContent = name;
+            }
+        }
+        
+        function calculateEnergy() {
+            // First, set base energy for producers and reset consumers
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                if (s.trophicLevel === 1) {
+                    // Base energy for producers (if not manually set)
+                    if (!s.manualEnergy) {
+                        s.energy = 1000;
+                    }
+                } else {
+                    // Reset energy for all consumers to recalculate
+                    if (!s.manualEnergy) {
+                        s.energy = 0;
+                    }
+                }
+            }
+            
+            // Calculate energy flow from bottom to top
+            // Process one trophic level at a time
+            for (let level = 1; level <= 4; level++) {
+                for (let i = 0; i < species.length; i++) {
+                    const s = species[i];
+                    if (s.trophicLevel === level) {
+                        // Skip if this species has no predators
+                        if (s.predators.length === 0) continue;
+                        
+                        // Calculate energy to share (10% of this species' energy)
+                        const energyToShare = s.energy * 0.1;
+                        const energyPerPredator = energyToShare / s.predators.length;
+                        
+                        // Distribute energy to all predators
+                        for (let j = 0; j < s.predators.length; j++) {
+                            const predator = findSpeciesById(s.predators[j]);
+                            if (predator && !predator.manualEnergy) {
+                                predator.energy += energyPerPredator;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Update energy indicators
+            updateEnergyIndicators();
+        }
+        
+        function calculatePopulation() {
+            // Skip calculation if already running (prevent recursion)
+            if (calculatePopulation.isRunning) return;
+            calculatePopulation.isRunning = true;
+            
+            // First pass: calculate populations for all species
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                // Skip if population is manually set
+                if (s.manualPopulation) continue;
+                
+                if (s.trophicLevel === 1) {
+                    // PRODUCERS: affected by predation pressure from primary consumers
+                    let primaryConsumerPop = 0;
+                    for (let j = 0; j < s.predators.length; j++) {
+                        const predator = findSpeciesById(s.predators[j]);
+                        if (predator && predator.trophicLevel === 2) {
+                            primaryConsumerPop += predator.population;
+                        }
+                    }
+                    
+                    // Decrease producer population when primary consumers increase
+                    const predationImpact = primaryConsumerPop * 0.4;
+                    s.population = Math.max(20, 100 - predationImpact);
+                } 
+                else if (s.trophicLevel === 2) {
+                    // PRIMARY CONSUMERS: affected by producer availability and secondary consumer predation
+                    let producerPop = 0;
+                    for (let j = 0; j < s.prey.length; j++) {
+                        const prey = findSpeciesById(s.prey[j]);
+                        if (prey && prey.trophicLevel === 1) {
+                            producerPop += prey.population;
+                        }
+                    }
+                    
+                    let secondaryConsumerPop = 0;
+                    for (let j = 0; j < s.predators.length; j++) {
+                        const predator = findSpeciesById(s.predators[j]);
+                        if (predator && predator.trophicLevel === 3) {
+                            secondaryConsumerPop += predator.population;
+                        }
+                    }
+                    
+                    // Primary consumers increase with producer population and decrease with secondary consumer population
+                    s.population = Math.max(5, Math.min(producerPop * 0.3, 150) - (secondaryConsumerPop * 0.5));
+                }
+                else if (s.trophicLevel === 3) {
+                    // SECONDARY CONSUMERS: affected by primary consumer availability and tertiary consumer predation
+                    let primaryConsumerPop = 0;
+                    for (let j = 0; j < s.prey.length; j++) {
+                        const prey = findSpeciesById(s.prey[j]);
+                        if (prey && prey.trophicLevel === 2) {
+                            primaryConsumerPop += prey.population;
+                        }
+                    }
+                    
+                    let tertiaryConsumerPop = 0;
+                    for (let j = 0; j < s.predators.length; j++) {
+                        const predator = findSpeciesById(s.predators[j]);
+                        if (predator && predator.trophicLevel === 4) {
+                            tertiaryConsumerPop += predator.population;
+                        }
+                    }
+                    
+                    // Secondary consumers increase with primary consumer population and decrease with tertiary consumer population
+                    s.population = Math.max(5, Math.min(primaryConsumerPop * 0.3, 150) - (tertiaryConsumerPop * 0.5));
+                }
+                else if (s.trophicLevel === 4) {
+                    // TERTIARY CONSUMERS: affected only by secondary consumer availability
+                    let secondaryConsumerPop = 0;
+                    for (let j = 0; j < s.prey.length; j++) {
+                        const prey = findSpeciesById(s.prey[j]);
+                        if (prey && prey.trophicLevel === 3) {
+                            secondaryConsumerPop += prey.population;
+                        }
+                    }
+                    
+                    // Tertiary consumers increase with secondary consumer population
+                    s.population = Math.max(5, Math.min(secondaryConsumerPop * 0.3, 100));
+                }
+            }
+            
+            // Update population visualizations
+            updatePopulationBars();
+            updatePopulationGraph();
+            
+            calculatePopulation.isRunning = false;
+        }
+        calculatePopulation.isRunning = false;
+        
+        function updateEnergyIndicators() {
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                const element = document.getElementById(s.id);
+                if (element) {
+                    const energyIndicator = element.querySelector(".energy-indicator");
+                    energyIndicator.textContent = Math.round(s.energy) + " kJ";
+                    energyIndicator.style.display = showEnergyIndicators ? "block" : "none";
+                }
+            }
+        }
+        
+        function updatePopulationBars() {
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                const element = document.getElementById(s.id);
+                if (element) {
+                    const popBarContainer = element.querySelector(".population-bar-container");
+                    if (popBarContainer) {
+                        popBarContainer.style.display = showPopulationBars ? "block" : "none";
+                        
+                        const popBar = popBarContainer.querySelector(".population-bar");
+                        if (popBar) {
+                            // Height based on population (0-100%)
+                            const barHeight = Math.min(100, (s.population / 200) * 100);
+                            popBar.style.height = barHeight + "%";
+                        }
+                    }
+                }
+            }
+        }
+        
+        function updatePopulationGraph() {
+            if (!showPopulationGraph) return;
+            
+            // Clear previous graph
+            populationGraph.innerHTML = "";
+            
+            // Sort species by trophic level for the graph
+            const sortedSpecies = [...species].sort((a, b) => a.trophicLevel - b.trophicLevel);
+            
+            // Find maximum population for scaling
+            let maxPopulation = 100;
+            for (let i = 0; i < sortedSpecies.length; i++) {
+                maxPopulation = Math.max(maxPopulation, sortedSpecies[i].population);
+            }
+            
+            // Create bars
+            for (let i = 0; i < sortedSpecies.length; i++) {
+                const s = sortedSpecies[i];
+                const bar = document.createElement("div");
+                bar.className = "bar";
+                
+                // Calculate height based on population (percentage of max)
+                const height = (s.population / maxPopulation) * 180;
+                
+                bar.style.height = height + "px";
+                bar.style.left = (i * 45 + 10) + "px"; // Increased spacing for labels
+                
+                // Different colors for different trophic levels
+                switch (s.trophicLevel) {
+                    case 1: bar.style.backgroundColor = "#4CAF50"; break; // Green
+                    case 2: bar.style.backgroundColor = "#FFC107"; break; // Yellow
+                    case 3: bar.style.backgroundColor = "#FF9800"; break; // Orange
+                    case 4: bar.style.backgroundColor = "#F44336"; break; // Red
+                }
+                
+                // Add bottom label
+                const label = document.createElement("div");
+                label.className = "bar-label";
+                
+                // Shortened label format but still identifiable
+                let shortName = "";
+                if (s.name.includes("Producer")) {
+                    shortName = "Prod " + s.name.charAt(s.name.length - 1);
+                } else if (s.name.includes("Primary")) {
+                    shortName = "Pri " + s.name.charAt(s.name.length - 1);
+                } else if (s.name.includes("Secondary")) {
+                    shortName = "Sec " + s.name.charAt(s.name.length - 1);
+                } else if (s.name.includes("Tertiary")) {
+                    shortName = "Ter " + s.name.charAt(s.name.length - 1);
+                }
+                
+                label.textContent = shortName;
+                label.style.left = "-5px";
+                
+                // Add population value label
+                const valueLabel = document.createElement("div");
+                valueLabel.className = "bar-value";
+                valueLabel.textContent = Math.round(s.population);
+                
+                bar.appendChild(label);
+                bar.appendChild(valueLabel);
+                populationGraph.appendChild(bar);
+            }
+        }
+        
+        function removeSpeciesById(id) {
+            // Find the species to remove
+            let speciesIndex = -1;
+            for (let i = 0; i < species.length; i++) {
+                if (species[i].id === id) {
+                    speciesIndex = i;
+                    break;
+                }
+            }
+            
+            if (speciesIndex === -1) return;
+            
+            const speciesElement = document.getElementById(id);
+            if (speciesElement) {
+                simulationArea.removeChild(speciesElement);
+            }
+            
+            // Remove all arrows connected to this species
+            for (let i = arrows.length - 1; i >= 0; i--) {
+                const arrow = arrows[i];
+                if (arrow.from === id || arrow.to === id) {
+                    const arrowElement = document.getElementById(arrow.id);
+                    if (arrowElement) {
+                        simulationArea.removeChild(arrowElement);
+                    }
+                    arrows.splice(i, 1);
+                }
+            }
+            
+            // Update prey/predator relationships
+            for (let i = 0; i < species.length; i++) {
+                const s = species[i];
+                // Remove references in prey arrays
+                for (let j = s.prey.length - 1; j >= 0; j--) {
+                    if (s.prey[j] === id) {
+                        s.prey.splice(j, 1);
+                    }
+                }
+                // Remove references in predator arrays
+                for (let j = s.predators.length - 1; j >= 0; j--) {
+                    if (s.predators[j] === id) {
+                        s.predators.splice(j, 1);
+                    }
+                }
+            }
+            
+            // Remove species from array
+            species.splice(speciesIndex, 1);
+            
+            // Update species labels and other visuals
+            updateTrophicLevels();
+            updateSpeciesLabels();
+            calculateEnergy();
+            calculatePopulation();
+            updateEnergyIndicators();
+            updatePopulationGraph();
+            updatePopulationBars();
+            
+            // Reset adjustment panel
+            resetSpeciesAdjustmentPanel();
+        }
+        
+        function updateSpeciesAdjustmentPanel(speciesData) {
+            resetSpeciesAdjustmentPanel();
+            
+            const title = document.createElement("h4");
+            title.textContent = `Adjusting: ${speciesData.name}`;
+            
+            // Current control status
+            const statusText = document.createElement("div");
+            statusText.style.marginBottom = "10px";
+            statusText.style.fontSize = "12px";
+            statusText.style.fontStyle = "italic";
+            statusText.textContent = speciesData.manualPopulation ? 
+                "Population: Fixed by user" : "Population: Calculated automatically";
+            
+            // Population controls for all species
+            const populationControls = createAdjustmentControl(
+                "Population:",
+                speciesData.population,
+                5,
+                200
+            );
+            
+            // Only allow energy adjustment for producers
+            const energyControls = speciesData.trophicLevel === 1 ? 
+                createAdjustmentControl(
+                    "Energy (kJ):",
+                    speciesData.energy,
+                    100,
+                    2000
+                ) : null;
+            
+            // Add apply button
+            const applyButton = document.createElement("button");
+            applyButton.textContent = "Apply Changes";
+            applyButton.className = "apply";
+            applyButton.onclick = function() {
+                // Get population value
+                const populationValue = Number(populationControls.dataset.pendingValue);
+                const oldPopulation = speciesData.population;
+                const changeAmount = populationValue - oldPopulation;
+                
+                // Apply population change
+                speciesData.population = populationValue;
+                speciesData.manualPopulation = true;
+                
+                // Apply energy change (only for producers)
+                if (speciesData.trophicLevel === 1 && energyControls) {
+                    const energyValue = Number(energyControls.dataset.pendingValue);
+                    speciesData.energy = energyValue;
+                    speciesData.manualEnergy = true;
+                }
+                
+                // Apply population impacts based on trophic level relationships
+                if (Math.abs(changeAmount) > 5) {
+                    // Determine impact factor based on magnitude of change
+                    const impactFactor = Math.abs(changeAmount) * 0.3;
+                    
+                    // PRODUCER (Level 1)
+                    if (speciesData.trophicLevel === 1) {
+                        // When producer increases: increase its primary consumers
+                        if (changeAmount > 0) {
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 2 && !predator.manualPopulation) {
+                                    predator.population = Math.min(200, predator.population + impactFactor);
+                                }
+                            }
+                        } 
+                        // When producer decreases: decrease its primary consumers
+                        else {
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 2 && !predator.manualPopulation) {
+                                    predator.population = Math.max(5, predator.population + changeAmount * 0.3);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // PRIMARY CONSUMER (Level 2)
+                    else if (speciesData.trophicLevel === 2) {
+                        // When primary consumer increases: 
+                        // - Decrease connected producers
+                        // - Increase connected secondary consumers
+                        if (changeAmount > 0) {
+                            // Decrease producers
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 1 && !prey.manualPopulation) {
+                                    prey.population = Math.max(10, prey.population - impactFactor);
+                                }
+                            }
+                            
+                            // Increase secondary consumers
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 3 && !predator.manualPopulation) {
+                                    predator.population = Math.min(200, predator.population + impactFactor * 0.7);
+                                }
+                            }
+                        } 
+                        // When primary consumer decreases: 
+                        // - Increase connected producers
+                        // - Decrease connected secondary consumers
+                        else {
+                            // Increase producers
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 1 && !prey.manualPopulation) {
+                                    prey.population = Math.min(200, prey.population - changeAmount * 0.3);
+                                }
+                            }
+                            
+                            // Decrease secondary consumers
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 3 && !predator.manualPopulation) {
+                                    predator.population = Math.max(5, predator.population + changeAmount * 0.7);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // SECONDARY CONSUMER (Level 3)
+                    else if (speciesData.trophicLevel === 3) {
+                        // When secondary consumer increases: 
+                        // - Decrease connected primary consumers
+                        // - Increase connected tertiary consumers
+                        if (changeAmount > 0) {
+                            // Decrease primary consumers
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 2 && !prey.manualPopulation) {
+                                    prey.population = Math.max(10, prey.population - impactFactor);
+                                }
+                            }
+                            
+                            // Increase tertiary consumers
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 4 && !predator.manualPopulation) {
+                                    predator.population = Math.min(200, predator.population + impactFactor * 0.7);
+                                }
+                            }
+                        } 
+                        // When secondary consumer decreases: 
+                        // - Increase connected primary consumers
+                        // - Decrease connected tertiary consumers
+                        else {
+                            // Increase primary consumers
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 2 && !prey.manualPopulation) {
+                                    prey.population = Math.min(200, prey.population - changeAmount * 0.3);
+                                }
+                            }
+                            
+                            // Decrease tertiary consumers
+                            for (let i = 0; i < speciesData.predators.length; i++) {
+                                const predator = findSpeciesById(speciesData.predators[i]);
+                                if (predator && predator.trophicLevel === 4 && !predator.manualPopulation) {
+                                    predator.population = Math.max(5, predator.population + changeAmount * 0.7);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // TERTIARY CONSUMER (Level 4)
+                    else if (speciesData.trophicLevel === 4) {
+                        // When tertiary consumer increases: decrease connected secondary consumers
+                        if (changeAmount > 0) {
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 3 && !prey.manualPopulation) {
+                                    prey.population = Math.max(10, prey.population - impactFactor);
+                                }
+                            }
+                        } 
+                        // When tertiary consumer decreases: increase connected secondary consumers
+                        else {
+                            for (let i = 0; i < speciesData.prey.length; i++) {
+                                const prey = findSpeciesById(speciesData.prey[i]);
+                                if (prey && prey.trophicLevel === 3 && !prey.manualPopulation) {
+                                    prey.population = Math.min(200, prey.population - changeAmount * 0.3);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Update the ecosystem
+                calculateEnergy();
+                calculatePopulation();
+                
+                // Update all visuals
+                updateEnergyIndicators();
+                updatePopulationGraph();
+                updatePopulationBars();
+                
+                // Show confirmation
+                applyButton.textContent = "Changes Applied!";
+                setTimeout(function() {
+                    applyButton.textContent = "Apply Changes";
+                }, 1500);
+            };
+            
+            // Add reset button to remove manual overrides
+            const resetButton = document.createElement("button");
+            resetButton.textContent = "Reset to Automatic";
+            resetButton.style.marginTop = "10px";
+            resetButton.style.width = "100%";
+            resetButton.style.backgroundColor = "#9E9E9E";
+            resetButton.onclick = function() {
+                // Remove manual flags
+                speciesData.manualPopulation = false;
+                
+                // Only reset energy for producers
+                if (speciesData.trophicLevel === 1) {
+                    speciesData.manualEnergy = false;
+                }
+                
+                // Recalculate values
+                calculateEnergy();
+                calculatePopulation();
+                
+                // Update controls with new values
+                updateSpeciesAdjustmentPanel(speciesData);
+                
+                // Update visuals
+                updateEnergyIndicators();
+                updatePopulationGraph();
+                updatePopulationBars();
+            };
+            
+            speciesAdjustments.appendChild(title);
+            speciesAdjustments.appendChild(statusText);
+            speciesAdjustments.appendChild(populationControls);
+            
+            // Only add energy controls for producers
+            if (energyControls) {
+                speciesAdjustments.appendChild(energyControls);
+            } else {
+                // Add explanation for consumers
+                const energyInfo = document.createElement("p");
+                energyInfo.style.fontSize = "12px";
+                energyInfo.style.fontStyle = "italic";
+                energyInfo.style.color = "#666";
+                energyInfo.textContent = "Energy for consumers is calculated automatically based on prey energy.";
+                speciesAdjustments.appendChild(energyInfo);
+            }
+            
+            speciesAdjustments.appendChild(applyButton);
+            speciesAdjustments.appendChild(resetButton);
+        }
+        
+        function createAdjustmentControl(labelText, initialValue, min, max) {
+            const container = document.createElement("div");
+            container.className = "adjustment-control";
+            
+            const label = document.createElement("label");
+            label.textContent = labelText;
+            
+            const controlsDiv = document.createElement("div");
+            controlsDiv.className = "species-controls";
+            
+            const slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = min;
+            slider.max = max;
+            slider.value = initialValue;
+            slider.className = "slider";
+            
+            const numberInput = document.createElement("input");
+            numberInput.type = "number";
+            numberInput.min = min;
+            numberInput.max = max;
+            numberInput.value = initialValue;
+            
+            // Store initial value
+            container.dataset.pendingValue = initialValue;
+            container.dataset.property = labelText.includes("Population") ? "population" : "energy";
+            
+            slider.oninput = function() {
+                numberInput.value = slider.value;
+                container.dataset.pendingValue = slider.value;
+            };
+            
+            numberInput.onchange = function() {
+                const value = Math.min(max, Math.max(min, Number(numberInput.value)));
+                numberInput.value = value;
+                slider.value = value;
+                container.dataset.pendingValue = value;
+            };
+            
+            controlsDiv.appendChild(slider);
+            controlsDiv.appendChild(numberInput);
+            
+            container.appendChild(label);
+            container.appendChild(controlsDiv);
+            
+            return container;
+        }
+        
+        function resetSpeciesAdjustmentPanel() {
+            speciesAdjustments.innerHTML = "";
+            const title = document.createElement("h3");
+            title.textContent = "Species Adjustments";
+            
+            const instruction = document.createElement("p");
+            instruction.textContent = "Select a species to adjust its values";
+            
+            speciesAdjustments.appendChild(title);
+            speciesAdjustments.appendChild(instruction);
+        }
+        
+        function findSpeciesById(id) {
+            for (let i = 0; i < species.length; i++) {
+                if (species[i].id === id) {
+                    return species[i];
+                }
+            }
+            return null;
+        }
+        
+        // Listen for window resize to update arrows
+        window.addEventListener('resize', function() {
+            updateArrows();
+        });
+    </script>
+</body>
+</html>
