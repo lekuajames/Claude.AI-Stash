@@ -2,6 +2,9 @@ Science
 https://lekuajames.github.io/Claude.AI-Stash/foodmolecules
 https://lekuajames.github.io/Claude.AI-Stash/foodtests
 https://lekuajames.github.io/Claude.AI-Stash/enzymegraph
+https://lekuajames.github.io/Claude.AI-Stash/digestivesystem
+
+https://lekuajames.github.io/Claude.AI-Stash/menstrualcycle
 
 https://lekuajames.github.io/Claude.AI-Stash/foodweb
 
