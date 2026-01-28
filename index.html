@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Pressure Physics Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .formula {
+            font-size: 1.6em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        /* Main Layout Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 350px 300px;
+            grid-template-rows: auto auto;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Panel Styling */
+        .panel {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            font-size: 1.1em;
+        }
+
+        .panel h2 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        /* Tank Simulation Panel */
+        .simulation-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .tank-scene {
+            position: relative;
+            width: 300px;
+            height: 400px;
+        }
+
+        .tank-container {
+            position: relative;
+            width: 250px;
+            height: 350px;
+            margin: 25px auto;
+        }
+
+        .tank {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #2c3e50;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.2));
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+            overflow: hidden;
+            transition: border-top 0.3s ease;
+        }
+
+        .tank.open-top {
+            border-top: 4px dashed #2c3e50;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        .tank.closed-top {
+            border-top: 4px solid #2c3e50;
+        }
+
+        .water {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to bottom,
+                rgba(33, 150, 243, 0.7) 0%,
+                rgba(33, 150, 243, 0.85) 30%,
+                rgba(33, 150, 243, 0.9) 70%,
+                rgba(25, 118, 210, 0.95) 100%);
+            box-shadow: 
+                inset 0 10px 20px rgba(255,255,255,0.3),
+                inset 0 -5px 15px rgba(0,0,0,0.1),
+                0 0 15px rgba(33, 150, 243, 0.4);
+            transition: height 0.4s ease;
+            z-index: 5;
+        }
+
+        .measurement-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ff4444 0,
+                #ff4444 8px,
+                transparent 8px,
+                transparent 16px
+            );
+            transition: bottom 0.3s ease;
+            z-index: 10;
+            opacity: 0.8;
+        }
+
+        .pressure-indicator {
+            position: absolute;
+            left: -70px;
+            width: 50px;
+            height: 10px;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            border-radius: 5px;
+            transition: bottom 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.7);
+            z-index: 100;
+        }
+
+        .pressure-indicator::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: -6px;
+            width: 22px;
+            height: 22px;
+            background: radial-gradient(circle, #ff4444, #cc3333);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .pressure-indicator::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: -3px;
+            width: 0;
+            height: 0;
+            border-left: 16px solid #ff4444;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .pressure-label {
+            position: absolute;
+            left: -25px;
+            top: -35px;
+            background: linear-gradient(135deg, #ff4444, #ff6666);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            border: 2px solid #fff;
+            text-align: center;
+            min-width: 100px;
+            z-index: 150;
+        }
+
+        .pressure-label.above::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #ff4444;
+        }
+
+        .pressure-label.below::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 8px solid #ff4444;
+        }
+
+        /* Pressure Arrows */
+        .pressure-arrows {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            pointer-events: none;
+        }
+
+        .pressure-arrows.show {
+            display: block;
+        }
+
+        .arrow {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .arrow-patm {
+            left: 50px;
+            color: #2196F3;
+            transition: top 0.3s ease;
+        }
+
+        .arrow-pliquid {
+            left: 120px;
+            color: #ff4444;
+            transition: top 0.3s ease;
+        }
+
+        .arrow-icon-down {
+            width: 16px;
+            height: 30px;
+            position: relative;
+            margin-bottom: 3px;
+        }
+
+        .arrow-icon-down::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            width: 2px;
+            height: 18px;
+            background: currentColor;
+        }
+
+        .arrow-icon-down::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid currentColor;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+        }
+
+        .arrow-label {
+            background: white;
+            color: black;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 1px solid currentColor;
+            font-weight: bold;
+            z-index: 200;
+        }
+
+        /* Control Elements */
+        .control-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            border: 1px solid #e3f2fd;
+        }
+
+        .control-group h3 {
+            margin: 0 0 12px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .slider-container {
+            margin: 15px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .slider-wrapper {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #2196F3;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: #1976D2;
+            transform: scale(1.1);
+        }
+
+        .slider-ticks {
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        .tick {
+            position: absolute;
+            font-size: 0.9em;
+            color: #666;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .tick::before {
+            content: '';
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 10px;
+            background: #999;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .input-container label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 1em;
+            min-width: 100px;
+        }
+
+        .number-input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 2px solid #2196F3;
+            border-radius: 6px;
+            font-size: 1.05em;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: #1976D2;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .preset-buttons, .toggle-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn, .toggle-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            font-weight: 500;
+            flex: 1;
+            min-width: fit-content;
+        }
+
+        .preset-btn:hover, .toggle-btn:hover {
+            border-color: #2196F3;
+            background: #f0f8ff;
+            transform: translateY(-1px);
+        }
+
+        .preset-btn.active, .toggle-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #1976D2;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .info-note {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        /* Measurement Displays */
+        .measurement-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .measurement-card {
+            background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .measurement-card h4 {
+            color: #2e7d32;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .measurement-card .value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1b5e20;
+        }
+
+        .calculation-steps {
+            background: linear-gradient(135deg, #fff3e0, #ffebe3);
+            border: 2px solid #ff9800;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .calculation-steps h3 {
+            color: #e65100;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .calc-step {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            border-left: 3px solid #ff9800;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .calc-result {
+            margin-top: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #155724;
+            text-align: center;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+            
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Water Pressure Physics Simulation</h1>
+            <div class="formula">P = h × ρ × g</div>
+            <p>Pressure = Height × Density × Gravitational Field Strength</p>
+        </div>
+        
+        <div class="main-grid">
+            <!-- Tank Simulation Panel -->
+            <div class="panel simulation-panel">
+                <h2>🌊 Tank Simulation</h2>
+                <div class="tank-scene">
+                    <div class="tank-container">
+                        <div class="tank open-top" id="tank">
+                            <div class="water" id="water"></div>
+                            <div class="measurement-line" id="measurementLine"></div>
+                        </div>
+                        
+                        <div class="pressure-indicator" id="pressureIndicator">
+                            <div class="pressure-label above" id="pressureLabel">Pressure Point</div>
+                        </div>
+                        
+                        <div class="pressure-arrows" id="pressureArrows">
+                            <div class="arrow arrow-patm" id="arrowPatm">
+                                <div class="arrow-label">P<sub>atm</sub></div>
+                                <div class="arrow-icon-down"></div>
+                            </div>
+                            <div class="arrow arrow-pliquid" id="arrowPliquid">
+                                <div class="arrow-label">P<sub>liquid</sub></div>
+                                <div class="arrow-icon-down"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="panel">
+                <h2>⚙️ Controls</h2>
+                
+                <div class="control-group">
+                    <h3>Pressure System</h3>
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn active" onclick="setPressureSystem('open')" id="openBtn">🌍 Open Top</button>
+                        <button class="toggle-btn" onclick="setPressureSystem('closed')" id="closedBtn">🔒 Closed</button>
+                    </div>
+                    <div class="info-note" id="systemNote">
+                        Open to atmosphere: includes atmospheric pressure (101,325 Pa)
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Pressure Units</h3>
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn active" onclick="setPressureUnit('Pa')" id="paBtn">Pa</button>
+                        <button class="toggle-btn" onclick="setPressureUnit('cmHg')" id="cmHgBtn">cmHg</button>
+                        <button class="toggle-btn" onclick="setPressureUnit('mmHg')" id="mmHgBtn">mmHg</button>
+                    </div>
+                    <div class="info-note" id="unitNote">
+                        Base unit: Pascals (Pa)
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Visualization</h3>
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn" onclick="togglePressureArrows()" id="arrowsBtn">📊 Show Pressure Arrows</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Water Height</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>0 m</span>
+                            <span>5 m</span>
+                        </div>
+                        <div class="slider-wrapper">
+                            <input type="range" min="0" max="5" step="0.1" value="2" class="slider" id="heightSlider">
+                            <div class="slider-ticks">
+                                <div class="tick" style="left: 0%">0</div>
+                                <div class="tick" style="left: 20%">1</div>
+                                <div class="tick" style="left: 40%">2</div>
+                                <div class="tick" style="left: 60%">3</div>
+                                <div class="tick" style="left: 80%">4</div>
+                                <div class="tick" style="left: 100%">5</div>
+                            </div>
+                        </div>
+                        <div class="input-container">
+                            <label>Height (m):</label>
+                            <input type="number" min="0" max="5" step="0.1" value="2.0" class="number-input" id="heightInput">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Pressure Measurement Point</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Bottom</span>
+                            <span>Surface</span>
+                        </div>
+                        <input type="range" min="0" max="100" step="1" value="100" class="slider" id="pressureSlider">
+                        <div class="input-container">
+                            <label>Depth (m):</label>
+                            <input type="number" min="0" max="2.0" step="0.1" value="2.0" class="number-input" id="depthInput">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physics Properties Panel -->
+            <div class="panel">
+                <h2>🔬 Physics Properties</h2>
+                
+                <div class="control-group">
+                    <h3>Liquid Density</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>500</span>
+                            <span>15000 kg/m³</span>
+                        </div>
+                        <input type="range" min="500" max="15000" step="100" value="1000" class="slider" id="densitySlider">
+                        <div class="input-container">
+                            <label>Density:</label>
+                            <input type="number" min="500" max="15000" step="10" value="1000" class="number-input" id="densityInput">
+                        </div>
+                    </div>
+                    <div class="preset-buttons">
+                        <button class="preset-btn active" onclick="setDensity(1000)">💧 Water</button>
+                        <button class="preset-btn" onclick="setDensity(13600)">☿️ Mercury</button>
+                        <button class="preset-btn" onclick="setDensity(800)">🛢️ Oil</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Gravitational Field Strength</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>1</span>
+                            <span>12 m/s²</span>
+                        </div>
+                        <input type="range" min="1" max="12" step="0.1" value="9.8" class="slider" id="gravitySlider">
+                        <div class="input-container">
+                            <label>Field Strength:</label>
+                            <input type="number" min="1" max="12" step="0.1" value="9.81" class="number-input" id="gravityInput">
+                        </div>
+                    </div>
+                    <div class="preset-buttons">
+                        <button class="preset-btn active" onclick="setGravity(9.81)">🌍 Earth (Sea)</button>
+                        <button class="preset-btn" onclick="setGravity(9.77)">⛰️ Earth (High)</button>
+                        <button class="preset-btn" onclick="setGravity(1.62)">🌙 Moon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-grid">
+            <!-- Current Measurements Panel -->
+            <div class="panel">
+                <h2>📊 Current Measurements</h2>
+                <div class="measurement-grid">
+                    <div class="measurement-card">
+                        <h4>Water Height</h4>
+                        <div class="value" id="heightValue">2.0 m</div>
+                    </div>
+                    <div class="measurement-card">
+                        <h4>Measurement Depth</h4>
+                        <div class="value" id="depthValue">2.0 m</div>
+                    </div>
+                    <div class="measurement-card">
+                        <h4>Liquid Density</h4>
+                        <div class="value" id="densityValue">1,000 kg/m³</div>
+                    </div>
+                    <div class="measurement-card">
+                        <h4>Field Strength</h4>
+                        <div class="value" id="gravityValue">9.81 m/s²</div>
+                    </div>
+                    <div class="measurement-card">
+                        <h4>Atmospheric Pressure</h4>
+                        <div class="value" id="atmosphericValue">101,325 Pa</div>
+                    </div>
+                    <div class="measurement-card">
+                        <h4>Total Pressure</h4>
+                        <div class="value" id="totalPressureValue">120,945 Pa</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pressure Calculation Steps Panel -->
+            <div class="panel">
+                <h2>💡 Pressure Calculation Steps</h2>
+                <div class="calculation-steps">
+                    <div class="calc-step" id="step1">1. Liquid Pressure: P_liquid = h × ρ × g</div>
+                    <div class="calc-step" id="step2">2. P_liquid = 2.0 m × 1000 kg/m³ × 9.81 m/s²</div>
+                    <div class="calc-step" id="step3">3. P_liquid = 19,620 Pa</div>
+                    <div class="calc-step" id="step4">4. Atmospheric Pressure: P_atm = 101,325 Pa</div>
+                    <div class="calc-result" id="finalResult">
+                        Total Pressure: P_total = P_liquid + P_atm = 120,945 Pa
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentHeight = 2.0;
+        let currentDensity = 1000;
+        let currentGravity = 9.81;
+        let pressurePosition = 100; // Percentage from bottom
+        let isOpenSystem = true;
+        let showPressureArrows = false;
+        let pressureUnit = 'Pa'; // Pa, cmHg, mmHg
+        let atmosphericPressure = 101325; // Pa
+        let mercuryDensity = 13600; // kg/m³
+
+        // Pressure system controls
+        function setPressureSystem(system) {
+            isOpenSystem = (system === 'open');
+            const openBtn = document.getElementById('openBtn');
+            const closedBtn = document.getElementById('closedBtn');
+            const note = document.getElementById('systemNote');
+            const tank = document.getElementById('tank');
+            
+            if (isOpenSystem) {
+                openBtn.classList.add('active');
+                closedBtn.classList.remove('active');
+                note.textContent = 'Open to atmosphere: includes atmospheric pressure (101,325 Pa)';
+                tank.className = 'tank open-top';
+            } else {
+                closedBtn.classList.add('active');
+                openBtn.classList.remove('active');
+                note.textContent = 'Closed system: only fluid pressure';
+                tank.className = 'tank closed-top';
+            }
+            
+            updateSimulation();
+        }
+
+        // Pressure unit controls
+        function setPressureUnit(unit) {
+            pressureUnit = unit;
+            const paBtn = document.getElementById('paBtn');
+            const cmHgBtn = document.getElementById('cmHgBtn');
+            const mmHgBtn = document.getElementById('mmHgBtn');
+            const note = document.getElementById('unitNote');
+            
+            [paBtn, cmHgBtn, mmHgBtn].forEach(btn => btn.classList.remove('active'));
+            
+            if (unit === 'Pa') {
+                paBtn.classList.add('active');
+                note.textContent = 'Base unit: Pascals (Pa)';
+            } else if (unit === 'cmHg') {
+                cmHgBtn.classList.add('active');
+                note.textContent = 'Conversion: h(cm) = P(Pa) ÷ (ρ_mercury × g)';
+            } else if (unit === 'mmHg') {
+                mmHgBtn.classList.add('active');
+                note.textContent = 'Conversion: h(mm) = P(Pa) ÷ (ρ_mercury × g)';
+            }
+            
+            updateSimulation();
+        }
+
+        // Pressure arrows toggle
+        function togglePressureArrows() {
+            showPressureArrows = !showPressureArrows;
+            const arrowsBtn = document.getElementById('arrowsBtn');
+            const pressureArrows = document.getElementById('pressureArrows');
+            
+            if (showPressureArrows) {
+                arrowsBtn.classList.add('active');
+                arrowsBtn.textContent = '📊 Hide Pressure Arrows';
+                pressureArrows.classList.add('show');
+            } else {
+                arrowsBtn.classList.remove('active');
+                arrowsBtn.textContent = '📊 Show Pressure Arrows';
+                pressureArrows.classList.remove('show');
+            }
+            
+            updateSimulation();
+        }
+
+        // Pressure conversion functions
+        function convertPressure(pressurePa) {
+            if (pressureUnit === 'cmHg') {
+                return pressurePa / (mercuryDensity * currentGravity) * 100;
+            } else if (pressureUnit === 'mmHg') {
+                return pressurePa / (mercuryDensity * currentGravity) * 1000;
+            }
+            return pressurePa;
+        }
+
+        function formatPressure(pressurePa, decimals = 1) {
+            const converted = convertPressure(pressurePa);
+            if (pressureUnit === 'Pa') {
+                return `${Math.round(converted).toLocaleString()} Pa`;
+            } else {
+                return `${converted.toFixed(decimals)} ${pressureUnit}`;
+            }
+        }
+
+        // Preset functions
+        function setDensity(density) {
+            currentDensity = density;
+            document.getElementById('densitySlider').value = density;
+            document.getElementById('densityInput').value = density;
+            updateSimulation();
+            updatePresetButtons('density', density);
+        }
+
+        function setGravity(gravity) {
+            currentGravity = gravity;
+            document.getElementById('gravitySlider').value = gravity;
+            document.getElementById('gravityInput').value = gravity.toFixed(2);
+            updateSimulation();
+            updatePresetButtons('gravity', gravity);
+        }
+
+        function updatePresetButtons(type, value) {
+            if (type === 'density') {
+                const buttons = document.querySelectorAll('.control-group:nth-child(1) .preset-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                if (value === 1000) buttons[0].classList.add('active');
+                else if (value === 13600) buttons[1].classList.add('active');
+                else if (value === 800) buttons[2].classList.add('active');
+            } else if (type === 'gravity') {
+                const buttons = document.querySelectorAll('.control-group:nth-child(2) .preset-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                if (Math.abs(value - 9.81) < 0.01) buttons[0].classList.add('active');
+                else if (Math.abs(value - 9.77) < 0.01) buttons[1].classList.add('active');
+                else if (Math.abs(value - 1.62) < 0.01) buttons[2].classList.add('active');
+            }
+        }
+
+        // Main simulation update
+        function updateSimulation() {
+            const maxHeight = 5;
+            const tankHeightPx = 350;
+            const waterHeightPx = (currentHeight / maxHeight) * tankHeightPx;
+            
+            // Update water height
+            const water = document.getElementById('water');
+            if (water) water.style.height = `${waterHeightPx}px`;
+            
+            // Update pressure indicator and measurement line position
+            const indicator = document.getElementById('pressureIndicator');
+            const measurementLine = document.getElementById('measurementLine');
+            const indicatorPosition = (pressurePosition / 100) * waterHeightPx;
+            indicator.style.bottom = `${indicatorPosition}px`;
+            measurementLine.style.bottom = `${indicatorPosition}px`;
+            
+            // Adjust pressure label positioning to stay within bounds
+            const label = document.getElementById('pressureLabel');
+            const labelHeight = 40; // Approximate label height including padding
+            const minTopPosition = labelHeight + 10; // Minimum distance from tank top
+            const currentBottomPosition = indicatorPosition;
+            const distanceFromTop = tankHeightPx - currentBottomPosition;
+            
+            // If the label would go outside the top of the tank, reposition it below the indicator
+            if (distanceFromTop < minTopPosition) {
+                label.style.top = '25px'; // Position below the indicator
+                label.style.left = '-25px';
+                label.className = 'pressure-label below';
+            } else {
+                label.style.top = '-35px'; // Normal position above the indicator
+                label.style.left = '-25px';
+                label.className = 'pressure-label above';
+            }
+            
+            // Calculate pressures
+            const depthAtIndicator = currentHeight * (1 - pressurePosition / 100);
+            const fluidPressure = depthAtIndicator * currentDensity * currentGravity;
+            const totalPressure = isOpenSystem ? fluidPressure + atmosphericPressure : fluidPressure;
+            
+            // Update pressure arrows
+            if (showPressureArrows) {
+                const arrowPliquid = document.getElementById('arrowPliquid');
+                const arrowPatm = document.getElementById('arrowPatm');
+                
+                if (depthAtIndicator >= 0 && currentHeight > 0) {
+                    const measurementLineTop = tankHeightPx - indicatorPosition;
+                    const pliquidArrowTop = Math.max(10, measurementLineTop - 45);
+                    arrowPliquid.style.top = `${pliquidArrowTop}px`;
+                    arrowPliquid.style.display = 'flex';
+                } else {
+                    arrowPliquid.style.display = 'none';
+                }
+                
+                if (isOpenSystem && currentHeight > 0) {
+                    const waterSurfaceTop = tankHeightPx - waterHeightPx;
+                    const patmArrowTop = Math.max(10, waterSurfaceTop - 45);
+                    arrowPatm.style.top = `${patmArrowTop}px`;
+                    arrowPatm.style.display = 'flex';
+                } else {
+                    arrowPatm.style.display = 'none';
+                }
+                
+                const arrowPatmLabel = document.querySelector('#arrowPatm .arrow-label');
+                const arrowPliquidLabel = document.querySelector('#arrowPliquid .arrow-label');
+                
+                if (arrowPatmLabel) {
+                    arrowPatmLabel.innerHTML = `P<sub>atm</sub> = ${formatPressure(atmosphericPressure, 0)}`;
+                }
+                
+                if (arrowPliquidLabel) {
+                    arrowPliquidLabel.innerHTML = `P<sub>liquid</sub> = ${formatPressure(fluidPressure)}`;
+                }
+            }
+            
+            // Update input fields
+            document.getElementById('heightInput').value = currentHeight.toFixed(1);
+            document.getElementById('depthInput').value = depthAtIndicator.toFixed(1);
+            document.getElementById('densityInput').value = currentDensity;
+            document.getElementById('gravityInput').value = currentGravity.toFixed(2);
+            
+            // Update measurement display values
+            document.getElementById('heightValue').textContent = `${currentHeight.toFixed(1)} m`;
+            document.getElementById('depthValue').textContent = `${depthAtIndicator.toFixed(1)} m`;
+            document.getElementById('densityValue').textContent = `${currentDensity.toLocaleString()} kg/m³`;
+            document.getElementById('gravityValue').textContent = `${currentGravity.toFixed(2)} m/s²`;
+            document.getElementById('atmosphericValue').textContent = isOpenSystem ? formatPressure(atmosphericPressure) : `0 ${pressureUnit}`;
+            document.getElementById('totalPressureValue').textContent = formatPressure(totalPressure);
+            
+            // Update pressure label content
+            label.textContent = formatPressure(totalPressure);
+            
+            // Update calculation steps
+            updateCalculationDisplay(depthAtIndicator, fluidPressure, totalPressure);
+            
+            // Show/hide indicator
+            if (depthAtIndicator >= 0 && currentHeight > 0) {
+                indicator.style.display = 'block';
+                measurementLine.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+                measurementLine.style.display = 'none';
+            }
+        }
+
+        function updateCalculationDisplay(depth, fluidPressure, totalPressure) {
+            document.getElementById('step1').textContent = `1. Liquid Pressure: P_liquid = h × ρ × g`;
+            document.getElementById('step2').textContent = `2. P_liquid = ${depth.toFixed(1)} m × ${currentDensity} kg/m³ × ${currentGravity.toFixed(2)} m/s²`;
+            document.getElementById('step3').textContent = `3. P_liquid = ${Math.round(fluidPressure).toLocaleString()} Pa`;
+            
+            let step4Text = '';
+            let finalText = '';
+            
+            if (isOpenSystem) {
+                step4Text = `4. Atmospheric Pressure: P_atm = ${atmosphericPressure.toLocaleString()} Pa`;
+            } else {
+                step4Text = `4. Closed system: no atmospheric pressure added`;
+            }
+            
+            if (pressureUnit === 'Pa') {
+                if (isOpenSystem) {
+                    finalText = `Total Pressure: P_total = P_liquid + P_atm = ${Math.round(totalPressure).toLocaleString()} Pa`;
+                } else {
+                    finalText = `Total Pressure: P_total = P_liquid = ${Math.round(totalPressure).toLocaleString()} Pa`;
+                }
+            } else if (pressureUnit === 'cmHg') {
+                const convertedTotal = convertPressure(totalPressure);
+                const mercuryPressure = mercuryDensity * currentGravity;
+                if (isOpenSystem) {
+                    finalText = `Total Pressure: P_total = P_liquid + P_atm = ${Math.round(totalPressure).toLocaleString()} Pa
+5. Mercury Column: h = P_total ÷ (ρ_Hg × g) = ${Math.round(totalPressure).toLocaleString()} ÷ (${mercuryDensity} × ${currentGravity.toFixed(2)}) = ${(totalPressure/mercuryPressure).toFixed(3)} m = ${convertedTotal.toFixed(1)} cmHg`;
+                } else {
+                    finalText = `Total Pressure: P_total = P_liquid = ${Math.round(totalPressure).toLocaleString()} Pa
+5. Mercury Column: h = P_total ÷ (ρ_Hg × g) = ${Math.round(totalPressure).toLocaleString()} ÷ (${mercuryDensity} × ${currentGravity.toFixed(2)}) = ${(totalPressure/mercuryPressure).toFixed(3)} m = ${convertedTotal.toFixed(1)} cmHg`;
+                }
+            } else if (pressureUnit === 'mmHg') {
+                const convertedTotal = convertPressure(totalPressure);
+                const mercuryPressure = mercuryDensity * currentGravity;
+                if (isOpenSystem) {
+                    finalText = `Total Pressure: P_total = P_liquid + P_atm = ${Math.round(totalPressure).toLocaleString()} Pa
+5. Mercury Column: h = P_total ÷ (ρ_Hg × g) = ${Math.round(totalPressure).toLocaleString()} ÷ (${mercuryDensity} × ${currentGravity.toFixed(2)}) = ${(totalPressure/mercuryPressure).toFixed(4)} m = ${convertedTotal.toFixed(1)} mmHg`;
+                } else {
+                    finalText = `Total Pressure: P_total = P_liquid = ${Math.round(totalPressure).toLocaleString()} Pa
+5. Mercury Column: h = P_total ÷ (ρ_Hg × g) = ${Math.round(totalPressure).toLocaleString()} ÷ (${mercuryDensity} × ${currentGravity.toFixed(2)}) = ${(totalPressure/mercuryPressure).toFixed(4)} m = ${convertedTotal.toFixed(1)} mmHg`;
+                }
+            }
+            
+            document.getElementById('step4').textContent = step4Text;
+            document.getElementById('finalResult').textContent = finalText;
+        }
+
+        // Initialize event listeners
+        function init() {
+            document.getElementById('depthInput').setAttribute('max', currentHeight);
+            updateSimulation();
+            
+            // Height slider and input
+            document.getElementById('heightSlider').addEventListener('input', function() {
+                currentHeight = parseFloat(this.value);
+                document.getElementById('heightInput').value = currentHeight.toFixed(1);
+                document.getElementById('depthInput').setAttribute('max', currentHeight);
+                const currentDepth = parseFloat(document.getElementById('depthInput').value);
+                if (currentDepth > currentHeight) {
+                    const newDepth = currentHeight;
+                    document.getElementById('depthInput').value = newDepth.toFixed(1);
+                    pressurePosition = (1 - newDepth / currentHeight) * 100;
+                    document.getElementById('pressureSlider').value = pressurePosition;
+                }
+                updateSimulation();
+            });
+            
+            document.getElementById('heightInput').addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (!isNaN(value) && value >= 0 && value <= 5) {
+                    currentHeight = value;
+                    document.getElementById('heightSlider').value = value;
+                    document.getElementById('depthInput').setAttribute('max', value);
+                    const currentDepth = parseFloat(document.getElementById('depthInput').value);
+                    if (currentDepth > value) {
+                        document.getElementById('depthInput').value = value.toFixed(1);
+                        pressurePosition = 0;
+                        document.getElementById('pressureSlider').value = 0;
+                    }
+                    updateSimulation();
+                }
+            });
+            
+            // Pressure position slider and input
+            document.getElementById('pressureSlider').addEventListener('input', function() {
+                pressurePosition = parseFloat(this.value);
+                const depth = currentHeight * (1 - pressurePosition / 100);
+                document.getElementById('depthInput').value = depth.toFixed(1);
+                updateSimulation();
+            });
+            
+            document.getElementById('depthInput').addEventListener('input', function() {
+                const depth = parseFloat(this.value);
+                if (!isNaN(depth) && depth >= 0 && depth <= currentHeight) {
+                    pressurePosition = (1 - depth / currentHeight) * 100;
+                    document.getElementById('pressureSlider').value = pressurePosition;
+                    updateSimulation();
+                } else if (depth > currentHeight) {
+                    this.value = currentHeight.toFixed(1);
+                    pressurePosition = 0;
+                    document.getElementById('pressureSlider').value = 0;
+                    updateSimulation();
+                }
+            });
+            
+            // Density slider and input
+            document.getElementById('densitySlider').addEventListener('input', function() {
+                currentDensity = parseFloat(this.value);
+                document.getElementById('densityInput').value = currentDensity;
+                updateSimulation();
+                updatePresetButtons('density', currentDensity);
+            });
+            
+            document.getElementById('densityInput').addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (!isNaN(value) && value >= 500 && value <= 15000) {
+                    currentDensity = value;
+                    document.getElementById('densitySlider').value = value;
+                    updateSimulation();
+                    updatePresetButtons('density', currentDensity);
+                }
+            });
+            
+            // Gravity slider and input
+            document.getElementById('gravitySlider').addEventListener('input', function() {
+                currentGravity = parseFloat(this.value);
+                document.getElementById('gravityInput').value = currentGravity.toFixed(2);
+                updateSimulation();
+                updatePresetButtons('gravity', currentGravity);
+            });
+            
+            document.getElementById('gravityInput').addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (!isNaN(value) && value >= 1 && value <= 12) {
+                    currentGravity = value;
+                    document.getElementById('gravitySlider').value = value;
+                    updateSimulation();
+                    updatePresetButtons('gravity', currentGravity);
+                }
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
