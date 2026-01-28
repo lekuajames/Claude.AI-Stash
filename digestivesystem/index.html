@@ -1,0 +1,875 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Digestive System Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            color: #333;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        .simulation-area {
+            flex: 0.7;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-height: calc(100vh - 16px);
+        }
+
+        .control-panel {
+            flex: 0.8;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-height: calc(100vh - 16px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .info-panel-container {
+            flex: 1.5;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-height: calc(100vh - 16px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .digestive-tract {
+            position: relative;
+            width: 100%;
+            max-width: 240px;
+            margin: 0 auto;
+            height: 450px;
+        }
+
+        .organ {
+            position: absolute;
+            width: 100%;
+            border: 2px solid;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            line-height: 1.1;
+        }
+
+        .organ:hover {
+            transform: scale(1.03);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .mouth {
+            top: 0;
+            height: 65px;
+            background: #ffebee;
+            border-color: #e91e63;
+            color: #c2185b;
+        }
+
+        .oesophagus {
+            top: 70px;
+            height: 65px;
+            background: #f3e5f5;
+            border-color: #9c27b0;
+            color: #7b1fa2;
+        }
+
+        .stomach {
+            top: 140px;
+            height: 85px;
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+        }
+
+        .small-intestines {
+            top: 230px;
+            height: 100px;
+            background: #e8f5e8;
+            border-color: #4caf50;
+            color: #388e3c;
+        }
+
+        .large-intestines {
+            top: 335px;
+            height: 65px;
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1976d2;
+        }
+
+        .anus {
+            top: 405px;
+            height: 30px;
+            background: #fafafa;
+            border-color: #757575;
+            color: #424242;
+        }
+
+        .food-particle {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .controls {
+            margin-bottom: 12px;
+        }
+
+        .controls h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 3px;
+            font-size: 14px;
+        }
+
+        .food-selection {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: #3498db;
+        }
+
+        .checkbox-group label {
+            font-size: 12px;
+            cursor: pointer;
+            line-height: 1.2;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            height: calc(100vh - 90px);
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 12px;
+        }
+
+        .info-section h4 {
+            color: #2c3e50;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .info-content {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .molecules-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .molecule-tag {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .ph-indicator {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+        }
+
+        .ph-acidic { background: #e74c3c; }
+        .ph-neutral { background: #95a5a6; }
+        .ph-alkaline { background: #2ecc71; }
+
+        .water-level {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            height: 20px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .water-fill {
+            height: 100%;
+            background: linear-gradient(to right, #85c1e9, #5dade2);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .water-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 11px;
+            z-index: 2;
+        }
+
+        .enzyme-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+
+        .enzyme-table th,
+        .enzyme-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .enzyme-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+
+        .enzyme-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .no-enzymes {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .all-absorbed {
+            color: #2c3e50;
+            font-style: italic;
+            text-align: center;
+            padding: 8px;
+            background-color: #e8f5e8;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .warning-text {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .panel-title {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .credit {
+            position: fixed;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.9);
+            font-size: 10px;
+            z-index: 1000;
+        }
+
+        .info-section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Scrollbar styling */
+        .info-panel {
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f1f1f1;
+        }
+
+        .info-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .info-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .info-panel::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 3px;
+        }
+
+        .info-panel::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+
+        #phExplanation {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        #absorptionInfo {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+            font-size: 12px;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Digestive Tract Visualization -->
+        <div class="simulation-area">
+            <h1>🫁 Human Digestive System</h1>
+            
+            <div class="digestive-tract">
+                <div class="organ mouth" data-organ="0">
+                    MOUTH<br>
+                    Buccal Cavity
+                </div>
+                <div class="organ oesophagus" data-organ="1">
+                    OESOPHAGUS<br>
+                    Food Tube
+                </div>
+                <div class="organ stomach" data-organ="2">
+                    STOMACH<br>
+                    Storage & Digestion
+                </div>
+                <div class="organ small-intestines" data-organ="3">
+                    SMALL INTESTINES<br>
+                    Main Digestion
+                </div>
+                <div class="organ large-intestines" data-organ="4">
+                    LARGE INTESTINES<br>
+                    Water Absorption
+                </div>
+                <div class="organ anus" data-organ="5">
+                    ANUS
+                </div>
+                
+                <div class="food-particle" id="foodParticle"></div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="control-panel">
+            <div class="controls">
+                <h3>🏥 Health Problems</h3>
+                <div class="food-selection">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="pancreasFailure">
+                        <label for="pancreasFailure">Pancreas unable to excrete enzymes</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="intestineFailure">
+                        <label for="intestineFailure">Small intestines unable to excrete enzymes</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="lactoseIntolerant">
+                        <label for="lactoseIntolerant">Lactose intolerant</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="gallbladderDisconnected">
+                        <label for="gallbladderDisconnected">Gall bladder disconnected</label>
+                    </div>
+                </div>
+
+                <h3>🍎 Food Molecules</h3>
+                <div class="food-selection">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="starch" checked>
+                        <label for="starch">Starch</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="protein" checked>
+                        <label for="protein">Protein</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="fats" checked>
+                        <label for="fats">Fats</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="maltose">
+                        <label for="maltose">Maltose</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="sucrose">
+                        <label for="sucrose">Sucrose</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="lactose">
+                        <label for="lactose">Lactose</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="info-panel-container">
+            <h3 class="panel-title">📊 Digestion Information</h3>
+            <div class="info-panel">
+                <div class="info-section">
+                    <h4>📍 Current Location</h4>
+                    <div class="info-content" id="currentLocation">Mouth</div>
+                </div>
+
+                <div class="info-section">
+                    <h4>🧪 pH Level</h4>
+                    <div class="info-content">
+                        <span id="phIndicator" class="ph-indicator ph-neutral">pH 7</span>
+                        <div id="phExplanation"></div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>🍽️ Molecules Upon Entering</h4>
+                    <div class="info-content">
+                        <div class="molecules-list" id="moleculesEntering"></div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>🍽️ Remaining After Digestion (Catalysed by Enzymes)</h4>
+                    <div class="info-content">
+                        <div class="molecules-list" id="moleculesRemaining"></div>
+                        <div id="absorptionInfo"></div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>🧬 Enzymes & Processes</h4>
+                    <div class="info-content">
+                        <div id="enzymeTable"></div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>💧 Water Level</h4>
+                    <div class="info-content">
+                        <div class="water-level">
+                            <div class="water-fill" id="waterFill" style="width: 100%"></div>
+                            <div class="water-text" id="waterText">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="credit">
+        Made by James Kua, Temasek Junior College
+    </div>
+
+    <script>
+        // Define organs and their properties
+        const organs = [
+            {
+                name: "Mouth (Buccal Cavity)",
+                ph: 7,
+                phClass: "ph-neutral",
+                phExplanation: "",
+                position: 30,
+                waterLevel: 100,
+                enzymes: [
+                    { name: "Salivary Amylase", source: "Salivary Glands", substrate: "starch", product: "maltose" }
+                ]
+            },
+            {
+                name: "Oesophagus",
+                ph: 7,
+                phClass: "ph-neutral",
+                phExplanation: "",
+                position: 95,
+                waterLevel: 100,
+                enzymes: []
+            },
+            {
+                name: "Stomach",
+                ph: 2,
+                phClass: "ph-acidic",
+                phExplanation: "Low pH caused by hydrochloric acid secreted by gastric glands",
+                position: 167,
+                waterLevel: 100,
+                enzymes: [
+                    { name: "Gastric Protease (Pepsin)", source: "Stomach", substrate: "protein", product: "polypeptides" }
+                ]
+            },
+            {
+                name: "Small Intestines",
+                ph: 8,
+                phClass: "ph-alkaline",
+                phExplanation: "Bile from liver and pancreatic juice from pancreas neutralize acidic chyme from stomach",
+                position: 255,
+                waterLevel: 10,
+                enzymes: [
+                    { name: "Pancreatic Amylase", source: "Pancreas", substrate: "starch", product: "maltose" },
+                    { name: "Pancreatic Protease (Trypsin)", source: "Pancreas", substrate: "protein", product: "polypeptides" },
+                    { name: "Pancreatic Lipase", source: "Pancreas", substrate: "fats", product: "glycerol + 3 fatty acid chains" },
+                    { name: "Intestinal Maltase", source: "Small Intestines", substrate: "maltose", product: "glucose" },
+                    { name: "Intestinal Sucrase", source: "Small Intestines", substrate: "sucrose", product: "glucose + fructose" },
+                    { name: "Intestinal Lactase", source: "Small Intestines", substrate: "lactose", product: "glucose + galactose" },
+                    { name: "Intestinal Protease (Peptidase)", source: "Small Intestines", substrate: "polypeptides", product: "amino acids" },
+                    { name: "Intestinal Lipase", source: "Small Intestines", substrate: "fats", product: "glycerol + 3 fatty acid chains" }
+                ]
+            },
+            {
+                name: "Large Intestines",
+                ph: 7,
+                phClass: "ph-neutral",
+                phExplanation: "",
+                position: 335,
+                waterLevel: 0,
+                enzymes: []
+            },
+            {
+                name: "Anus",
+                ph: 7,
+                phClass: "ph-neutral",
+                phExplanation: "",
+                position: 382,
+                waterLevel: 0,
+                enzymes: []
+            }
+        ];
+
+        // Simulation state
+        let currentOrganIndex = 0;
+        let digestiveStates = [];
+
+        // Get selected food molecules
+        function getSelectedMolecules() {
+            const molecules = [];
+            ['starch', 'protein', 'fats', 'maltose', 'sucrose', 'lactose'].forEach(id => {
+                if (document.getElementById(id).checked) {
+                    molecules.push(id);
+                }
+            });
+            return molecules;
+        }
+
+        // Get health conditions
+        function getHealthConditions() {
+            return {
+                pancreasFailure: document.getElementById('pancreasFailure').checked,
+                intestineFailure: document.getElementById('intestineFailure').checked,
+                lactoseIntolerant: document.getElementById('lactoseIntolerant').checked,
+                gallbladderDisconnected: document.getElementById('gallbladderDisconnected').checked
+            };
+        }
+
+        // Check if enzyme should be blocked by health conditions
+        function isEnzymeBlocked(enzyme, health) {
+            if (health.pancreasFailure && enzyme.source === 'Pancreas') return true;
+            if (health.intestineFailure && enzyme.source === 'Small Intestines') return true;
+            if (health.lactoseIntolerant && enzyme.name === 'Intestinal Lactase') return true;
+            if (health.gallbladderDisconnected && enzyme.substrate === 'fats') return true;
+            return false;
+        }
+
+        // Process digestion at a specific organ
+        function processDigestionAtOrgan(enteringMolecules, organIndex, health) {
+            const organ = organs[organIndex];
+            const result = [...enteringMolecules];
+
+            organ.enzymes.forEach(enzyme => {
+                if (isEnzymeBlocked(enzyme, health)) return;
+
+                const substrateIndex = result.indexOf(enzyme.substrate);
+                if (substrateIndex !== -1) {
+                    // Special handling for starch and protein - keep original until small intestines
+                    if ((enzyme.substrate === 'starch' || enzyme.substrate === 'protein') && organIndex < 3) {
+                        // Add products but keep original molecule
+                        const products = enzyme.product.split(' + ').map(p => p.trim());
+                        products.forEach(product => {
+                            if (!result.includes(product)) {
+                                result.push(product);
+                            }
+                        });
+                    } else {
+                        // Normal digestion - remove substrate and add products
+                        result.splice(substrateIndex, 1);
+                        const products = enzyme.product.split(' + ').map(p => p.trim());
+                        products.forEach(product => {
+                            if (!result.includes(product)) {
+                                result.push(product);
+                            }
+                        });
+                    }
+                }
+            });
+
+            return result;
+        }
+
+        // Get molecules that should be absorbed in small intestines
+        function getAbsorbedMolecules(molecules) {
+            const absorbable = ['glucose', 'fructose', 'galactose', 'amino acids', 'glycerol', '3 fatty acid chains'];
+            return molecules.filter(mol => absorbable.includes(mol));
+        }
+
+        // Build complete digestion pathway
+        function buildDigestionStates() {
+            const initialMolecules = getSelectedMolecules();
+            const health = getHealthConditions();
+            digestiveStates = [];
+
+            let currentMolecules = [...initialMolecules];
+
+            for (let i = 0; i < organs.length; i++) {
+                const enteringMolecules = [...currentMolecules];
+                const processedMolecules = processDigestionAtOrgan(currentMolecules, i, health);
+
+                let remainingMolecules;
+                let absorbed = [];
+
+                if (i === 3) { // Small intestines
+                    absorbed = getAbsorbedMolecules(processedMolecules);
+                    remainingMolecules = processedMolecules.filter(mol => !absorbed.includes(mol));
+                } else if (i >= 4) { // Large intestines and anus - no digestion
+                    remainingMolecules = [...enteringMolecules];
+                } else {
+                    remainingMolecules = processedMolecules;
+                }
+
+                digestiveStates[i] = {
+                    entering: enteringMolecules,
+                    remaining: remainingMolecules,
+                    absorbed: absorbed
+                };
+
+                currentMolecules = remainingMolecules;
+            }
+        }
+
+        // Display molecules as tags
+        function displayMolecules(molecules, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (molecules.length === 0) {
+                if (containerId === 'moleculesRemaining' && currentOrganIndex === 3) {
+                    container.innerHTML = '<div class="all-absorbed">All food absorbed through epithelial cells</div>';
+                }
+                return;
+            }
+
+            molecules.forEach(molecule => {
+                const tag = document.createElement('span');
+                tag.className = 'molecule-tag';
+                tag.textContent = molecule.charAt(0).toUpperCase() + molecule.slice(1);
+                container.appendChild(tag);
+            });
+        }
+
+        // Create enzyme table
+        function createEnzymeTable(organIndex) {
+            const organ = organs[organIndex];
+            const state = digestiveStates[organIndex] || { entering: [] };
+            const health = getHealthConditions();
+
+            if (organ.enzymes.length === 0) {
+                return '<div class="no-enzymes">No digestive enzymes present</div>';
+            }
+
+            const activeEnzymes = organ.enzymes.filter(enzyme => {
+                return state.entering.includes(enzyme.substrate) && !isEnzymeBlocked(enzyme, health);
+            });
+
+            if (activeEnzymes.length === 0) {
+                const hasBlockedEnzymes = organ.enzymes.some(enzyme => isEnzymeBlocked(enzyme, health));
+                if (hasBlockedEnzymes && organIndex === 3) {
+                    return '<div class="no-enzymes">Enzymes not secreted due to health condition</div>';
+                }
+                return '<div class="no-enzymes">No active enzymes for present molecules</div>';
+            }
+
+            let tableHTML = '<table class="enzyme-table">';
+            tableHTML += '<thead><tr><th>Enzyme</th><th>Source</th><th>Digestion Process Catalysed</th></tr></thead>';
+            tableHTML += '<tbody>';
+
+            activeEnzymes.forEach(enzyme => {
+                tableHTML += `<tr>
+                    <td>${enzyme.name}</td>
+                    <td>${enzyme.source}</td>
+                    <td>${enzyme.substrate.charAt(0).toUpperCase() + enzyme.substrate.slice(1)} → ${enzyme.product}</td>
+                </tr>`;
+            });
+
+            tableHTML += '</tbody></table>';
+            return tableHTML;
+        }
+
+        // Update information panel
+        function updateInfoPanel() {
+            const organ = organs[currentOrganIndex];
+            const state = digestiveStates[currentOrganIndex] || { entering: [], remaining: [], absorbed: [] };
+            const health = getHealthConditions();
+
+            // Update location
+            document.getElementById('currentLocation').textContent = organ.name;
+
+            // Update pH
+            const phIndicator = document.getElementById('phIndicator');
+            phIndicator.textContent = `pH ${organ.ph}`;
+            phIndicator.className = `ph-indicator ${organ.phClass}`;
+            document.getElementById('phExplanation').textContent = organ.phExplanation;
+
+            // Update molecules
+            displayMolecules(state.entering, 'moleculesEntering');
+            displayMolecules(state.remaining, 'moleculesRemaining');
+
+            // Update absorption info for small intestines
+            const absorptionInfo = document.getElementById('absorptionInfo');
+            if (currentOrganIndex === 3) {
+                let absorptionText = '';
+
+                // Check for gallbladder issue with fats
+                if (health.gallbladderDisconnected && state.entering.includes('fats')) {
+                    absorptionText += '<div class="warning-text">⚠️ Fats will take too long to digest as there is no bile to emulsify fats</div>';
+                }
+
+                // Show absorbed molecules
+                if (state.absorbed.length > 0) {
+                    absorptionText += '<strong>Food absorbed through epithelial cells by diffusion and active transport:</strong><br>';
+                    state.absorbed.forEach(mol => {
+                        absorptionText += `• ${mol.charAt(0).toUpperCase() + mol.slice(1)}<br>`;
+                    });
+                }
+
+                absorptionInfo.innerHTML = absorptionText;
+            } else {
+                absorptionInfo.innerHTML = '';
+            }
+
+            // Update enzyme table
+            document.getElementById('enzymeTable').innerHTML = createEnzymeTable(currentOrganIndex);
+
+            // Update water level
+            const waterFill = document.getElementById('waterFill');
+            const waterText = document.getElementById('waterText');
+            waterFill.style.width = `${organ.waterLevel}%`;
+            waterText.textContent = `${organ.waterLevel}%`;
+        }
+
+        // Update position
+        function updatePosition(index) {
+            currentOrganIndex = parseInt(index);
+            const organ = organs[currentOrganIndex];
+
+            document.getElementById('foodParticle').style.top = `${organ.position}px`;
+
+            updateInfoPanel();
+        }
+
+        // Initialize simulation
+        document.addEventListener('DOMContentLoaded', function() {
+            buildDigestionStates();
+            updatePosition(0);
+
+            // Add organ click handlers
+            document.querySelectorAll('.organ').forEach((organ, index) => {
+                organ.addEventListener('click', () => {
+                    updatePosition(index);
+                });
+            });
+
+            // Add change handlers for food molecules
+            ['starch', 'protein', 'fats', 'maltose', 'sucrose', 'lactose'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    buildDigestionStates();
+                    updateInfoPanel();
+                });
+            });
+
+            // Add change handlers for health conditions
+            ['pancreasFailure', 'intestineFailure', 'lactoseIntolerant', 'gallbladderDisconnected'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    buildDigestionStates();
+                    updateInfoPanel();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
