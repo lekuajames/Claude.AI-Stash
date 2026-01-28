@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Level Biology: Food Tests Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2C3E50, #3498DB);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 25px;
+            padding: 5px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #2C3E50;
+        }
+
+        .simulation-area {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .quiz-area {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 25px;
+            min-height: 600px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #2C3E50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #3498DB;
+            padding-bottom: 10px;
+        }
+
+        .molecule-grid, .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-molecule-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .molecule-card, .test-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .molecule-card:hover, .test-card:hover {
+            border-color: #3498DB;
+            background: #e8f4fd;
+            transform: scale(1.05);
+        }
+
+        .molecule-card.selected, .test-card.selected {
+            border-color: #2980B9;
+            background: #d4edda;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .molecule-card.quiz-selected {
+            border-color: #e74c3c;
+            background: #ffeaa7;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .molecule-card.correct {
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .molecule-card.incorrect {
+            border-color: #e74c3c;
+            background: #ffeaea;
+        }
+
+        .molecule-name {
+            font-weight: bold;
+            color: #2C3E50;
+            margin-bottom: 5px;
+        }
+
+        .molecule-formula {
+            color: #7f8c8d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .molecule-structure {
+            width: 60px;
+            height: 60px;
+            margin: 10px auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            font-weight: bold;
+        }
+
+        .test-image {
+            width: 80px;
+            height: 60px;
+            margin: 10px auto;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .test-button, .quiz-button {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .test-button:hover, .quiz-button:hover {
+            background: linear-gradient(45deg, #c0392b, #a93226);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .test-button:disabled, .quiz-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .quiz-button.submit {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+
+        .quiz-button.submit:hover {
+            background: linear-gradient(45deg, #229954, #1e8449);
+        }
+
+        .quiz-button.next {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+
+        .results-area {
+            min-height: 200px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px dashed #bdc3c7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .test-tube {
+            width: 40px;
+            height: 120px;
+            background: #ecf0f1;
+            border: 3px solid #34495e;
+            border-radius: 0 0 20px 20px;
+            margin: 20px auto;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .test-tube::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -5px;
+            width: 50px;
+            height: 20px;
+            background: #34495e;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .solution {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            width: 34px;
+            height: 0;
+            border-radius: 0 0 15px 15px;
+            transition: all 1s ease;
+        }
+
+        .observation-text {
+            margin-top: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+
+        .conclusion-text {
+            margin-top: 10px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .info-panel {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #6c5300;
+        }
+
+        .quiz-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .quiz-sample {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-sample h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .score-display {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .feedback.correct {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .feedback.incorrect {
+            background: #ffeaea;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        @keyframes bubble {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+
+        .bubbling {
+            animation: bubble 1s infinite;
+        }
+
+        .reset-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .tests-performed {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .test-result-item {
+            margin: 5px 0;
+            padding: 5px 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
+                <button class="mode-btn" onclick="switchMode('quiz')">Quiz Mode</button>
+            </div>
+            <h1>🧪 Food Tests Simulation</h1>
+            <p>O Level Biology - Testing for Biological Molecules</p>
+        </div>
+
+        <!-- Practice Mode -->
+        <div class="simulation-area" id="practiceMode">
+            <!-- Molecules Section -->
+            <div class="section">
+                <h2>🧬 Select Molecule</h2>
+                <div class="molecule-grid">
+                    <div class="molecule-card" data-molecule="glucose">
+                        <div class="molecule-structure" style="background: #e74c3c;">C₆</div>
+                        <div class="molecule-name">Glucose</div>
+                        <div class="molecule-formula">C₆H₁₂O₆</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="fructose">
+                        <div class="molecule-structure" style="background: #f39c12;">C₆</div>
+                        <div class="molecule-name">Fructose</div>
+                        <div class="molecule-formula">C₆H₁₂O₆</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="sucrose">
+                        <div class="molecule-structure" style="background: #9b59b6;">C₁₂</div>
+                        <div class="molecule-name">Sucrose</div>
+                        <div class="molecule-formula">C₁₂H₂₂O₁₁</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="maltose">
+                        <div class="molecule-structure" style="background: #3498db;">C₁₂</div>
+                        <div class="molecule-name">Maltose</div>
+                        <div class="molecule-formula">C₁₂H₂₂O₁₁</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="starch">
+                        <div class="molecule-structure" style="background: #2ecc71;">ST</div>
+                        <div class="molecule-name">Starch</div>
+                        <div class="molecule-formula">(C₆H₁₀O₅)ₙ</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="fat">
+                        <div class="molecule-structure" style="background: #f1c40f;">FA</div>
+                        <div class="molecule-name">Fat</div>
+                        <div class="molecule-formula">Glycerol + 3 Fatty Acids</div>
+                    </div>
+                    <div class="molecule-card" data-molecule="protein">
+                        <div class="molecule-structure" style="background: #e67e22;">PR</div>
+                        <div class="molecule-name">Protein</div>
+                        <div class="molecule-formula">Amino Acid Chains</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tests Section -->
+            <div class="section">
+                <h2>🔬 Select Test</h2>
+                <div class="test-grid">
+                    <div class="test-card" data-test="benedict">
+                        <div class="test-image" style="background: #3498db;">🧪</div>
+                        <div class="molecule-name">Benedict's Test</div>
+                        <div class="molecule-formula">For Reducing Sugars</div>
+                    </div>
+                    <div class="test-card" data-test="iodine">
+                        <div class="test-image" style="background: #f39c12;">💧</div>
+                        <div class="molecule-name">Iodine Test</div>
+                        <div class="molecule-formula">For Starch</div>
+                    </div>
+                    <div class="test-card" data-test="ethanol">
+                        <div class="test-image" style="background: #e74c3c;">🍶</div>
+                        <div class="molecule-name">Ethanol Emulsion</div>
+                        <div class="molecule-formula">For Fats</div>
+                    </div>
+                    <div class="test-card" data-test="biuret">
+                        <div class="test-image" style="background: #9b59b6;">⚗️</div>
+                        <div class="molecule-name">Biuret Test</div>
+                        <div class="molecule-formula">For Proteins</div>
+                    </div>
+                </div>
+                
+                <button class="test-button" id="performTest" disabled>
+                    🧪 Perform Test
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section">
+                <h2>📊 Test Results</h2>
+                <div class="results-area" id="resultsArea">
+                    <div class="test-tube" id="testTube">
+                        <div class="solution" id="solution"></div>
+                    </div>
+                    <div class="observation-text" id="observationText">
+                        Select a molecule and test to begin
+                    </div>
+                    <div class="conclusion-text" id="conclusionText"></div>
+                    <button class="reset-btn" id="resetBtn" style="display: none;">Reset Test</button>
+                </div>
+                
+                <div class="info-panel">
+                    <strong>💡 Instructions:</strong><br>
+                    1. Select a biological molecule<br>
+                    2. Choose an appropriate test<br>
+                    3. Click "Perform Test" to see results<br>
+                    4. Observe the color changes and conclusions
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Mode -->
+        <div class="quiz-area hidden" id="quizMode">
+            <!-- Unknown Sample -->
+            <div class="section">
+                <h2>🧬 Unknown Sample</h2>
+                <div class="quiz-sample">
+                    <h3>Sample #<span id="sampleNumber">1</span></h3>
+                    <p>Analyze this unknown mixture!</p>
+                </div>
+                <div class="score-display">
+                    <div>Score: <span id="currentScore">0</span>/10</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">Question <span id="questionNumber">1</span>/10</div>
+                </div>
+                <div class="quiz-info">
+                    <strong>🎯 Your Task:</strong><br>
+                    Perform tests to identify which molecules are present in this sample. Multiple molecules may be present!
+                    <br><br>
+                    <label style="display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 10px;">
+                        <input type="checkbox" id="challengingModeToggle" checked onchange="toggleChallengingMode()">
+                        <span style="font-weight: bold; color: #e74c3c;">🔥 Challenging Mode (Hide Conclusions)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Test Selection -->
+            <div class="section">
+                <h2>🔬 Perform Tests</h2>
+                <div class="test-grid">
+                    <div class="test-card quiz-test" data-test="benedict">
+                        <div class="test-image" style="background: #3498db;">🧪</div>
+                        <div class="molecule-name">Benedict's Test</div>
+                        <div class="molecule-formula">For Reducing Sugars</div>
+                    </div>
+                    <div class="test-card quiz-test" data-test="iodine">
+                        <div class="test-image" style="background: #f39c12;">💧</div>
+                        <div class="molecule-name">Iodine Test</div>
+                        <div class="molecule-formula">For Starch</div>
+                    </div>
+                    <div class="test-card quiz-test" data-test="ethanol">
+                        <div class="test-image" style="background: #e74c3c;">🍶</div>
+                        <div class="molecule-name">Ethanol Emulsion</div>
+                        <div class="molecule-formula">For Fats</div>
+                    </div>
+                    <div class="test-card quiz-test" data-test="biuret">
+                        <div class="test-image" style="background: #9b59b6;">⚗️</div>
+                        <div class="molecule-name">Biuret Test</div>
+                        <div class="molecule-formula">For Proteins</div>
+                    </div>
+                </div>
+                
+                <button class="quiz-button" id="performQuizTest" disabled>
+                    🧪 Perform Selected Test
+                </button>
+
+                <div class="tests-performed" id="testsPerformed" style="display: none;">
+                    <strong>Tests Performed:</strong>
+                    <div id="testResultsList"></div>
+                </div>
+            </div>
+
+            <!-- Test Results -->
+            <div class="section">
+                <h2>📊 Test Results</h2>
+                <div class="results-area" id="quizResultsArea">
+                    <div class="test-tube" id="quizTestTube">
+                        <div class="solution" id="quizSolution"></div>
+                    </div>
+                    <div class="observation-text" id="quizObservationText">
+                        Select a test to begin analysis
+                    </div>
+                    <div class="conclusion-text" id="quizConclusionText"></div>
+                </div>
+            </div>
+
+            <!-- Answer Selection -->
+            <div class="section">
+                <h2>🎯 Your Answer</h2>
+                <p style="margin-bottom: 15px; font-weight: bold; color: #2C3E50;">
+                    Select ALL molecules you think are present:
+                </p>
+                <div class="quiz-molecule-grid">
+                    <div class="molecule-card quiz-answer" data-molecule="glucose">
+                        <div class="molecule-structure" style="background: #e74c3c; font-size: 1.2em;">C₆</div>
+                        <div class="molecule-name">Glucose</div>
+                    </div>
+                    <div class="molecule-card quiz-answer" data-molecule="fructose">
+                        <div class="molecule-structure" style="background: #f39c12; font-size: 1.2em;">C₆</div>
+                        <div class="molecule-name">Fructose</div>
+                    </div>
+                    <div class="molecule-card quiz-answer" data-molecule="maltose">
+                        <div class="molecule-structure" style="background: #3498db; font-size: 1.2em;">C₁₂</div>
+                        <div class="molecule-name">Maltose</div>
+                    </div>
+                    <div class="molecule-card quiz-answer" data-molecule="starch">
+                        <div class="molecule-structure" style="background: #2ecc71; font-size: 1.2em;">ST</div>
+                        <div class="molecule-name">Starch</div>
+                    </div>
+                    <div class="molecule-card quiz-answer" data-molecule="fat">
+                        <div class="molecule-structure" style="background: #f1c40f; font-size: 1.2em;">FA</div>
+                        <div class="molecule-name">Fat</div>
+                    </div>
+                    <div class="molecule-card quiz-answer" data-molecule="protein">
+                        <div class="molecule-structure" style="background: #e67e22; font-size: 1.2em;">PR</div>
+                        <div class="molecule-name">Protein</div>
+                    </div>
+                </div>
+                
+                <button class="quiz-button submit" id="submitAnswer">
+                    ✅ Submit Answer
+                </button>
+                
+                <button class="quiz-button next hidden" id="nextQuestion">
+                    ➡️ Next Question
+                </button>
+                
+                <div id="feedback" class="feedback" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #2C3E50; color: white; text-align: center; padding: 15px; font-size: 0.9em;">
+            Made by <strong>James Kua</strong>, Temasek Junior College
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'practice';
+        let selectedMolecule = null;
+        let selectedTest = null;
+        let selectedQuizTest = null;
+        let challengingMode = false;
+        let quizData = {
+            currentQuestion: 0,
+            score: 0,
+            totalQuestions: 10,
+            currentSample: [],
+            studentAnswers: [],
+            testsPerformed: []
+        };
+
+        // Test results database (removed cellulose)
+        const testResults = {
+            benedict: {
+                glucose: { color: '#dc2626', height: '90px', observation: 'Brick-red precipitate formed', conclusion: 'Large amount of reducing sugar present' },
+                fructose: { color: '#dc2626', height: '90px', observation: 'Brick-red precipitate formed', conclusion: 'Large amount of reducing sugar present' },
+                maltose: { color: '#f59e0b', height: '70px', observation: 'Orange precipitate formed', conclusion: 'Moderate amount of reducing sugar present' },
+                sucrose: { color: '#3b82f6', height: '20px', observation: 'Solution remained blue', conclusion: 'Reducing sugar is not present' },
+                starch: { color: '#3b82f6', height: '20px', observation: 'Solution remained blue', conclusion: 'Reducing sugar is not present' },
+                fat: { color: '#3b82f6', height: '20px', observation: 'Solution remained blue', conclusion: 'Reducing sugar is not present' },
+                protein: { color: '#3b82f6', height: '20px', observation: 'Solution remained blue', conclusion: 'Reducing sugar is not present' }
+            },
+            iodine: {
+                starch: { color: '#1e293b', height: '80px', observation: 'Iodine solution turns blue-black', conclusion: 'Starch is present' },
+                glucose: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' },
+                fructose: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' },
+                maltose: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' },
+                sucrose: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' },
+                fat: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' },
+                protein: { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' }
+            },
+            ethanol: {
+                fat: { color: '#f3f4f6', height: '70px', observation: 'Cloudy white emulsion formed', conclusion: 'Fat is present' },
+                glucose: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' },
+                fructose: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' },
+                maltose: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' },
+                sucrose: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' },
+                starch: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' },
+                protein: { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' }
+            },
+            biuret: {
+                protein: { color: '#7c3aed', height: '80px', observation: 'Solution turns violet', conclusion: 'Proteins are present' },
+                glucose: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' },
+                fructose: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' },
+                maltose: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' },
+                sucrose: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' },
+                starch: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' },
+                fat: { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' }
+            }
+        };
+
+        const allMolecules = ['glucose', 'fructose', 'maltose', 'sucrose', 'starch', 'fat', 'protein'];
+        const quizMolecules = ['glucose', 'fructose', 'maltose', 'starch', 'fat', 'protein']; // Removed sucrose - no test can identify it
+
+        // Mode switching
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (mode === 'practice') {
+                document.getElementById('practiceMode').classList.remove('hidden');
+                document.getElementById('quizMode').classList.add('hidden');
+                resetPracticeMode();
+            } else {
+                document.getElementById('practiceMode').classList.add('hidden');
+                document.getElementById('quizMode').classList.remove('hidden');
+                // Ensure checkbox is checked when entering quiz mode
+                document.getElementById('challengingModeToggle').checked = true;
+                challengingMode = true;
+                startQuiz();
+            }
+        }
+
+        // Generate random sample for quiz
+        function generateRandomSample() {
+            const numMolecules = Math.floor(Math.random() * 3) + 1; // 1-3 molecules
+            const sample = [];
+            const shuffled = [...quizMolecules].sort(() => 0.5 - Math.random());
+            
+            for (let i = 0; i < numMolecules; i++) {
+                sample.push(shuffled[i]);
+            }
+            
+            return sample;
+        }
+
+        // Calculate combined test result for mixture
+        function calculateMixtureResult(test, sample) {
+            if (test === 'benedict') {
+                const hasGlucose = sample.includes('glucose');
+                const hasFructose = sample.includes('fructose');
+                const hasMaltose = sample.includes('maltose');
+                
+                if (hasGlucose || hasFructose) {
+                    return { color: '#dc2626', height: '90px', observation: 'Brick-red precipitate formed', conclusion: 'Large amount of reducing sugar present' };
+                } else if (hasMaltose) {
+                    return { color: '#f59e0b', height: '70px', observation: 'Orange precipitate formed', conclusion: 'Moderate amount of reducing sugar present' };
+                } else {
+                    return { color: '#3b82f6', height: '20px', observation: 'Solution remained blue', conclusion: 'Reducing sugar is not present' };
+                }
+            } else if (test === 'iodine') {
+                return sample.includes('starch') ? 
+                    { color: '#1e293b', height: '80px', observation: 'Iodine solution turns blue-black', conclusion: 'Starch is present' } :
+                    { color: '#f59e0b', height: '30px', observation: 'Iodine solution remains orange-brown', conclusion: 'Starch is not present' };
+            } else if (test === 'ethanol') {
+                return sample.includes('fat') ? 
+                    { color: '#f3f4f6', height: '70px', observation: 'Cloudy white emulsion formed', conclusion: 'Fat is present' } :
+                    { color: 'transparent', height: '20px', observation: 'Solution remained clear and colourless', conclusion: 'Fat is not present' };
+            } else if (test === 'biuret') {
+                return sample.includes('protein') ? 
+                    { color: '#7c3aed', height: '80px', observation: 'Solution turns violet', conclusion: 'Proteins are present' } :
+                    { color: '#3b82f6', height: '20px', observation: 'Solution remains blue', conclusion: 'Proteins are not present' };
+            }
+        }
+
+        // Toggle challenging mode
+        function toggleChallengingMode() {
+            challengingMode = document.getElementById('challengingModeToggle').checked;
+        }
+        function startQuiz() {
+            quizData = {
+                currentQuestion: 0,
+                score: 0,
+                totalQuestions: 10,
+                currentSample: [],
+                studentAnswers: [],
+                testsPerformed: []
+            };
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            quizData.currentQuestion++;
+            quizData.currentSample = generateRandomSample();
+            quizData.studentAnswers = [];
+            quizData.testsPerformed = [];
+            
+            document.getElementById('sampleNumber').textContent = quizData.currentQuestion;
+            document.getElementById('questionNumber').textContent = quizData.currentQuestion;
+            document.getElementById('currentScore').textContent = quizData.score;
+            
+            // Reset UI
+            document.querySelectorAll('.quiz-test').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('.quiz-answer').forEach(card => {
+                card.classList.remove('quiz-selected', 'correct', 'incorrect');
+            });
+            document.getElementById('performQuizTest').disabled = true;
+            document.getElementById('submitAnswer').classList.remove('hidden');
+            document.getElementById('nextQuestion').classList.add('hidden');
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('testsPerformed').style.display = 'none';
+            document.getElementById('testResultsList').innerHTML = '';
+            
+            // Reset test tube
+            const solution = document.getElementById('quizSolution');
+            const conclusionText = document.getElementById('quizConclusionText');
+            solution.style.backgroundColor = '';
+            solution.style.height = '0';
+            document.getElementById('quizObservationText').textContent = 'Select a test to begin analysis';
+            conclusionText.textContent = '';
+            conclusionText.style.color = '#27ae60'; // Reset to default color
+            conclusionText.style.fontStyle = 'normal'; // Reset to default style
+            
+            selectedQuizTest = null;
+        }
+
+        // Practice Mode Event Listeners
+        document.querySelectorAll('.molecule-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (currentMode === 'practice') {
+                    document.querySelectorAll('.molecule-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedMolecule = card.dataset.molecule;
+                    updateTestButton();
+                }
+            });
+        });
+
+        document.querySelectorAll('.test-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (currentMode === 'practice') {
+                    document.querySelectorAll('.test-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedTest = card.dataset.test;
+                    updateTestButton();
+                }
+            });
+        });
+
+        // Quiz Mode Event Listeners
+        document.querySelectorAll('.quiz-test').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.quiz-test').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedQuizTest = card.dataset.test;
+                document.getElementById('performQuizTest').disabled = false;
+                document.getElementById('performQuizTest').textContent = `🧪 Perform ${selectedQuizTest.toUpperCase()} Test`;
+            });
+        });
+
+        document.querySelectorAll('.quiz-answer').forEach(card => {
+            card.addEventListener('click', () => {
+                const molecule = card.dataset.molecule;
+                if (quizData.studentAnswers.includes(molecule)) {
+                    quizData.studentAnswers = quizData.studentAnswers.filter(m => m !== molecule);
+                    card.classList.remove('quiz-selected');
+                } else {
+                    quizData.studentAnswers.push(molecule);
+                    card.classList.add('quiz-selected');
+                }
+            });
+        });
+
+        function updateTestButton() {
+            const button = document.getElementById('performTest');
+            if (selectedMolecule && selectedTest) {
+                button.disabled = false;
+                button.textContent = `🧪 Test ${selectedMolecule.toUpperCase()} with ${selectedTest.toUpperCase()}`;
+            } else {
+                button.disabled = true;
+                button.textContent = '🧪 Perform Test';
+            }
+        }
+
+        // Perform practice test
+        document.getElementById('performTest').addEventListener('click', () => {
+            if (!selectedMolecule || !selectedTest) return;
+
+            const result = testResults[selectedTest][selectedMolecule];
+            const solution = document.getElementById('solution');
+            const testTube = document.getElementById('testTube');
+            const observationText = document.getElementById('observationText');
+            const conclusionText = document.getElementById('conclusionText');
+            const resetBtn = document.getElementById('resetBtn');
+
+            testTube.classList.add('bubbling');
+
+            setTimeout(() => {
+                solution.style.backgroundColor = result.color;
+                solution.style.height = result.height;
+                
+                setTimeout(() => {
+                    observationText.textContent = `Observation: ${result.observation}`;
+                    conclusionText.textContent = `Conclusion: ${result.conclusion}`;
+                    resetBtn.style.display = 'block';
+                    testTube.classList.remove('bubbling');
+                }, 1000);
+            }, 500);
+        });
+
+        // Perform quiz test
+        document.getElementById('performQuizTest').addEventListener('click', () => {
+            if (!selectedQuizTest) return;
+
+            const result = calculateMixtureResult(selectedQuizTest, quizData.currentSample);
+            const solution = document.getElementById('quizSolution');
+            const testTube = document.getElementById('quizTestTube');
+            const observationText = document.getElementById('quizObservationText');
+            const conclusionText = document.getElementById('quizConclusionText');
+
+            // Add to performed tests
+            quizData.testsPerformed.push({
+                test: selectedQuizTest,
+                observation: result.observation,
+                conclusion: result.conclusion
+            });
+
+            testTube.classList.add('bubbling');
+
+            setTimeout(() => {
+                solution.style.backgroundColor = result.color;
+                solution.style.height = result.height;
+                
+                setTimeout(() => {
+                    observationText.textContent = `Observation: ${result.observation}`;
+                    if (!challengingMode) {
+                        conclusionText.textContent = `Conclusion: ${result.conclusion}`;
+                    } else {
+                        conclusionText.textContent = '🔥 Challenging Mode: Interpret the observation yourself!';
+                        conclusionText.style.color = '#e74c3c';
+                        conclusionText.style.fontStyle = 'italic';
+                    }
+                    testTube.classList.remove('bubbling');
+                    
+                    // Update tests performed list
+                    updateTestsPerformed();
+                    
+                    // Clear selection
+                    document.querySelectorAll('.quiz-test').forEach(c => c.classList.remove('selected'));
+                    selectedQuizTest = null;
+                    document.getElementById('performQuizTest').disabled = true;
+                    document.getElementById('performQuizTest').textContent = '🧪 Perform Selected Test';
+                }, 1000);
+            }, 500);
+        });
+
+        function updateTestsPerformed() {
+            const testsDiv = document.getElementById('testsPerformed');
+            const listDiv = document.getElementById('testResultsList');
+            
+            if (quizData.testsPerformed.length > 0) {
+                testsDiv.style.display = 'block';
+                listDiv.innerHTML = quizData.testsPerformed.map(test => 
+                    `<div class="test-result-item">
+                        <strong>${test.test.charAt(0).toUpperCase() + test.test.slice(1)}:</strong> ${test.observation}
+                        ${!challengingMode ? `<br><em style="color: #27ae60;">${test.conclusion}</em>` : ''}
+                    </div>`
+                ).join('');
+            }
+        }
+
+        // Submit quiz answer
+        document.getElementById('submitAnswer').addEventListener('click', () => {
+            const correctAnswers = quizData.currentSample;
+            const studentAnswers = quizData.studentAnswers;
+            
+            // Check if answers are correct
+            const isCorrect = correctAnswers.length === studentAnswers.length && 
+                             correctAnswers.every(molecule => studentAnswers.includes(molecule));
+            
+            if (isCorrect) {
+                quizData.score++;
+            }
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            const correctList = correctAnswers.join(', ');
+            const studentList = studentAnswers.length > 0 ? studentAnswers.join(', ') : 'None selected';
+            
+            if (isCorrect) {
+                feedback.className = 'feedback correct';
+                feedback.textContent = `✅ Correct! The sample contained: ${correctList}`;
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `❌ Incorrect.<br>Your answer: ${studentList}<br>Correct answer: ${correctList}`;
+            }
+            feedback.style.display = 'block';
+            
+            // Color-code the answer cards
+            document.querySelectorAll('.quiz-answer').forEach(card => {
+                const molecule = card.dataset.molecule;
+                if (correctAnswers.includes(molecule)) {
+                    card.classList.add('correct');
+                } else if (studentAnswers.includes(molecule)) {
+                    card.classList.add('incorrect');
+                }
+            });
+            
+            // Update score display
+            document.getElementById('currentScore').textContent = quizData.score;
+            
+            // Show appropriate button
+            document.getElementById('submitAnswer').classList.add('hidden');
+            
+            if (quizData.currentQuestion < quizData.totalQuestions) {
+                document.getElementById('nextQuestion').classList.remove('hidden');
+            } else {
+                // Quiz finished
+                const finalScore = (quizData.score / quizData.totalQuestions * 100).toFixed(0);
+                feedback.innerHTML += `<br><br><strong>🎉 Quiz Complete! Final Score: ${quizData.score}/${quizData.totalQuestions} (${finalScore}%)</strong>`;
+                
+                setTimeout(() => {
+                    if (confirm(`Quiz completed! You scored ${quizData.score}/${quizData.totalQuestions} (${finalScore}%). Would you like to try again?`)) {
+                        startQuiz();
+                    }
+                }, 2000);
+            }
+        });
+
+        // Next question
+        document.getElementById('nextQuestion').addEventListener('click', nextQuestion);
+
+        // Reset practice mode
+        function resetPracticeMode() {
+            const solution = document.getElementById('solution');
+            const observationText = document.getElementById('observationText');
+            const conclusionText = document.getElementById('conclusionText');
+            const resetBtn = document.getElementById('resetBtn');
+
+            solution.style.backgroundColor = '';
+            solution.style.height = '0';
+            observationText.textContent = 'Select a molecule and test to begin';
+            conclusionText.textContent = '';
+            resetBtn.style.display = 'none';
+
+            document.querySelectorAll('.molecule-card, .test-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            selectedMolecule = null;
+            selectedTest = null;
+            updateTestButton();
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', resetPracticeMode);
+    </script>
+</body>
+</html>
