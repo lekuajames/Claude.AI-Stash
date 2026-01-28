@@ -1,0 +1,976 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Electricity - Charging by Friction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .simulation-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+        }
+
+        .controls {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            border-radius: 8px;
+            min-height: 80px;
+        }
+
+        .explanation-box h3 {
+            color: #0066cc;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .explanation-box p {
+            color: #333;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .triboelectric-series {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+        }
+
+        .triboelectric-series h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .triboelectric-series ol {
+            margin-left: 20px;
+            color: #856404;
+            font-size: 0.9em;
+        }
+
+        .triboelectric-series li {
+            margin: 5px 0;
+        }
+
+        .quiz-option:hover:not(:disabled) {
+            background: #ffc107 !important;
+            transform: translateX(5px);
+        }
+
+        .quiz-option:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .quiz-mode-hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Static Electricity Simulation</h1>
+        <p class="subtitle">Charging by Friction</p>
+
+        <div class="main-content">
+            <div class="simulation-area">
+                <canvas id="simulationCanvas"></canvas>
+                <div class="explanation-box" id="explanationBox">
+                    <h3>Instructions</h3>
+                    <p>Select a cloth material and a rod material from the dropdowns, then click START to see how charging by friction works!</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group" id="clothControl">
+                    <label for="clothSelect">Select Cloth Material:</label>
+                    <select id="clothSelect">
+                        <option value="polystyrene">Polystyrene Cloth</option>
+                        <option value="silk">Silk Cloth</option>
+                        <option value="wool">Wool Cloth</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="rodControl">
+                    <label for="rodSelect">Select Rod Material:</label>
+                    <select id="rodSelect">
+                        <option value="glass">Glass Rod</option>
+                        <option value="acrylic">Acrylic Rod</option>
+                        <option value="wooden">Wooden Rod</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button class="start-btn" id="startBtn">START</button>
+                    <button class="reset-btn" id="resetBtn">RESET</button>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="quizMode" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: bold; color: #495057;">Quiz Mode 🎓</span>
+                    </label>
+                </div>
+
+                <div id="quizInterface" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 2px solid #ffc107;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">Which direction did electrons move?</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="quiz-option" id="quizClothToRod" style="padding: 10px; border: 2px solid #856404; background: white; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: all 0.3s;">
+                            Cloth → Rod
+                        </button>
+                        <button class="quiz-option" id="quizRodToCloth" style="padding: 10px; border: 2px solid #856404; background: white; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: all 0.3s;">
+                            Cloth ← Rod
+                        </button>
+                        <button class="quiz-option" id="quizNoTransfer" style="padding: 10px; border: 2px solid #856404; background: white; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: all 0.3s;">
+                            No electron transfer
+                        </button>
+                    </div>
+                    <div id="quizFeedback" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+                </div>
+
+                <div class="triboelectric-series">
+                    <p style="color: #cc0000; font-weight: bold; font-size: 0.9em; margin-bottom: 10px; text-align: center;">⚠️ There is no need to memorize the triboelectric series</p>
+                    <h4>📊 Triboelectric Series</h4>
+                    <p style="font-size: 0.85em; margin-bottom: 8px; color: #856404;">Materials higher in the series lose electrons more easily:</p>
+                    <ol>
+                        <li>Glass (loses electrons easily)</li>
+                        <li>Wool</li>
+                        <li>Silk</li>
+                        <li>Wood</li>
+                        <li>Acrylic</li>
+                        <li>Polystyrene (gains electrons easily)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; padding: 20px; color: white; font-size: 0.9em;">
+        Made by James Kua, Temasek Junior College
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const clothSelect = document.getElementById('clothSelect');
+        const rodSelect = document.getElementById('rodSelect');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const explanationBox = document.getElementById('explanationBox');
+        const quizModeCheckbox = document.getElementById('quizMode');
+        const quizInterface = document.getElementById('quizInterface');
+        const quizFeedback = document.getElementById('quizFeedback');
+        const quizClothToRod = document.getElementById('quizClothToRod');
+        const quizRodToCloth = document.getElementById('quizRodToCloth');
+        const quizNoTransfer = document.getElementById('quizNoTransfer');
+
+        let isQuizMode = false;
+        let quizState = null; // Stores randomized quiz configuration
+
+        // Generate random quiz configuration
+        function generateQuizState() {
+            const clothMaterials = ['polystyrene', 'silk', 'wool'];
+            const rodMaterials = ['glass', 'acrylic', 'wooden'];
+            
+            const randomCloth = clothMaterials[Math.floor(Math.random() * clothMaterials.length)];
+            const randomRod = rodMaterials[Math.floor(Math.random() * rodMaterials.length)];
+            
+            const clothSeries = triboelectricSeries[randomCloth];
+            const rodSeries = triboelectricSeries[randomRod];
+            
+            let direction;
+            if (clothSeries === rodSeries) {
+                direction = 'none';
+            } else if (clothSeries < rodSeries) {
+                direction = 'clothToRod';
+            } else {
+                direction = 'rodToCloth';
+            }
+            
+            return {
+                clothMaterial: randomCloth,
+                rodMaterial: randomRod,
+                correctAnswer: direction
+            };
+        }
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Triboelectric series (higher index = gains electrons more easily)
+        const triboelectricSeries = {
+            'glass': 0,
+            'wool': 1,
+            'silk': 2,
+            'wooden': 3,
+            'acrylic': 4,
+            'polystyrene': 5
+        };
+
+        const materialNames = {
+            'glass': 'Glass',
+            'wool': 'Wool',
+            'silk': 'Silk',
+            'wooden': 'Wood',
+            'acrylic': 'Acrylic',
+            'polystyrene': 'Polystyrene'
+        };
+
+        let animationState = 'idle'; // idle, rubbing, separating, complete
+        let animationProgress = 0;
+        let electrons = [];
+        let clothCharges = [];
+        let rodCharges = [];
+
+        // Particle class for electrons
+        class Electron {
+            constructor(x, y, targetX, targetY, targetCharge) {
+                this.x = x;
+                this.y = y;
+                this.startX = x;
+                this.startY = y;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.targetCharge = targetCharge; // Reference to destination charge object
+                this.progress = 0;
+            }
+
+            update() {
+                this.progress += 0.025; // Faster for concurrent animation
+                if (this.progress > 1) {
+                    this.progress = 1;
+                    // Make the destination charge visible when electron arrives
+                    if (this.targetCharge) {
+                        this.targetCharge.visible = true;
+                    }
+                }
+                
+                // Cubic easing
+                const t = this.progress;
+                const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                
+                this.x = this.startX + (this.targetX - this.startX) * eased;
+                this.y = this.startY + (this.targetY - this.startY) * eased;
+            }
+
+            draw() {
+                // Draw electron as blue minus sign
+                ctx.fillStyle = '#4444ff';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('-', this.x, this.y);
+            }
+        }
+
+        function initializeCharges() {
+            clothCharges = [];
+            rodCharges = [];
+
+            // Initialize cloth charges (rectangle) - store as relative offsets
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 3; j++) {
+                    clothCharges.push({
+                        offsetX: 10 + i * 30,
+                        offsetY: -45 + j * 30,
+                        type: i % 2 === 0 ? '+' : '-',
+                        visible: true
+                    });
+                }
+            }
+
+            // Initialize rod charges - store as relative offsets
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 2; j++) {
+                    rodCharges.push({
+                        offsetX: 10 + i * 30,
+                        offsetY: -15 + j * 30,
+                        type: i % 2 === 0 ? '+' : '-',
+                        visible: true
+                    });
+                }
+            }
+        }
+
+        function drawCloth(x, y, width, height, label, showLabel = true) {
+            // Draw cloth rectangle
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(x, y, width, height);
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, width, height);
+
+            // Draw label
+            if (showLabel) {
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x + width / 2, y - 15);
+            }
+
+            // Draw charges using relative positions
+            clothCharges.forEach(charge => {
+                if (charge.visible) {
+                    ctx.fillStyle = charge.type === '+' ? '#ff4444' : '#4444ff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(charge.type, x + charge.offsetX, y + height / 2 + charge.offsetY);
+                }
+            });
+        }
+
+        function drawRod(x, y, width, height, label, showLabel = true) {
+            // Draw rod
+            ctx.fillStyle = '#d0d0d0';
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, 10);
+            ctx.fill();
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw label
+            if (showLabel) {
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x + width / 2, y - 15);
+            }
+
+            // Draw charges using relative positions
+            rodCharges.forEach(charge => {
+                if (charge.visible) {
+                    ctx.fillStyle = charge.type === '+' ? '#ff4444' : '#4444ff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(charge.type, x + charge.offsetX, y + height / 2 + charge.offsetY);
+                }
+            });
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const clothMaterial = clothSelect.value;
+            const rodMaterial = rodSelect.value;
+
+            let clothX, rodX, clothY, rodY;
+            
+            // Base Y positions
+            clothY = canvas.height / 2 - 60;
+            rodY = canvas.height / 2 - 30;
+
+            if (animationState === 'idle') {
+                // Start separated
+                clothX = canvas.width / 2 - 250;
+                rodX = canvas.width / 2 + 50;
+            } else if (animationState === 'rubbing') {
+                // Move objects together to overlap and add vertical oscillation
+                const oscillation = Math.sin(animationProgress * Math.PI * 4) * 15;
+                const convergence = Math.min(animationProgress * 2, 1); // Move together in first half
+                
+                clothX = canvas.width / 2 - 250 + convergence * 30; // Move cloth right
+                rodX = canvas.width / 2 + 50 - convergence * 130; // Move rod left
+                
+                // Apply opposite vertical movements to simulate rubbing
+                clothY = canvas.height / 2 - 60 + oscillation;
+                rodY = canvas.height / 2 - 30 - oscillation;
+            } else if (animationState === 'separating') {
+                // Smoothly separate the objects with clear gap
+                const progress = animationProgress;
+                const startClothX = canvas.width / 2 - 220;
+                const startRodX = canvas.width / 2 - 80;
+                clothX = startClothX - progress * 150; // Move cloth left
+                rodX = startRodX + progress * 150; // Move rod right
+            } else if (animationState === 'complete') {
+                // Keep separated - both fully visible with appropriate gap
+                clothX = Math.max(10, canvas.width / 2 - 370); // Cloth on left side
+                rodX = Math.min(canvas.width - 280, canvas.width / 2 + 70); // Rod on right side
+            }
+
+            // In quiz mode when showing result, use generic labels instead of material names
+            let clothLabel, rodLabel;
+            if (isQuizMode && animationState === 'complete') {
+                clothLabel = 'Cloth';
+                rodLabel = 'Rod';
+            } else {
+                clothLabel = materialNames[clothMaterial] + ' Cloth';
+                rodLabel = materialNames[rodMaterial] + ' Rod';
+            }
+            
+            drawCloth(clothX, clothY, 200, 120, clothLabel, true);
+            drawRod(rodX, rodY, 270, 60, rodLabel, true);
+
+            // Draw net charge labels after animation completes
+            if (animationState === 'complete') {
+                const clothSeries = triboelectricSeries[clothMaterial];
+                const rodSeries = triboelectricSeries[rodMaterial];
+
+                if (clothSeries !== rodSeries) {
+                    const clothPositive = clothSeries < rodSeries;
+
+                    // Draw label for cloth
+                    ctx.save();
+                    ctx.fillStyle = clothPositive ? '#cc0000' : '#0000cc';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(
+                        clothPositive ? 'Net Positively Charged' : 'Net Negatively Charged',
+                        clothX + 100,
+                        canvas.height / 2 + 80
+                    );
+
+                    // Draw label for rod
+                    ctx.fillStyle = clothPositive ? '#0000cc' : '#cc0000';
+                    ctx.fillText(
+                        clothPositive ? 'Net Negatively Charged' : 'Net Positively Charged',
+                        rodX + 135,
+                        canvas.height / 2 + 50
+                    );
+                    ctx.restore();
+                }
+            }
+
+            // Draw electrons in transit (only those still moving)
+            electrons.forEach(e => {
+                e.update();
+                // Only draw if electron hasn't reached destination yet
+                if (e.progress < 1) {
+                    e.draw();
+                }
+            });
+        }
+
+        function animate() {
+            drawScene();
+
+            if (animationState === 'rubbing') {
+                animationProgress += 0.02;
+                
+                // Start electron transfer at 30% through rubbing animation
+                if (animationProgress >= 0.3 && electrons.length === 0) {
+                    startElectronTransfer();
+                }
+                
+                if (animationProgress >= 1) {
+                    animationState = 'separating';
+                    animationProgress = 0;
+                    // Redistribute charges evenly after rubbing completes
+                    redistributeCharges();
+                }
+            } else if (animationState === 'separating') {
+                animationProgress += 0.03;
+                if (animationProgress >= 1) {
+                    animationState = 'complete';
+                    updateFinalCharges();
+                    showFinalExplanation();
+                }
+            }
+
+            if (animationState !== 'idle' && animationState !== 'complete') {
+                requestAnimationFrame(animate);
+            } else if (animationState === 'complete') {
+                // Draw one final frame
+                drawScene();
+            }
+        }
+
+        function startElectronTransfer() {
+            const clothMaterial = clothSelect.value;
+            const rodMaterial = rodSelect.value;
+
+            const clothSeries = triboelectricSeries[clothMaterial];
+            const rodSeries = triboelectricSeries[rodMaterial];
+
+            electrons = [];
+
+            if (clothSeries === rodSeries) {
+                // No charge transfer
+                return;
+            }
+
+            // Get overlapped positions during rubbing (at convergence = 1)
+            const clothX = canvas.width / 2 - 220; // Fully converged position
+            const clothY = canvas.height / 2 - 60;
+            const clothHeight = 120;
+            const rodX = canvas.width / 2 - 80; // Fully converged position
+            const rodY = canvas.height / 2 - 30;
+            const rodHeight = 60;
+
+            // Determine direction of electron flow
+            let fromCloth = clothSeries < rodSeries; // Cloth is higher, loses electrons
+
+            // Find electron charges to transfer
+            const sourceCharges = fromCloth ? clothCharges : rodCharges;
+            const destCharges = fromCloth ? rodCharges : clothCharges;
+            const sourceX = fromCloth ? clothX : rodX;
+            const sourceY = fromCloth ? clothY : rodY;
+            const sourceHeight = fromCloth ? clothHeight : rodHeight;
+            
+            const electronSources = sourceCharges.filter(c => c.type === '-' && c.visible);
+
+            // Transfer 3 electrons
+            const numElectrons = Math.min(3, electronSources.length);
+            for (let i = 0; i < numElectrons; i++) {
+                const source = electronSources[i];
+                source.visible = false;
+
+                // Create destination charge that is initially invisible
+                // Position these in a clear visible area that doesn't overlap existing charges
+                const destCharge = {
+                    offsetX: fromCloth ? (180 + i * 25) : (140 + i * 20), // Adjusted for cloth to stay within 200px width
+                    offsetY: fromCloth ? (0 + (i % 2) * 25) : (15 + (i % 2) * 30),
+                    type: '-',
+                    visible: false // Will become visible when electron arrives
+                };
+                destCharges.push(destCharge);
+
+                // Calculate positions
+                const targetX = fromCloth ? rodX : clothX;
+                const targetY = fromCloth ? rodY : clothY;
+                const targetHeight = fromCloth ? rodHeight : clothHeight;
+
+                const startX = sourceX + source.offsetX;
+                const startY = sourceY + sourceHeight / 2 + source.offsetY;
+                const endX = targetX + destCharge.offsetX;
+                const endY = targetY + targetHeight / 2 + destCharge.offsetY;
+
+                // Create electron with reference to destination charge
+                electrons.push(new Electron(startX, startY, endX, endY, destCharge));
+            }
+        }
+
+        function redistributeCharges() {
+            // Only redistribute NEGATIVE charges (electrons) - positive charges (protons) don't move
+            const visibleClothNegatives = clothCharges.filter(c => c.visible && c.type === '-');
+            const clothRows = 3;
+            const clothCols = Math.ceil(visibleClothNegatives.length / clothRows);
+            const clothSpacingX = 180 / (clothCols + 1);
+            const clothSpacingY = 110 / (clothRows + 1);
+            
+            visibleClothNegatives.forEach((charge, index) => {
+                const row = index % clothRows;
+                const col = Math.floor(index / clothRows);
+                charge.offsetX = 10 + (col + 1) * clothSpacingX;
+                charge.offsetY = -55 + (row + 1) * clothSpacingY;
+            });
+            
+            // Redistribute rod negative charges evenly
+            const visibleRodNegatives = rodCharges.filter(c => c.visible && c.type === '-');
+            const rodRows = 2;
+            const rodCols = Math.ceil(visibleRodNegatives.length / rodRows);
+            const rodSpacingX = 250 / (rodCols + 1);
+            const rodSpacingY = 50 / (rodRows + 1);
+            
+            visibleRodNegatives.forEach((charge, index) => {
+                const row = index % rodRows;
+                const col = Math.floor(index / rodRows);
+                charge.offsetX = 10 + (col + 1) * rodSpacingX;
+                charge.offsetY = -25 + (row + 1) * rodSpacingY;
+            });
+        }
+
+        function updateFinalCharges() {
+            // Ensure charges are redistributed (may have already been done, but safe to call again)
+            redistributeCharges();
+        }
+
+        function showFinalExplanation() {
+            const clothMaterial = clothSelect.value;
+            const rodMaterial = rodSelect.value;
+
+            const clothName = materialNames[clothMaterial];
+            const rodName = materialNames[rodMaterial];
+
+            const clothSeries = triboelectricSeries[clothMaterial];
+            const rodSeries = triboelectricSeries[rodMaterial];
+
+            let explanation = '';
+
+            if (clothSeries === rodSeries) {
+                explanation = `<h3>No Charging</h3>
+                    <p>Both materials are the same, so no charge transfer occurs. The objects remain electrically neutral.</p>`;
+            } else if (clothSeries < rodSeries) {
+                // Cloth higher in series, loses electrons
+                explanation = `<h3>Charging Complete! ⚡</h3>
+                    <p><strong>Electrons from ${clothName} cloth are transferred by friction to the ${rodName} rod.</strong></p>
+                    <p>• The <strong>${clothName} cloth</strong> has lost electrons, resulting in a net positive charge. It becomes <span style="color: #ff4444; font-weight: bold;">positively charged</span>.</p>
+                    <p>• The <strong>${rodName} rod</strong> has gained electrons, resulting in a net negative charge. It becomes <span style="color: #4444ff; font-weight: bold;">negatively charged</span>.</p>`;
+            } else {
+                // Rod higher in series, loses electrons
+                explanation = `<h3>Charging Complete! ⚡</h3>
+                    <p><strong>Electrons from the ${rodName} rod are transferred by friction to the ${clothName} cloth.</strong></p>
+                    <p>• The <strong>${rodName} rod</strong> has lost electrons, resulting in a net positive charge. It becomes <span style="color: #ff4444; font-weight: bold;">positively charged</span>.</p>
+                    <p>• The <strong>${clothName} cloth</strong> has gained electrons, resulting in a net negative charge. It becomes <span style="color: #4444ff; font-weight: bold;">negatively charged</span>.</p>`;
+            }
+
+            explanationBox.innerHTML = explanation;
+        }
+
+        function reset() {
+            animationState = 'idle';
+            animationProgress = 0;
+            electrons = [];
+            quizState = null;
+            initializeCharges();
+            drawScene();
+            
+            quizInterface.style.display = 'none';
+            
+            if (isQuizMode) {
+                explanationBox.innerHTML = `
+                    <h3>Quiz Mode Activated! 🎓</h3>
+                    <p>In quiz mode, you'll see the final result and need to determine which direction the electrons moved.</p>
+                `;
+            } else {
+                explanationBox.innerHTML = `
+                    <h3>Instructions</h3>
+                    <p>Select a cloth material and a rod material from the dropdowns, then click START to see how charging by friction works!</p>
+                `;
+            }
+            
+            startBtn.disabled = false;
+        }
+
+        startBtn.addEventListener('click', () => {
+            let clothMaterial, rodMaterial;
+            
+            if (isQuizMode) {
+                // Generate random quiz
+                quizState = generateQuizState();
+                clothMaterial = quizState.clothMaterial;
+                rodMaterial = quizState.rodMaterial;
+                
+                // Temporarily set the selects to match quiz state (hidden from user)
+                clothSelect.value = clothMaterial;
+                rodSelect.value = rodMaterial;
+            } else {
+                clothMaterial = clothSelect.value;
+                rodMaterial = rodSelect.value;
+            }
+
+            startBtn.disabled = true;
+            electrons = []; // Clear any leftover electrons
+            initializeCharges();
+            
+            if (isQuizMode) {
+                // Quiz mode: show final result immediately with objects separated
+                // Remove electrons from source without animation
+                const clothMaterial = quizState.clothMaterial;
+                const rodMaterial = quizState.rodMaterial;
+                const clothSeries = triboelectricSeries[clothMaterial];
+                const rodSeries = triboelectricSeries[rodMaterial];
+                
+                if (clothSeries !== rodSeries) {
+                    const fromCloth = clothSeries < rodSeries;
+                    const sourceCharges = fromCloth ? clothCharges : rodCharges;
+                    const destCharges = fromCloth ? rodCharges : clothCharges;
+                    const electronSources = sourceCharges.filter(c => c.type === '-' && c.visible);
+                    
+                    // Hide 3 electrons from source
+                    for (let i = 0; i < 3 && i < electronSources.length; i++) {
+                        electronSources[i].visible = false;
+                    }
+                    
+                    // Add visible electrons to destination
+                    for (let i = 0; i < 3; i++) {
+                        destCharges.push({
+                            offsetX: fromCloth ? (180 + i * 25) : (140 + i * 20),
+                            offsetY: fromCloth ? (0 + (i % 2) * 25) : (15 + (i % 2) * 30),
+                            type: '-',
+                            visible: true
+                        });
+                    }
+                }
+                
+                // Redistribute charges evenly
+                redistributeCharges();
+                
+                animationState = 'complete';
+                drawScene();
+                
+                quizInterface.style.display = 'block';
+                quizFeedback.style.display = 'none';
+                
+                // Enable quiz options
+                document.querySelectorAll('.quiz-option').forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.background = 'white';
+                });
+                
+                explanationBox.innerHTML = `
+                    <h3>Quiz Time! 🎓</h3>
+                    <p>Look at the final charges on the objects. Which direction did the electrons move?</p>
+                `;
+            } else {
+                // Normal mode: show animation
+                quizInterface.style.display = 'none';
+                explanationBox.innerHTML = `
+                    <h3>Rubbing in Progress...</h3>
+                    <p>The ${materialNames[clothMaterial]} cloth and ${materialNames[rodMaterial]} rod are being rubbed together. Watch as electrons transfer during the rubbing!</p>
+                `;
+
+                animationState = 'rubbing';
+                animationProgress = 0;
+                animate();
+            }
+        });
+
+        resetBtn.addEventListener('click', reset);
+
+        // Quiz mode toggle
+        quizModeCheckbox.addEventListener('change', (e) => {
+            isQuizMode = e.target.checked;
+            const clothControl = document.getElementById('clothControl');
+            const rodControl = document.getElementById('rodControl');
+            
+            if (isQuizMode) {
+                startBtn.textContent = 'START QUIZ';
+                clothControl.classList.add('quiz-mode-hidden');
+                rodControl.classList.add('quiz-mode-hidden');
+                explanationBox.innerHTML = `
+                    <h3>Quiz Mode Activated! 🎓</h3>
+                    <p>In quiz mode, you'll see the final result and need to determine which direction the electrons moved.</p>
+                `;
+            } else {
+                startBtn.textContent = 'START';
+                clothControl.classList.remove('quiz-mode-hidden');
+                rodControl.classList.remove('quiz-mode-hidden');
+                quizInterface.style.display = 'none';
+                explanationBox.innerHTML = `
+                    <h3>Instructions</h3>
+                    <p>Select a cloth material and a rod material from the dropdowns, then click START to see how charging by friction works!</p>
+                `;
+            }
+        });
+
+        // Quiz option handlers
+        function checkQuizAnswer(answer) {
+            if (!quizState) return;
+            
+            const clothMaterial = quizState.clothMaterial;
+            const rodMaterial = quizState.rodMaterial;
+            const correctAnswer = quizState.correctAnswer;
+
+            const isCorrect = answer === correctAnswer;
+
+            // Disable all buttons after answer
+            document.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.disabled = true;
+            });
+
+            // Show feedback
+            quizFeedback.style.display = 'block';
+            
+            if (isCorrect) {
+                quizFeedback.style.background = '#d4edda';
+                quizFeedback.style.border = '2px solid #28a745';
+                quizFeedback.style.color = '#155724';
+                quizFeedback.innerHTML = `
+                    <strong>✓ Correct!</strong><br>
+                    ${getCorrectExplanation(clothMaterial, rodMaterial, correctAnswer)}
+                `;
+            } else {
+                quizFeedback.style.background = '#f8d7da';
+                quizFeedback.style.border = '2px solid #dc3545';
+                quizFeedback.style.color = '#721c24';
+                quizFeedback.innerHTML = `
+                    <strong>✗ Not quite right.</strong><br>
+                    ${getCorrectExplanation(clothMaterial, rodMaterial, correctAnswer)}
+                `;
+            }
+
+            // Enable start button for next quiz
+            startBtn.disabled = false;
+        }
+
+        function getCorrectExplanation(clothMaterial, rodMaterial, correctAnswer) {
+            const clothName = materialNames[clothMaterial];
+            const rodName = materialNames[rodMaterial];
+
+            if (correctAnswer === 'none') {
+                return `Both materials are the same, so no electron transfer occurs.`;
+            } else if (correctAnswer === 'clothToRod') {
+                return `Electrons moved from the ${clothName} cloth to the ${rodName} rod. ${clothName} is higher in the triboelectric series, so it loses electrons more easily.`;
+            } else {
+                return `Electrons moved from the ${rodName} rod to the ${clothName} cloth. ${rodName} is higher in the triboelectric series, so it loses electrons more easily.`;
+            }
+        }
+
+        quizClothToRod.addEventListener('click', () => checkQuizAnswer('clothToRod'));
+        quizRodToCloth.addEventListener('click', () => checkQuizAnswer('rodToCloth'));
+        quizNoTransfer.addEventListener('click', () => checkQuizAnswer('none'));
+
+        // Update labels when dropdown selections change
+        clothSelect.addEventListener('change', () => {
+            if (animationState === 'idle') {
+                drawScene();
+            }
+        });
+
+        rodSelect.addEventListener('change', () => {
+            if (animationState === 'idle') {
+                drawScene();
+            }
+        });
+
+        // Initial setup
+        initializeCharges();
+        drawScene();
+    </script>
+</body>
+</html>
