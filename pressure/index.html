@@ -1,0 +1,897 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pressure Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .control-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .simulation-area {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 2;
+            min-width: 450px;
+            position: relative;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        
+        .input-with-unit {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            max-width: 150px;
+        }
+        
+        .numeric-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        
+        .unit {
+            color: #666;
+            font-weight: bold;
+            min-width: 35px;
+        }
+        
+        .results {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .results h3 {
+            margin-top: 0;
+            color: #2980b9;
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .box-face-selection {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .face-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .face-option.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .object-shape-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .object-shape-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .object-shape-option.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .formula {
+            background-color: #f1f8e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        
+        .explanation-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .explanation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .explanation-header h3 {
+            margin: 0;
+        }
+        
+        .toggle-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        .toggle-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .explanation-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 1000px;
+            overflow: hidden;
+            opacity: 1;
+        }
+        
+        .explanation-content.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .info-box {
+            background-color: #eff8ff;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pressure Simulation: Objects on Ground</h1>
+    
+    <div class="container">
+        <div class="control-panel">
+            <div class="control-group">
+                <label>Object Shape:</label>
+                <div class="object-shape-toggle">
+                    <div class="object-shape-option selected" data-shape="box">
+                        Box
+                    </div>
+                    <div class="object-shape-option" data-shape="cylinder">
+                        Cylinder
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label for="density">Density (kg/m³):</label>
+                <div class="input-with-unit">
+                    <input type="number" id="density" min="100" max="20000" value="1000" step="10" class="numeric-input">
+                    <span class="unit">kg/m³</span>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <p>Current Mass: <span id="calculatedMass">0.072 kg</span></p>
+                <p>Current Volume: <span id="calculatedVolume">0.072 m³</span></p>
+            </div>
+            
+            <div id="box-dimensions">
+                <div class="control-group">
+                    <label for="length">Length (m):</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="length" min="0.1" max="10" value="0.6" step="0.1" class="numeric-input">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="width">Width (m):</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="width" min="0.1" max="10" value="0.4" step="0.1" class="numeric-input">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="height">Height (m):</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="height" min="0.1" max="10" value="0.3" step="0.1" class="numeric-input">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="cylinder-dimensions" style="display: none;">
+                <div class="control-group">
+                    <label for="radius">Radius (m):</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="radius" min="0.1" max="5" value="0.3" step="0.1" class="numeric-input">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="cylinder-height">Height (m):</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="cylinder-height" min="0.1" max="10" value="0.5" step="0.1" class="numeric-input">
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group" id="box-face-controls">
+                <label>Face in contact with ground:</label>
+                <div class="box-face-selection">
+                    <div class="face-option selected" data-face="bottom">
+                        Length × Width<br>(Bottom)
+                    </div>
+                    <div class="face-option" data-face="side">
+                        Length × Height<br>(Side)
+                    </div>
+                    <div class="face-option" data-face="end">
+                        Width × Height<br>(End)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="formula">
+                <p>Pressure = Force / Area</p>
+                <p>P = (m × 9.81) / A</p>
+            </div>
+            
+            <div class="results">
+                <h3>Results:</h3>
+                <p>Weight: <span id="weightResult">0 N</span></p>
+                <p>Contact Area: <span id="contactAreaCalc">Length × Width = 0.6 m × 0.4 m</span> = <span id="areaResult">0.24 m²</span></p>
+                <p>Pressure: <span id="pressureResult">0 Pa</span></p>
+            </div>
+        </div>
+        
+        <div class="simulation-area">
+            <canvas id="simulationCanvas" width="450" height="350"></canvas>
+            
+            <div class="explanation-container">
+                <div class="explanation-header">
+                    <h3>Understanding Pressure</h3>
+                    <button id="toggle-explanation" class="toggle-button">Show</button>
+                </div>
+                
+                <div id="explanation-content" class="explanation-content hidden">
+                    <p>Pressure is defined as force per unit area. When an object rests on a surface, it exerts a force equal to its weight:</p>
+                    <p><strong>Weight = Mass × Gravity (9.81 m/s²)</strong></p>
+                    <p>The pressure depends on both the weight and the area of contact. A larger contact area results in lower pressure, while a smaller contact area creates higher pressure.</p>
+                    <p>For a box, the contact area depends on which face touches the ground. For a cylinder standing on its flat circular base, the contact area is π × r².</p>
+                    <hr>
+                    <h4>Constant Density Physics:</h4>
+                    <p>All objects in this simulation have constant density, meaning their mass changes with volume according to:</p>
+                    <p><strong>Mass = Density × Volume</strong></p>
+                    <p>Volume of Box = Length × Width × Height</p>
+                    <p>Volume of Cylinder = π × Radius² × Height</p>
+                    <p>This simulates real objects made of consistent materials where bigger dimensions create more mass.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Created by James Kua</p>
+        <p>Temasek Junior College</p>
+    </div>
+    
+    <script>
+        // Constants
+        const GRAVITY = 9.81; // m/s²
+        
+        // Get DOM elements
+        const densityInput = document.getElementById('density');
+        const lengthInput = document.getElementById('length');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const radiusInput = document.getElementById('radius');
+        const cylinderHeightInput = document.getElementById('cylinder-height');
+        
+        const calculatedMass = document.getElementById('calculatedMass');
+        const calculatedVolume = document.getElementById('calculatedVolume');
+        
+        const weightResult = document.getElementById('weightResult');
+        const areaResult = document.getElementById('areaResult');
+        const pressureResult = document.getElementById('pressureResult');
+        
+        const faceOptions = document.querySelectorAll('.face-option');
+        const objectShapeOptions = document.querySelectorAll('.object-shape-option');
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Initial values
+        let density = parseFloat(densityInput.value);
+        let length = parseFloat(lengthInput.value);
+        let width = parseFloat(widthInput.value);
+        let height = parseFloat(heightInput.value);
+        let radius = parseFloat(radiusInput.value);
+        let cylinderHeight = parseFloat(cylinderHeightInput.value);
+        let currentFace = 'bottom'; // Default face
+        let objectShape = 'box'; // Default shape
+        
+        // Event listeners for object shape selection
+        objectShapeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                objectShapeOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Update object shape
+                objectShape = this.dataset.shape;
+                
+                // Show/hide appropriate dimension controls
+                if (objectShape === 'box') {
+                    document.getElementById('box-dimensions').style.display = 'block';
+                    document.getElementById('cylinder-dimensions').style.display = 'none';
+                    document.getElementById('box-face-controls').style.display = 'block';
+                } else {
+                    document.getElementById('box-dimensions').style.display = 'none';
+                    document.getElementById('cylinder-dimensions').style.display = 'block';
+                    document.getElementById('box-face-controls').style.display = 'none';
+                    // Force cylinder to be on its base (flat side)
+                    currentFace = 'bottom';
+                }
+                
+                // Update simulation
+                updateSimulation();
+            });
+        });
+        
+        // Event listeners for face selection
+        faceOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                faceOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Update current face
+                currentFace = this.dataset.face;
+                
+                // Update simulation
+                updateSimulation();
+            });
+        });
+        
+        // Event listeners for text inputs
+        densityInput.addEventListener('input', function() {
+            density = parseFloat(this.value);
+            if (isNaN(density) || density < 100) density = 100;
+            if (density > 20000) density = 20000;
+            updateSimulation();
+        });
+        
+        lengthInput.addEventListener('input', function() {
+            length = parseFloat(this.value);
+            if (isNaN(length) || length < 0.1) length = 0.1;
+            if (length > 10) length = 10;
+            updateSimulation();
+        });
+        
+        widthInput.addEventListener('input', function() {
+            width = parseFloat(this.value);
+            if (isNaN(width) || width < 0.1) width = 0.1;
+            if (width > 10) width = 10;
+            updateSimulation();
+        });
+        
+        heightInput.addEventListener('input', function() {
+            height = parseFloat(this.value);
+            if (isNaN(height) || height < 0.1) height = 0.1;
+            if (height > 10) height = 10;
+            updateSimulation();
+        });
+        
+        radiusInput.addEventListener('input', function() {
+            radius = parseFloat(this.value);
+            if (isNaN(radius) || radius < 0.1) radius = 0.1;
+            if (radius > 5) radius = 5;
+            updateSimulation();
+        });
+        
+        cylinderHeightInput.addEventListener('input', function() {
+            cylinderHeight = parseFloat(this.value);
+            if (isNaN(cylinderHeight) || cylinderHeight < 0.1) cylinderHeight = 0.1;
+            if (cylinderHeight > 10) cylinderHeight = 10;
+            updateSimulation();
+        });
+        
+        // Toggle explanation visibility
+        document.getElementById('toggle-explanation').addEventListener('click', function() {
+            const content = document.getElementById('explanation-content');
+            content.classList.toggle('hidden');
+            
+            // Update button text
+            this.textContent = content.classList.contains('hidden') ? 'Show' : 'Hide';
+        });
+        
+        // Function to calculate volume
+        function calculateVolume() {
+            if (objectShape === 'box') {
+                return length * width * height;
+            } else {
+                // Volume of cylinder = π * r² * h
+                return Math.PI * radius * radius * cylinderHeight;
+            }
+        }
+        
+        // Function to calculate results
+        function calculateResults() {
+            // Calculate volume
+            const volume = calculateVolume();
+            
+            // Calculate mass (always using density)
+            const mass = density * volume;
+            
+            // Calculate weight
+            const weight = mass * GRAVITY;
+            
+            // Calculate contact area based on selected face and shape
+            let contactArea;
+            
+            if (objectShape === 'box') {
+                switch(currentFace) {
+                    case 'bottom':
+                        contactArea = length * width;
+                        break;
+                    case 'side':
+                        contactArea = length * height;
+                        break;
+                    case 'end':
+                        contactArea = width * height;
+                        break;
+                }
+            } else {
+                // Cylinder can only rest on its circular base
+                contactArea = Math.PI * radius * radius;
+            }
+            
+            // Calculate pressure
+            const pressure = weight / contactArea;
+            
+            return {
+                weight: weight.toFixed(1),
+                area: contactArea.toFixed(2),
+                pressure: pressure.toFixed(1),
+                mass: mass.toFixed(1),
+                volume: volume.toFixed(3)
+            };
+        }
+        
+        // Function to update simulation and results
+        function updateSimulation() {
+            // Calculate and update results
+            const results = calculateResults();
+            
+            weightResult.textContent = results.weight + ' N';
+            areaResult.textContent = results.area + ' m²';
+            pressureResult.textContent = results.pressure + ' Pa';
+            calculatedMass.textContent = results.mass + ' kg';
+            calculatedVolume.textContent = results.volume + ' m³';
+            
+            // Update contact area calculation display
+            let contactAreaCalcText = '';
+            if (objectShape === 'box') {
+                switch(currentFace) {
+                    case 'bottom':
+                        contactAreaCalcText = `Length × Width = ${length} m × ${width} m`;
+                        break;
+                    case 'side':
+                        contactAreaCalcText = `Length × Height = ${length} m × ${height} m`;
+                        break;
+                    case 'end':
+                        contactAreaCalcText = `Width × Height = ${width} m × ${height} m`;
+                        break;
+                }
+            } else {
+                // Cylinder case
+                contactAreaCalcText = `π × Radius² = π × (${radius} m)²`;
+            }
+            document.getElementById('contactAreaCalc').textContent = contactAreaCalcText;
+            
+            // Update visualization
+            drawSimulation();
+        }
+        
+        // Function to draw 3D box
+        function drawBox(centerX, bottom, length, width, height, pressureColor) {
+            // Constants for 3D perspective (matching ground plane perspective)
+            const perspectiveRatio = 0.5;  // How much shorter the depth appears
+            const groundAngle = Math.atan(0.25);  // Ground plane angle (based on groundDepth/4)
+            
+            // Calculate box placement adjustments to match 3D ground
+            const depthShiftX = width * perspectiveRatio;  // Horizontal shift for depth
+            const depthShiftY = width * perspectiveRatio * Math.tan(groundAngle);  // Vertical shift for depth
+            
+            // Calculate corner points with correct 3D perspective
+            const leftX = centerX - length / 2;
+            const rightX = centerX + length / 2;
+            const topY = bottom - height;
+            
+            // Draw shadows first (beneath the box)
+            ctx.beginPath();
+            if (currentFace === 'bottom') {
+                // Shadow shape for bottom face
+                ctx.moveTo(leftX, bottom);
+                ctx.lineTo(rightX, bottom);
+                ctx.lineTo(rightX + depthShiftX, bottom + depthShiftY);
+                ctx.lineTo(leftX + depthShiftX, bottom + depthShiftY);
+            } else if (currentFace === 'side') {
+                // Shadow shape for side face
+                ctx.moveTo(leftX, bottom);
+                ctx.lineTo(leftX, bottom - height);
+                ctx.lineTo(leftX + depthShiftX, bottom - height + depthShiftY);
+                ctx.lineTo(leftX + depthShiftX, bottom + depthShiftY);
+            } else if (currentFace === 'end') {
+                // Shadow shape for end face
+                ctx.moveTo(rightX, bottom);
+                ctx.lineTo(rightX, bottom - height);
+                ctx.lineTo(rightX + depthShiftX, bottom - height + depthShiftY);
+                ctx.lineTo(rightX + depthShiftX, bottom + depthShiftY);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';  // Soft shadow
+            ctx.fill();
+            
+            // Top face (visible in isometric view)
+            ctx.beginPath();
+            ctx.moveTo(leftX, topY);
+            ctx.lineTo(rightX, topY);
+            ctx.lineTo(rightX + depthShiftX, topY + depthShiftY);
+            ctx.lineTo(leftX + depthShiftX, topY + depthShiftY);
+            ctx.closePath();
+            ctx.fillStyle = '#B0C4DE';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Front face
+            ctx.beginPath();
+            ctx.moveTo(leftX, topY);
+            ctx.lineTo(leftX, bottom);
+            ctx.lineTo(rightX, bottom);
+            ctx.lineTo(rightX, topY);
+            ctx.closePath();
+            ctx.fillStyle = '#A9A9A9';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Side face
+            ctx.beginPath();
+            ctx.moveTo(rightX, topY);
+            ctx.lineTo(rightX + depthShiftX, topY + depthShiftY);
+            ctx.lineTo(rightX + depthShiftX, bottom + depthShiftY);
+            ctx.lineTo(rightX, bottom);
+            ctx.closePath();
+            ctx.fillStyle = '#808080';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Contact area highlight
+            ctx.beginPath();
+            if (currentFace === 'bottom') {
+                // Create a trapezoid that follows the ground perspective for bottom face
+                ctx.moveTo(leftX, bottom);
+                ctx.lineTo(rightX, bottom);
+                ctx.lineTo(rightX + depthShiftX, bottom + depthShiftY);
+                ctx.lineTo(leftX + depthShiftX, bottom + depthShiftY);
+                ctx.closePath();
+            } else if (currentFace === 'side') {
+                // Vertical face in contact with ground - front face (length × height)
+                ctx.moveTo(leftX, bottom);
+                ctx.lineTo(leftX, bottom - height);
+                ctx.lineTo(rightX, bottom - height);
+                ctx.lineTo(rightX, bottom);
+                ctx.closePath();
+            } else if (currentFace === 'end') {
+                // End face in contact with ground - side face (width × height)
+                ctx.moveTo(rightX, bottom);
+                ctx.lineTo(rightX, bottom - height);
+                ctx.lineTo(rightX + depthShiftX, bottom - height + depthShiftY);
+                ctx.lineTo(rightX + depthShiftX, bottom + depthShiftY);
+                ctx.closePath();
+            }
+            ctx.fillStyle = pressureColor;
+            ctx.fill();
+        }
+        
+        // Function to draw 3D cylinder
+        function drawCylinder(centerX, bottom, radius, height, pressureColor) {
+            const scaleFactor = 150; // Scale factor for visual rendering
+            const cylinderRadius = radius * scaleFactor;
+            const cylinderHeight = height * scaleFactor;
+            
+            // Draw shadow (beneath the cylinder)
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottom, cylinderRadius, cylinderRadius/2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fill();
+            
+            // Draw bottom ellipse (contact area)
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottom, cylinderRadius, cylinderRadius/2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = pressureColor;
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Draw cylinder sides (curved surface)
+            // Back half
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottom, cylinderRadius, cylinderRadius/2, 0, Math.PI, Math.PI * 2);
+            ctx.lineTo(centerX + cylinderRadius, bottom - cylinderHeight);
+            ctx.ellipse(centerX, bottom - cylinderHeight, cylinderRadius, cylinderRadius/2, 0, 0, Math.PI);
+            ctx.lineTo(centerX - cylinderRadius, bottom);
+            ctx.fillStyle = '#A9A9A9';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Front half
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottom, cylinderRadius, cylinderRadius/2, 0, 0, Math.PI);
+            ctx.lineTo(centerX - cylinderRadius, bottom - cylinderHeight);
+            ctx.ellipse(centerX, bottom - cylinderHeight, cylinderRadius, cylinderRadius/2, 0, Math.PI, Math.PI * 2);
+            ctx.lineTo(centerX + cylinderRadius, bottom);
+            ctx.fillStyle = '#808080';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Draw top ellipse
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottom - cylinderHeight, cylinderRadius, cylinderRadius/2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#B0C4DE';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+        }
+        
+        // Function to draw weight arrow
+        function drawWeightArrow(centerX, centerY, weight) {
+            const arrowLength = Math.min(20 + weight / 20, 60); // Scale arrow with weight
+            
+            // Arrow stem
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - arrowLength/2);
+            ctx.lineTo(centerX, centerY + arrowLength/2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#3498DB';
+            ctx.stroke();
+            
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY + arrowLength/2);
+            ctx.lineTo(centerX - 8, centerY + arrowLength/2 - 12);
+            ctx.lineTo(centerX + 8, centerY + arrowLength/2 - 12);
+            ctx.closePath();
+            ctx.fillStyle = '#3498DB';
+            ctx.fill();
+            
+            // Weight label
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#3498DB';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Weight: ${weight} N`, centerX, centerY - arrowLength/2 - 10);
+        }
+        
+        // Function to update the simulation visualization
+        function drawSimulation() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 3D Ground plane parameters
+            const groundY = 270;
+            const groundWidth = 350;
+            const groundDepth = 100;
+            const groundCenterX = 225; // Center of the ground plane
+            
+            // Draw 3D ground plane - top face
+            ctx.beginPath();
+            ctx.moveTo(50, groundY);
+            ctx.lineTo(50 + groundWidth, groundY);
+            ctx.lineTo(50 + groundWidth + groundDepth/2, groundY + groundDepth/4);
+            ctx.lineTo(50 + groundDepth/2, groundY + groundDepth/4);
+            ctx.closePath();
+            ctx.fillStyle = '#8c8c8c';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+            
+            // Draw 3D ground plane - side face
+            ctx.beginPath();
+            ctx.moveTo(50 + groundWidth, groundY);
+            ctx.lineTo(50 + groundWidth + groundDepth/2, groundY + groundDepth/4);
+            ctx.lineTo(50 + groundWidth + groundDepth/2, groundY + groundDepth/4 + 10);
+            ctx.lineTo(50 + groundWidth, groundY + 10);
+            ctx.closePath();
+            ctx.fillStyle = '#6c6c6c';
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw ground grid lines for perspective - more detailed grid
+            ctx.strokeStyle = '#777';
+            ctx.lineWidth = 0.5;
+            
+            // Horizontal grid lines (front to back)
+            for (let y = 0; y <= groundDepth/4; y += 10) {
+                ctx.beginPath();
+                ctx.moveTo(50, groundY + y);
+                ctx.lineTo(50 + groundWidth, groundY + y);
+                ctx.stroke();
+            }
+            
+            // Vertical grid lines (left to right)
+            for (let x = 50; x <= 50 + groundWidth; x += 25) {
+                ctx.beginPath();
+                ctx.moveTo(x, groundY);
+                ctx.lineTo(x + groundDepth/2 * (x - 50) / groundWidth, groundY + groundDepth/4);
+                ctx.stroke();
+            }
+            
+            // Diagonal grid lines (for better 3D effect)
+            for (let i = 0; i <= groundWidth; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(50 + i, groundY);
+                ctx.lineTo(50 + i + groundDepth/2, groundY + groundDepth/4);
+                ctx.stroke();
+            }
+            
+            // Calculate pressure intensity for color
+            const results = calculateResults();
+            const maxPressure = 10000; // Set a max pressure for color scaling
+            const pressureRatio = Math.min(parseFloat(results.pressure) / maxPressure, 1);
+            
+            // Generate pressure color (from green to red)
+            const red = Math.floor(255 * pressureRatio);
+            const green = Math.floor(255 * (1 - pressureRatio));
+            const pressureColor = `rgb(${red}, ${green}, 0)`;
+            
+            // Box/cylinder center position - align with ground plane grid
+            const centerX = groundCenterX;
+            const boxBottom = groundY;
+            
+            if (objectShape === 'box') {
+                // Set up scaling factor to fit canvas
+                const maxDimension = Math.max(length, width, height);
+                const scaleFactor = Math.min(150 / maxDimension, 150);
+                
+                // Calculate box dimensions and correctly reorient box based on current face
+                let boxLength, boxWidth, boxHeight;
+                let renderedLength, renderedWidth, renderedHeight;
+                
+                // First store the actual dimensions for calculation
+                renderedLength = length;
+                renderedWidth = width;
+                renderedHeight = height;
+                
+                // Then set the visual dimensions based on orientation
+                switch(currentFace) {
+                    case 'bottom':
+                        // Default orientation
+                        boxLength = length * scaleFactor;
+                        boxWidth = width * scaleFactor;
+                        boxHeight = height * scaleFactor;
+                        break;
+                    case 'side':
+                        // Rotate box to put length-height face down
+                        boxLength = length * scaleFactor;
+                        boxWidth = height * scaleFactor;
+                        boxHeight = width * scaleFactor;
+                        
+                        // Swap dimensions for calculation
+                        renderedWidth = height;
+                        renderedHeight = width;
+                        break;
+                    case 'end':
+                        // Rotate box to put width-height face down
+                        boxLength = width * scaleFactor;
+                        boxWidth = height * scaleFactor;
+                        boxHeight = length * scaleFactor;
+                        
+                        // Swap dimensions for calculation
+                        renderedLength = width;
+                        renderedWidth = height;
+                        renderedHeight = length;
+                        break;
+                }
+                
+                // Draw the box
+                drawBox(centerX, boxBottom, boxLength, boxWidth, boxHeight, pressureColor, currentFace);
+                
+                // Draw weight arrow at center of box
+                drawWeightArrow(centerX, boxBottom - boxHeight / 2, parseFloat(results.weight));
+            } else {
+                // Draw cylinder
+                drawCylinder(centerX, boxBottom, radius, cylinderHeight, pressureColor);
+                
+                // Draw weight arrow
+                const cylinderScaledHeight = cylinderHeight * 150;
+                drawWeightArrow(centerX, boxBottom - cylinderScaledHeight / 2, parseFloat(results.weight));
+            }
+        }
+        
+        // Initialize simulation
+        updateSimulation();
+    </script>
+</body>
+</html>
