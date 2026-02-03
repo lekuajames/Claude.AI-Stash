@@ -147,76 +147,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Detailed Calculation Breakdown -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                        <h2 class="font-semibold text-lg mb-3 text-slate-700 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                            Calculations Breakdown
-                        </h2>
-                        
-                        <div class="space-y-4 text-sm">
-                            
-                            <!-- Total Distance -->
-                            <div>
-                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Total Distance (Scalar)</div>
-                                <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700 break-words">
-                                    <div class="mb-1 text-xs text-slate-400">Sum of absolute lengths:</div>
-                                    <div id="calcDistSteps" class="mb-1">0</div>
-                                    <div class="font-bold border-t border-slate-300 pt-1 text-indigo-600">= <span id="calcDistResult">0.0</span> m</div>
-                                </div>
-                            </div>
-
-                            <!-- Displacement -->
-                            <div>
-                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Total Displacement (Vector)</div>
-                                <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700 break-words">
-                                    <div class="mb-1 text-xs text-slate-400">Sum of directed positions (right +, left -):</div>
-                                    <div id="calcDispSteps" class="mb-1">0</div>
-                                    <div class="font-bold border-t border-slate-300 pt-1 text-indigo-600">= <span id="calcDispResult">0.0</span> m</div>
-                                </div>
-                            </div>
-
-                            <!-- Average Speed -->
-                            <div>
-                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Average Speed</div>
-                                <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700">
-                                    <div class="flex items-center gap-2">
-                                        <div class="text-center">
-                                            <div class="border-b border-slate-400 pb-1 mb-1">Total Distance</div>
-                                            <div>Total Time</div>
-                                        </div>
-                                        <span class="text-xl">=</span>
-                                        <div class="text-center">
-                                            <div class="border-b border-slate-400 pb-1 mb-1" id="calcAvgNum">0 m</div>
-                                            <div id="calcAvgDen">0 s</div>
-                                        </div>
-                                        <span class="text-xl text-emerald-600 font-bold">= <span id="calcAvgResult">0.0</span> m/s</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Average Velocity -->
-                            <div>
-                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Average Velocity</div>
-                                <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700">
-                                    <div class="flex items-center gap-2">
-                                        <div class="text-center">
-                                            <div class="border-b border-slate-400 pb-1 mb-1">Total Disp.</div>
-                                            <div>Total Time</div>
-                                        </div>
-                                        <span class="text-xl">=</span>
-                                        <div class="text-center">
-                                            <div class="border-b border-slate-400 pb-1 mb-1" id="calcAvgVelNum">0 m</div>
-                                            <div id="calcAvgVelDen">0 s</div>
-                                        </div>
-                                        <span class="text-xl text-indigo-600 font-bold">= <span id="calcAvgVelResult">0.0</span> m/s</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -248,6 +178,76 @@
                         <canvas id="simCanvas" width="800" height="256" class="w-full h-full block"></canvas>
                         <!-- Origin Marker Overlay -->
                         <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-slate-400 font-mono">x=0</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Calculation Breakdown (Moved here) -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="font-semibold text-lg mb-3 text-slate-700 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Calculations Breakdown
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        
+                        <!-- Total Distance -->
+                        <div>
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-1">Total Distance (Scalar)</div>
+                            <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700 break-words">
+                                <div class="mb-1 text-xs text-slate-400">Sum of absolute lengths:</div>
+                                <div id="calcDistSteps" class="mb-1">0</div>
+                                <div class="font-bold border-t border-slate-300 pt-1 text-indigo-600">= <span id="calcDistResult">0.0</span> m</div>
+                            </div>
+                        </div>
+
+                        <!-- Displacement -->
+                        <div>
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-1">Total Displacement (Vector)</div>
+                            <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700 break-words">
+                                <div class="mb-1 text-xs text-slate-400">Sum of directed positions (right +, left -):</div>
+                                <div id="calcDispSteps" class="mb-1">0</div>
+                                <div class="font-bold border-t border-slate-300 pt-1 text-indigo-600">= <span id="calcDispResult">0.0</span> m</div>
+                            </div>
+                        </div>
+
+                        <!-- Average Speed -->
+                        <div>
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-1">Average Speed</div>
+                            <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700">
+                                <div class="flex items-center gap-2">
+                                    <div class="text-center">
+                                        <div class="border-b border-slate-400 pb-1 mb-1">Total Distance</div>
+                                        <div>Total Time</div>
+                                    </div>
+                                    <span class="text-xl">=</span>
+                                    <div class="text-center">
+                                        <div class="border-b border-slate-400 pb-1 mb-1" id="calcAvgNum">0 m</div>
+                                        <div id="calcAvgDen">0 s</div>
+                                    </div>
+                                    <span class="text-xl text-emerald-600 font-bold">= <span id="calcAvgResult">0.0</span> m/s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Average Velocity -->
+                        <div>
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-1">Average Velocity</div>
+                            <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700">
+                                <div class="flex items-center gap-2">
+                                    <div class="text-center">
+                                        <div class="border-b border-slate-400 pb-1 mb-1">Total Disp.</div>
+                                        <div>Total Time</div>
+                                    </div>
+                                    <span class="text-xl">=</span>
+                                    <div class="text-center">
+                                        <div class="border-b border-slate-400 pb-1 mb-1" id="calcAvgVelNum">0 m</div>
+                                        <div id="calcAvgVelDen">0 s</div>
+                                    </div>
+                                    <span class="text-xl text-indigo-600 font-bold">= <span id="calcAvgVelResult">0.0</span> m/s</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
