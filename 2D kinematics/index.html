@@ -195,6 +195,26 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Average Velocity -->
+                            <div>
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Average Velocity</div>
+                                <div class="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-slate-700">
+                                    <div class="flex items-center gap-2">
+                                        <div class="text-center">
+                                            <div class="border-b border-slate-400 pb-1 mb-1">Total Disp.</div>
+                                            <div>Total Time</div>
+                                        </div>
+                                        <span class="text-xl">=</span>
+                                        <div class="text-center">
+                                            <div class="border-b border-slate-400 pb-1 mb-1" id="calcAvgVelNum">0 m</div>
+                                            <div id="calcAvgVelDen">0 s</div>
+                                        </div>
+                                        <span class="text-xl text-indigo-600 font-bold">= <span id="calcAvgVelResult">0.0</span> m/s</span>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -231,28 +251,49 @@
                     </div>
                 </div>
 
+                <!-- Graph Controls -->
+                <div class="bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-4">
+                    <span class="text-sm font-bold text-slate-700 mr-2">Show Graphs:</span>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="toggleGraph('Dist')" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-slate-600">Distance</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="toggleGraph('Speed')" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-slate-600">Speed</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="toggleGraph('Disp')" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-slate-600">Displacement</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="toggleGraph('Vel')" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-slate-600">Velocity</span>
+                    </label>
+                </div>
+
                 <!-- Graphs Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Graph 1: Distance-Time -->
-                    <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                    <div id="wrapperGraphDist" class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hidden">
                         <h3 class="text-xs font-bold text-slate-500 uppercase mb-2 text-center">Distance vs Time</h3>
                         <canvas id="graphDist" width="350" height="200" class="w-full h-40"></canvas>
                     </div>
 
                     <!-- Graph 2: Speed-Time -->
-                    <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                    <div id="wrapperGraphSpeed" class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hidden">
                         <h3 class="text-xs font-bold text-slate-500 uppercase mb-2 text-center">Speed vs Time</h3>
                         <canvas id="graphSpeed" width="350" height="200" class="w-full h-40"></canvas>
                     </div>
 
                     <!-- Graph 3: Displacement-Time -->
-                    <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                    <div id="wrapperGraphDisp" class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hidden">
                         <h3 class="text-xs font-bold text-slate-500 uppercase mb-2 text-center">Displacement vs Time</h3>
                         <canvas id="graphDisp" width="350" height="200" class="w-full h-40"></canvas>
                     </div>
 
                     <!-- Graph 4: Velocity-Time -->
-                    <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                    <div id="wrapperGraphVel" class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hidden">
                         <h3 class="text-xs font-bold text-slate-500 uppercase mb-2 text-center">Velocity vs Time</h3>
                         <canvas id="graphVel" width="350" height="200" class="w-full h-40"></canvas>
                     </div>
@@ -322,6 +363,17 @@ function resizeCanvases() {
     resize(document.getElementById('graphSpeed'));
     resize(document.getElementById('graphDisp'));
     resize(document.getElementById('graphVel'));
+}
+
+function toggleGraph(type) {
+    const el = document.getElementById('wrapperGraph' + type);
+    if(el) {
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    }
 }
 
 // --- Data Logic ---
@@ -485,13 +537,21 @@ function updateCalculationDisplaySafe(timeLimit) {
         document.getElementById('calcDispResult').textContent = currentDispAccum.toFixed(1);
         
         const timeDenom = Math.max(tLimit, 0.001);
-        const avgSpeed = currentDistAccum / timeDenom;
-        const showAvg = tLimit > 0.01 ? avgSpeed.toFixed(2) : "0.00";
         
+        // Average Speed
+        const avgSpeed = currentDistAccum / timeDenom;
+        const showAvgSpeed = tLimit > 0.01 ? avgSpeed.toFixed(2) : "0.00";
         document.getElementById('calcAvgNum').textContent = currentDistAccum.toFixed(1) + " m";
         document.getElementById('calcAvgDen').textContent = tLimit.toFixed(1) + " s";
-        document.getElementById('calcAvgResult').textContent = showAvg;
-        
+        document.getElementById('calcAvgResult').textContent = showAvgSpeed;
+
+        // Average Velocity
+        const avgVel = currentDispAccum / timeDenom;
+        const showAvgVel = tLimit > 0.01 ? avgVel.toFixed(2) : "0.00";
+        document.getElementById('calcAvgVelNum').textContent = currentDispAccum.toFixed(1) + " m";
+        document.getElementById('calcAvgVelDen').textContent = tLimit.toFixed(1) + " s";
+        document.getElementById('calcAvgVelResult').textContent = showAvgVel;
+
     } catch (e) {
         console.warn("Calc display error:", e);
     }
