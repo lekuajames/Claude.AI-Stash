@@ -8,6 +8,7 @@ Science
 
 <br />https://lekuajames.github.io/Claude.AI-Stash/foodweb
 
+<br />https://lekuajames.github.io/Claude.AI-Stash/2D%20kinematics/
 
 <br />Forces
 <br />https://lekuajames.github.io/Claude.AI-Stash/ForcesMotion
