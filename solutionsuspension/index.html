@@ -200,7 +200,19 @@
                 alert("Please add solvent (water) before adding solute!");
                 return;
             }
-            soluteTotal += SOLUTE_INCREMENT;
+            
+            const capacity = getSolubilityCapacity();
+            
+            // Logic change: If we are already exactly at or above capacity, 
+            // the next add adds more to the total (resulting in precipitate).
+            // If we are below capacity, but this click would put us over, 
+            // we cap the total at EXACT capacity for this one click.
+            if (soluteTotal < capacity && (soluteTotal + SOLUTE_INCREMENT) > capacity) {
+                soluteTotal = capacity;
+            } else {
+                soluteTotal += SOLUTE_INCREMENT;
+            }
+            
             updateUI();
         }
 
@@ -223,7 +235,7 @@
 
         function filterMixture() {
             if (solventAmt === 0) return;
-            const solubilityCapacity = (BASE_SOLUBILITY + (temperature - 25) * TEMP_COEFF) * solventAmt;
+            const solubilityCapacity = getSolubilityCapacity();
             // Filtration removes only solids. Dissolved solute remains.
             soluteTotal = Math.min(soluteTotal, solubilityCapacity);
             insolubleTotal = 0;
@@ -240,17 +252,23 @@
             updateUI();
         }
 
+        function getSolubilityCapacity() {
+            return (BASE_SOLUBILITY + (temperature - 25) * TEMP_COEFF) * solventAmt;
+        }
+
         function updateUI() {
-            const solubilityCapacity = (BASE_SOLUBILITY + (temperature - 25) * TEMP_COEFF) * solventAmt;
+            const solubilityCapacity = getSolubilityCapacity();
             const dissolvedAmt = Math.min(soluteTotal, solubilityCapacity);
-            const solutePrecipitate = Math.max(0, soluteTotal - solubilityCapacity);
             
-            const isSaturated = solventAmt > 0 && soluteTotal >= (solubilityCapacity - 0.01);
-            const hasPrecipitate = solutePrecipitate > 0.1; 
+            // Use a very small epsilon to check saturation to handle floating point issues
+            const solutePrecipitate = Math.max(0, soluteTotal - (solubilityCapacity + 0.0001));
+            
+            const isSaturated = solventAmt > 0 && soluteTotal >= (solubilityCapacity - 0.0001);
+            const hasPrecipitate = solutePrecipitate > 0.01; 
             const hasInsoluble = insolubleTotal > 0;
             
             const isSuspension = hasPrecipitate || hasInsoluble;
-            const saturationRatio = solventAmt > 0 ? (dissolvedAmt / solubilityCapacity) : 0;
+            const saturationRatio = solventAmt > 0 ? (dissolvedAmt / (solubilityCapacity || 1)) : 0;
 
             const liquid = document.getElementById('liquid-solvent');
             const height = (solventAmt / MAX_BEAKER_VOL) * 300;
@@ -258,9 +276,6 @@
             liquid.setAttribute('y', 365 - height);
             
             // COLOR LOGIC: 
-            // Start with blue (#bae6fd -> 186, 230, 253)
-            // As solute dissolves, mix towards green (#10b981 -> 16, 185, 129)
-            // SaturationRatio determines intensity
             const r = Math.round(186 - (saturationRatio * (186 - 16)));
             const g = Math.round(230 - (saturationRatio * (230 - 185)));
             const b = Math.round(253 - (saturationRatio * (253 - 129)));
@@ -317,7 +332,7 @@
                 homoEl.innerText = "Homogeneous";
                 homoEl.className = "font-bold text-emerald-400";
                 descEl.innerText = isSaturated 
-                    ? "Max solubility reached! The liquid is uniform green throughout." 
+                    ? "Max solubility reached! The liquid is uniform green throughout and perfectly homogeneous." 
                     : "The solute is fully dissolved into a clear green homogeneous solution.";
             }
 
