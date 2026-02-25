@@ -6,27 +6,13 @@
     <title>Solubility & Mixtures Simulation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) translateX(0px); }
-            50% { transform: translateY(-5px) translateX(2px); }
-        }
-        .particle-dissolved {
-            animation: float 3s ease-in-out infinite;
-        }
-        .stirring-fast {
-            animation: rotate 0.5s linear infinite;
-        }
-        @keyframes rotate {
-            from { transform: rotate(0deg) translate(10px) rotate(0deg); }
-            to { transform: rotate(360deg) translate(10px) rotate(-360deg); }
-        }
         .beaker-glass {
             fill: rgba(255, 255, 255, 0.2);
             stroke: #334155;
             stroke-width: 4;
         }
         .liquid-water {
-            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), y 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), y 0.6s cubic-bezier(0.4, 0, 0.2, 1), fill 0.5s ease;
         }
         .workspace-grid {
             display: grid;
@@ -116,10 +102,14 @@
                 </div>
 
                 <svg id="beaker-container" viewBox="0 0 300 400" class="w-full h-auto max-h-[400px] drop-shadow-xl">
+                    <!-- Liquid level -->
                     <rect id="liquid-solvent" x="55" y="340" width="190" height="0" fill="#bae6fd" class="liquid-water" />
-                    <g id="dissolved-particles"></g>
+                    
+                    <!-- Solid particles (Undissolved) -->
                     <g id="insoluble-particles"></g>
                     <g id="precipitate-particles"></g>
+                    
+                    <!-- Beaker Frame -->
                     <path d="M50 50 L50 350 Q50 365 65 365 L235 365 Q250 365 250 350 L250 50" class="beaker-glass" fill="none" />
                     <line x1="50" y1="300" x2="80" y2="300" stroke="#94a3b8" stroke-width="2" />
                     <line x1="50" y1="200" x2="90" y2="200" stroke="#94a3b8" stroke-width="2" />
@@ -234,6 +224,7 @@
         function filterMixture() {
             if (solventAmt === 0) return;
             const solubilityCapacity = (BASE_SOLUBILITY + (temperature - 25) * TEMP_COEFF) * solventAmt;
+            // Filtration removes only solids. Dissolved solute remains.
             soluteTotal = Math.min(soluteTotal, solubilityCapacity);
             insolubleTotal = 0;
             updateUI();
@@ -266,8 +257,14 @@
             liquid.setAttribute('height', height);
             liquid.setAttribute('y', 365 - height);
             
-            const blueIntensity = Math.max(100, 230 - (saturationRatio * 50));
-            liquid.setAttribute('fill', `rgb(${blueIntensity-50}, ${blueIntensity}, 253)`);
+            // COLOR LOGIC: 
+            // Start with blue (#bae6fd -> 186, 230, 253)
+            // As solute dissolves, mix towards green (#10b981 -> 16, 185, 129)
+            // SaturationRatio determines intensity
+            const r = Math.round(186 - (saturationRatio * (186 - 16)));
+            const g = Math.round(230 - (saturationRatio * (230 - 185)));
+            const b = Math.round(253 - (saturationRatio * (253 - 129)));
+            liquid.setAttribute('fill', `rgb(${r}, ${g}, ${b})`);
 
             const bar = document.getElementById('sat-progress-bar');
             const label = document.getElementById('sat-label');
@@ -311,17 +308,17 @@
                 homoEl.className = "font-bold text-orange-400";
                 
                 if (hasInsoluble && !hasPrecipitate) {
-                    descEl.innerText = "Heterogeneous mixture: Sand particles do not dissolve and remain visible.";
+                    descEl.innerText = "Heterogeneous mixture: Sand particles do not dissolve. The green color represents dissolved solute in the liquid phase.";
                 } else {
-                    descEl.innerText = "The solution has exceeded its saturation point. Precipitate has formed.";
+                    descEl.innerText = "Saturation point exceeded. Solid precipitate has settled at the bottom.";
                 }
             } else {
                 typeEl.innerText = isSaturated ? "Saturated Solution" : "Unsaturated Solution";
                 homoEl.innerText = "Homogeneous";
                 homoEl.className = "font-bold text-emerald-400";
                 descEl.innerText = isSaturated 
-                    ? "Maximum solubility reached! The solution is 100% saturated but remains homogeneous." 
-                    : "The solute is completely dissolved. More solute can be added.";
+                    ? "Max solubility reached! The liquid is uniform green throughout." 
+                    : "The solute is fully dissolved into a clear green homogeneous solution.";
             }
 
             const isPowder = document.getElementById('checkPowdered').checked;
@@ -344,33 +341,14 @@
                 rateEl.innerText = "-";
             }
 
-            renderParticles(dissolvedAmt, solutePrecipitate, insolubleTotal);
+            renderParticles(solutePrecipitate, insolubleTotal);
         }
 
-        function renderParticles(dissolved, precipitate, sand) {
-            const dGroup = document.getElementById('dissolved-particles');
+        function renderParticles(precipitate, sand) {
             const pGroup = document.getElementById('precipitate-particles');
             const sGroup = document.getElementById('insoluble-particles');
-            dGroup.innerHTML = '';
             pGroup.innerHTML = '';
             sGroup.innerHTML = '';
-
-            const liquid = document.getElementById('liquid-solvent');
-            const lY = parseFloat(liquid.getAttribute('y'));
-            const lH = parseFloat(liquid.getAttribute('height'));
-            const isStirring = document.getElementById('checkStirring').checked;
-
-            const dCount = Math.floor(dissolved / 2);
-            for(let i = 0; i < dCount; i++) {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", 65 + Math.random() * 170);
-                circle.setAttribute("cy", lY + Math.random() * lH);
-                circle.setAttribute("r", "1.2");
-                circle.setAttribute("fill", "#ea580c");
-                circle.setAttribute("opacity", "0.5");
-                circle.setAttribute("class", isStirring ? "stirring-fast" : "particle-dissolved");
-                dGroup.appendChild(circle);
-            }
 
             const sCount = Math.floor(sand / 2);
             for(let i = 0; i < sCount; i++) {
