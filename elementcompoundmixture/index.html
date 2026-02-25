@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chemistry Simulation: Elements, Compounds & Mixtures</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --metal-color: #94a3b8;
+            --nonmetal-color: #fb923c;
+            --gas-color: #38bdf8;
+            --select-color: #3b82f6;
+            --trash-color: #ef4444;
+        }
+        body {
+            background-color: #f8fafc;
+            user-select: none;
+            touch-action: none;
+        }
+        .workspace {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+        .atom {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: grab;
+            position: absolute;
+            z-index: 20;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 2px solid rgba(0,0,0,0.1);
+            font-size: 0.85rem;
+            color: white;
+        }
+        .atom:active { cursor: grabbing; }
+        .atom.selected {
+            box-shadow: 0 0 0 4px var(--select-color), 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border-color: white;
+        }
+        
+        /* Specific Element Colors */
+        .atom.metal { background-color: var(--metal-color); }
+        .atom.non-metal { background-color: var(--nonmetal-color); }
+        .atom.gas { background-color: var(--gas-color); }
+        .atom.cu { background-color: #b45309; } 
+        .atom.fe { background-color: #475569; } 
+        .atom.s { background-color: #fde047; color: #854d0e; } 
+        .atom.c { background-color: #1e293b; }
+        .atom.na { background-color: #a855f7; } 
+        .atom.cl { background-color: #84cc16; }
+        .atom.ca { background-color: #64748b; }
+
+        .bond-line {
+            position: absolute;
+            height: 4px;
+            background: #cbd5e1;
+            transform-origin: 0 50%;
+            z-index: 15;
+            pointer-events: none;
+            border-radius: 2px;
+        }
+        .bond-line.selected { background: var(--select-color); height: 6px; opacity: 0.6; }
+
+        .molecule-label {
+            position: absolute;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: rgba(255,255,255,0.95);
+            padding: 2px 10px;
+            border-radius: 999px;
+            pointer-events: none;
+            z-index: 30;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateX(-50%);
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+            color: #1e293b;
+        }
+        .molecule-label.selected { border-color: var(--select-color); color: var(--select-color); }
+
+        /* Sidebar UI */
+        .sidebar { transition: transform 0.3s ease; }
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                z-index: 50;
+                background: white;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            .sidebar-left { left: 0; transform: translateX(-100%); }
+            .sidebar-right { right: 0; transform: translateX(100%); }
+            .sidebar.active { transform: translateX(0); }
+        }
+
+        #trash-bin {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 70px;
+            height: 70px;
+            background-color: white;
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            transition: all 0.2s ease;
+            color: #94a3b8;
+        }
+        #trash-bin.drag-over { border-color: var(--trash-color); background-color: #fef2f2; color: var(--trash-color); transform: scale(1.1); }
+        
+        .hidden-panel { display: none; }
+        .mode-active { background-color: #3b82f6 !important; color: white !important; }
+        
+        .property-table th { background-color: #f8fafc; padding: 6px; text-align: left; border: 1px solid #e2e8f0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
+        .property-table td { padding: 8px; border: 1px solid #e2e8f0; vertical-align: top; font-size: 0.75rem; color: #334155; line-height: 1.25; transition: background 0.3s; }
+        .fact-item { padding: 8px; border-left: 3px solid #3b82f6; background: #f0f7ff; font-size: 0.75rem; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+        
+        .highlight-col { background-color: rgba(59, 130, 246, 0.1) !important; font-weight: bold; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-white border-b px-4 py-3 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar('sidebar-left')" class="p-2 lg:hidden bg-slate-100 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+            </button>
+            <h1 class="text-md font-bold text-slate-800 hidden sm:block tracking-tight">Secondary 1 Chemistry</h1>
+        </div>
+        
+        <div id="status-bar" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 transition-all duration-300 border-2 border-transparent truncate max-w-[50%]">
+            Workspace Empty
+        </div>
+
+        <div class="flex items-center gap-2">
+            <div class="flex bg-slate-100 p-1 rounded-lg scale-95 sm:scale-100">
+                <button id="btn-basic" onclick="setMode('basic')" class="px-3 py-1 rounded-md text-xs font-medium transition mode-active">Basic</button>
+                <button id="btn-advanced" onclick="setMode('advanced')" class="px-3 py-1 rounded-md text-xs font-medium transition">Advanced</button>
+            </div>
+            <button onclick="toggleSidebar('sidebar-right')" class="p-2 lg:hidden bg-slate-100 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Left Sidebar (Active by default) -->
+        <aside id="sidebar-left" class="sidebar sidebar-left active w-72 lg:w-64 bg-slate-50 border-r p-4 flex flex-col gap-4 overflow-y-auto lg:relative lg:transform-none">
+            <div class="flex justify-between items-center lg:hidden">
+                <h2 class="font-bold text-slate-400 text-[10px] tracking-widest uppercase text-left">Controls</h2>
+                <button onclick="toggleSidebar('sidebar-left')" class="text-slate-400 p-1">✕</button>
+            </div>
+
+            <div id="controls-basic" class="space-y-3 text-left">
+                <h2 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">Basic Atoms</h2>
+                <button onclick="addAtom('metal', 'M')" class="w-full flex items-center justify-between p-3 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition shadow-sm active:scale-95">
+                    <span class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-full bg-slate-400 flex items-center justify-center text-white font-bold text-xs">M</span>
+                        Metal Atom
+                    </span>
+                </button>
+                <button onclick="addAtom('non-metal', 'N')" class="w-full flex items-center justify-between p-3 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition shadow-sm active:scale-95">
+                    <span class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-xs">N</span>
+                        Non-metal Atom
+                    </span>
+                </button>
+            </div>
+
+            <div id="controls-advanced" class="hidden space-y-4 text-left">
+                <div class="space-y-2">
+                    <h2 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">Specific Elements</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="addAtom('cu', 'Cu')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-orange-50">Cu</button>
+                        <button onclick="addAtom('fe', 'Fe')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-slate-100">Fe</button>
+                        <button onclick="addAtom('s', 'S')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-yellow-50">S</button>
+                        <button onclick="addAtom('c', 'C')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-slate-200">C</button>
+                        <button onclick="addAtom('na', 'Na')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-purple-50">Na</button>
+                        <button onclick="addAtom('cl', 'Cl')" class="p-3 bg-white border border-slate-200 rounded-xl text-xs active:bg-lime-50">Cl</button>
+                        <button onclick="addAtom('gas', 'Ne', true)" class="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs active:bg-sky-100">Ne</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <h2 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">Complex Molecules</h2>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="spawnCompound(['O', 'O'], true)" class="p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs text-left">O₂ Gas (Element)</button>
+                        <button onclick="spawnCompound(['N', 'N'], true)" class="p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs text-left">N₂ Gas (Element)</button>
+                        <button onclick="spawnCompound(['C', 'O', 'O'], true)" class="p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs text-left">CO₂ Gas (Compound)</button>
+                        <button onclick="spawnCompound(['Na', 'Cl'])" class="p-3 bg-white border border-slate-200 rounded-xl text-xs text-left">NaCl Salt (Compound)</button>
+                        <button onclick="spawnCompound(['Ca', 'C', 'O', 'O', 'O'])" class="p-3 bg-white border border-slate-200 rounded-xl text-xs text-left">CaCO₃ Chalk (Compound)</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-1">
+            <h2 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest text-left">Tools</h2>
+            <button id="break-btn" onclick="separateSelected()" class="w-full p-3 bg-blue-500 text-white rounded-xl shadow-md font-bold text-xs disabled:opacity-50 active:bg-blue-700 transition">
+                Break Selected Molecule
+            </button>
+            <button onclick="resetWorkspace()" class="w-full p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs active:bg-red-100 transition">
+                Clear All
+            </button>
+        </aside>
+
+        <!-- Center: Workspace -->
+        <section class="workspace relative" id="workspace">
+            <div id="trash-bin">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <span class="text-[9px] font-bold uppercase mt-1">Trash</span>
+            </div>
+            <div id="empty-workspace-hint" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                <span class="text-slate-400 font-bold text-4xl uppercase tracking-widest text-center">Chemistry Laboratory</span>
+            </div>
+        </section>
+
+        <!-- Right Sidebar (Active by default) -->
+        <aside id="sidebar-right" class="sidebar sidebar-right active w-80 lg:w-72 bg-white border-l p-4 overflow-y-auto lg:relative lg:transform-none">
+            <div class="flex justify-between items-center lg:hidden mb-4">
+                <h2 class="font-bold text-slate-400 text-[10px] tracking-widest uppercase text-left">Reference</h2>
+                <button onclick="toggleSidebar('sidebar-right')" class="text-slate-400 p-1">✕</button>
+            </div>
+
+            <!-- Elements Property Table -->
+            <div id="panel-elements" class="hidden-panel mb-6 text-left">
+                <h3 class="text-[11px] font-bold text-slate-800 uppercase mb-2 border-b border-slate-200 pb-1">Element Properties</h3>
+                <table class="property-table w-full mb-4">
+                    <thead>
+                        <tr>
+                            <th class="w-1/3">Feature</th>
+                            <th id="hdr-m">Metals</th>
+                            <th id="hdr-n">Non-metals</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="font-semibold">Appearance</td><td id="cell-m-1">Shiny</td><td id="cell-n-1">Dull solid</td></tr>
+                        <tr><td class="font-semibold">State</td><td id="cell-m-2">Solid</td><td id="cell-n-2">Gas/Low MP</td></tr>
+                        <tr><td class="font-semibold">Conductivity</td><td id="cell-m-3">High</td><td id="cell-n-3">Low</td></tr>
+                        <tr><td class="font-semibold">Malleable</td><td id="cell-m-4">Yes</td><td id="cell-n-4">No (Brittle)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Matter Classification Table -->
+            <div id="panel-comp-mix" class="hidden-panel mb-6 text-left">
+                <h3 class="text-[11px] font-bold text-slate-800 uppercase mb-2 border-b border-slate-200 pb-1">Matter Types</h3>
+                <table class="property-table w-full">
+                    <thead>
+                        <tr>
+                            <th class="w-1/3">Feature</th>
+                            <th id="hdr-c">Compound</th>
+                            <th id="hdr-mix">Mixture</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="font-semibold">Separation</td><td id="cell-c-1">Chemical</td><td id="cell-mix-1">Physical</td></tr>
+                        <tr><td class="font-semibold">Properties</td><td id="cell-c-2">Changed</td><td id="cell-mix-2">Same</td></tr>
+                        <tr><td class="font-semibold">Proportion</td><td id="cell-c-3">Fixed</td><td id="cell-mix-3">Any</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fun Facts -->
+            <div id="fun-facts" class="hidden-panel text-left">
+                <h3 class="text-[11px] font-bold text-blue-500 uppercase mb-2 border-b border-blue-100 pb-1">Scientific Facts</h3>
+                <div id="fact-list"></div>
+            </div>
+
+            <div id="separation-note" class="hidden p-3 bg-amber-50 rounded-xl text-[10px] text-amber-800 border border-amber-200 leading-relaxed mt-4 italic shadow-sm text-left">
+                <strong>Observation:</strong> This mixture contains gases and solids. Gases can be easily separated through physical venting or diffusion.
+            </div>
+
+            <div id="empty-hint" class="text-slate-400 italic text-xs text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                Workspace Empty<br><span class="text-[10px] opacity-50">Add particles to see scientific data</span>
+            </div>
+        </aside>
+    </main>
+
+    <div id="warning-toast" class="bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:100;">
+        Max molecule size: 6 atoms
+    </div>
+
+    <script>
+        const workspace = document.getElementById('workspace');
+        const statusBar = document.getElementById('status-bar');
+        const warningToast = document.getElementById('warning-toast');
+        const breakBtn = document.getElementById('break-btn');
+        const trashBin = document.getElementById('trash-bin');
+        const separationNote = document.getElementById('separation-note');
+        
+        let atoms = [];
+        let molecules = [];
+        let nextId = 1;
+        let activeDrag = null;
+        let selectedMoleculeId = null;
+        let offset = { x: 0, y: 0 };
+        let isOverTrash = false;
+        let simulationMode = 'basic';
+
+        const GRAVITY = 0.4;
+        const GAS_SPEED = 0.6;
+
+        // Custom Hill-system-like order. Note: 'M' comes before 'N' for basic mode naming.
+        const ELEMENT_ORDER = ['M', 'Ca', 'Cu', 'Na', 'C', 'S', 'O', 'Cl', 'N', 'Ne'];
+
+        const FUN_FACTS = {
+            'Cu': 'Copper is a great conductor and was the first metal used by humans.',
+            'Fe': 'Iron is found in your blood and the Earth\'s core.',
+            'S': 'Pure sulfur is odorless, but its compounds smell like rotten eggs.',
+            'C': 'Carbon is the basis for all known life on Earth.',
+            'Na': 'Sodium is a metal that explodes when it touches water.',
+            'Cl': 'Chlorine gas is used to disinfect water in swimming pools.',
+            'Ne': 'Neon is an inert gas used in bright, colorful signs.',
+            'N': 'Nitrogen makes up most of the air you breathe.',
+            'O': 'Oxygen is a reactive gas produced by plants.',
+            'M': 'Metals are shiny and good conductors of electricity.',
+            'N': 'Non-metals are poor conductors and can be gases or brittle solids.',
+            // Compound Facts
+            'NaCl': 'Sodium Chloride is common table salt and is essential for fluid balance.',
+            'CaCO3': 'Calcium Carbonate is the main component of shells, snails, and pearls.',
+            'CO2': 'Carbon Dioxide is used by plants during photosynthesis to make food.',
+            'O2': 'Oxygen gas (O₂) is the form of oxygen we breathe in the air.',
+            'N2': 'Nitrogen gas (N₂) is inert and used to keep packaged food fresh.'
+        };
+
+        function toggleSidebar(id) {
+            document.getElementById(id).classList.toggle('active');
+        }
+
+        function setMode(mode) {
+            simulationMode = mode;
+            document.getElementById('btn-basic').classList.toggle('mode-active', mode === 'basic');
+            document.getElementById('btn-advanced').classList.toggle('mode-active', mode === 'advanced');
+            document.getElementById('controls-basic').classList.toggle('hidden', mode === 'advanced');
+            document.getElementById('controls-advanced').classList.toggle('hidden', mode === 'basic');
+            resetWorkspace();
+        }
+
+        function updatePhysics() {
+            const rect = workspace.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const floorY = rect.height - 100;
+            const processedMols = new Set();
+            const draggingMolId = activeDrag ? activeDrag.moleculeId : null;
+
+            atoms.forEach(atom => {
+                if (atom === activeDrag) return;
+                if (atom.moleculeId !== null && atom.moleculeId === draggingMolId) return;
+
+                if (atom.moleculeId !== null) {
+                    if (processedMols.has(atom.moleculeId)) return;
+                    processedMols.add(atom.moleculeId);
+
+                    const mol = molecules.find(m => m.id === atom.moleculeId);
+                    if(!mol) return;
+                    const molAtoms = mol.atomIds.map(id => atoms.find(a => a.id === id)).filter(Boolean);
+                    
+                    if (mol.isGas) {
+                        molAtoms.forEach(a => { a.x += mol.vx; a.y += mol.vy; });
+                        const minX = Math.min(...molAtoms.map(a => a.x));
+                        const maxX = Math.max(...molAtoms.map(a => a.x)) + 50;
+                        const minY = Math.min(...molAtoms.map(a => a.y));
+                        const maxY = Math.max(...molAtoms.map(a => a.y)) + 50;
+                        if (minX < 0 || maxX > rect.width) mol.vx *= -1;
+                        if (minY < 0 || maxY > rect.height) mol.vy *= -1;
+                    } else {
+                        const lowestY = Math.max(...molAtoms.map(a => a.y));
+                        if (lowestY < floorY) {
+                            mol.vy_p = (mol.vy_p || 0) + GRAVITY;
+                            molAtoms.forEach(a => a.y += mol.vy_p);
+                        } else {
+                            const correction = lowestY - floorY;
+                            molAtoms.forEach(a => a.y -= correction);
+                            mol.vy_p = 0;
+                        }
+                    }
+                    molAtoms.forEach(a => updateAtomPosition(a));
+                } else {
+                    if (atom.isGas) {
+                        atom.x += atom.vx; atom.y += atom.vy;
+                        if (atom.x < 0 || atom.x > rect.width - 50) atom.vx *= -1;
+                        if (atom.y < 0 || atom.y > rect.height - 50) atom.vy *= -1;
+                    } else {
+                        if (atom.y < floorY) {
+                            atom.vy_p = (atom.vy_p || 0) + GRAVITY;
+                            atom.y += atom.vy_p;
+                        } else {
+                            atom.y = floorY; atom.vy_p = 0;
+                        }
+                    }
+                    updateAtomPosition(atom);
+                }
+            });
+            renderBonds();
+            requestAnimationFrame(updatePhysics);
+        }
+
+        function addAtom(type, symbol, isGas = false, initialX = null, initialY = null) {
+            const id = nextId++;
+            const atomClassMap = { 'M': 'metal', 'N': 'non-metal', 'Cu': 'cu', 'Fe': 'fe', 'S': 's', 'C': 'c', 'Na': 'na', 'Cl': 'cl', 'Ca': 'ca', 'O': 'gas', 'Ne': 'gas' };
+            
+            // Calculate center position for new particles
+            const centerX = workspace.clientWidth / 2;
+            const spawnX = initialX !== null ? initialX : (centerX - 25) + (Math.random() * 40 - 20);
+            const spawnY = initialY !== null ? initialY : (isGas ? 100 : 50);
+
+            const atom = {
+                id: id,
+                type: atomClassMap[symbol] || type,
+                symbol: symbol,
+                isGas: isGas,
+                x: spawnX,
+                y: spawnY,
+                vx: isGas ? (Math.random() - 0.5) * GAS_SPEED : 0,
+                vy: isGas ? (Math.random() - 0.5) * GAS_SPEED : 0,
+                vy_p: 0,
+                moleculeId: null
+            };
+            atoms.push(atom);
+            createAtomElement(atom);
+            updateClassification();
+            return atom;
+        }
+
+        function createAtomElement(atom) {
+            const el = document.createElement('div');
+            el.id = `atom-${atom.id}`;
+            el.className = `atom ${atom.type}`;
+            el.innerHTML = atom.symbol;
+            el.style.left = `${atom.x}px`;
+            el.style.top = `${atom.y}px`;
+            el.addEventListener('mousedown', (e) => startDrag(e, atom));
+            el.addEventListener('touchstart', (e) => startDrag(e, atom), {passive: false});
+            workspace.appendChild(el);
+        }
+
+        function spawnCompound(symbols, isGas = false) {
+            const centerX = workspace.clientWidth / 2;
+            const startX = centerX - (symbols.length * 12);
+            const startY = isGas ? 100 : 50;
+            
+            const spawnedAtoms = symbols.map((s, i) => {
+                const a = addAtom('none', s, isGas, startX + (i * 20), startY);
+                return a;
+            });
+            const molId = Date.now() + Math.random();
+            spawnedAtoms.forEach(a => a.moleculeId = molId);
+            molecules.push({ id: molId, atomIds: spawnedAtoms.map(a => a.id), vy: (Math.random()-0.5)*0.2, vx: (Math.random()-0.5)*0.2, vy_p: 0, isGas: isGas });
+            arrangeMolecule(molId);
+            updateClassification();
+        }
+
+        function startDrag(e, atom) {
+            e.preventDefault();
+            activeDrag = atom;
+            selectedMoleculeId = atom.moleculeId;
+            updateSelectionVisuals();
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            const rect = workspace.getBoundingClientRect();
+            offset.x = (clientX - rect.left) - atom.x;
+            offset.y = (clientY - rect.top) - atom.y;
+            window.addEventListener('mousemove', onDrag);
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchmove', onDrag, {passive: false});
+            window.addEventListener('touchend', endDrag);
+        }
+
+        function onDrag(e) {
+            if (!activeDrag) return;
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const rect = workspace.getBoundingClientRect();
+            let nX = (clientX - rect.left) - offset.x;
+            let nY = (clientY - rect.top) - offset.y;
+            nX = Math.max(0, Math.min(nX, rect.width - 50));
+            nY = Math.max(0, Math.min(nY, rect.height - 50));
+
+            if (activeDrag.moleculeId !== null) {
+                const mol = molecules.find(m => m.id === activeDrag.moleculeId);
+                const dx = nX - activeDrag.x;
+                const dy = nY - activeDrag.y;
+                mol.atomIds.forEach(id => {
+                    const a = atoms.find(atm => atm.id === id);
+                    if(a) { a.x += dx; a.y += dy; updateAtomPosition(a); }
+                });
+            } else {
+                activeDrag.x = nX; activeDrag.y = nY; updateAtomPosition(activeDrag);
+            }
+            const tRect = trashBin.getBoundingClientRect();
+            isOverTrash = (clientX >= tRect.left && clientX <= tRect.right && clientY >= tRect.top && clientY <= tRect.bottom);
+            trashBin.classList.toggle('drag-over', isOverTrash);
+        }
+
+        function endDrag() {
+            if (!activeDrag) return;
+            if (isOverTrash) deleteSelected();
+            else checkForBonding(activeDrag, true);
+            activeDrag = null;
+            isOverTrash = false;
+            trashBin.classList.remove('drag-over');
+            updateClassification();
+            window.removeEventListener('mousemove', onDrag);
+            window.removeEventListener('mouseup', endDrag);
+        }
+
+        function deleteSelected() {
+            const mId = activeDrag.moleculeId;
+            if (mId) {
+                const mol = molecules.find(m => m.id === mId);
+                mol.atomIds.forEach(id => { document.getElementById(`atom-${id}`)?.remove(); atoms = atoms.filter(a => a.id !== id); });
+                molecules = molecules.filter(m => m.id !== mId);
+                if (selectedMoleculeId === mId) selectedMoleculeId = null;
+            } else {
+                document.getElementById(`atom-${activeDrag.id}`)?.remove();
+                atoms = atoms.filter(a => a.id !== activeDrag.id);
+            }
+            updateSelectionVisuals();
+        }
+
+        function updateAtomPosition(atom) {
+            const el = document.getElementById(`atom-${atom.id}`);
+            if (el) { el.style.left = `${atom.x}px`; el.style.top = `${atom.y}px`; }
+        }
+
+        function updateSelectionVisuals() {
+            atoms.forEach(a => {
+                const el = document.getElementById(`atom-${a.id}`);
+                if (el) el.classList.toggle('selected', selectedMoleculeId && a.moleculeId === selectedMoleculeId);
+            });
+            breakBtn.disabled = !selectedMoleculeId;
+        }
+
+        function checkForBonding(draggedAtom, manualDrag = false) {
+            if (simulationMode === 'advanced') return;
+            const threshold = 65;
+            for (const other of atoms) {
+                if (other.id === draggedAtom.id) continue;
+                const dist = Math.sqrt(Math.pow(other.x - draggedAtom.x, 2) + Math.pow(other.y - draggedAtom.y, 2));
+                if (dist < threshold) {
+                    bondAtoms(draggedAtom, other, manualDrag);
+                    break;
+                }
+            }
+        }
+
+        function bondAtoms(a, b, manualDrag) {
+            const mIdA = a.moleculeId;
+            const mIdB = b.moleculeId;
+            if (mIdA && mIdA === mIdB) return;
+            const sizeA = mIdA ? molecules.find(m => m.id === mIdA).atomIds.length : 1;
+            const sizeB = mIdB ? molecules.find(m => m.id === mIdB).atomIds.length : 1;
+            if (sizeA + sizeB > 6) { if (manualDrag) showWarning(); return; }
+
+            let tId = mIdA || mIdB || (Date.now() + Math.random());
+            if (!mIdA && !mIdB) {
+                a.moleculeId = tId; b.moleculeId = tId;
+                molecules.push({ id: tId, atomIds: [a.id, b.id], vy: (Math.random()-0.5)*0.2, vx: (Math.random()-0.5)*0.2, vy_p: 0, isGas: a.isGas || b.isGas });
+            } else if (mIdA && !mIdB) {
+                const mol = molecules.find(m => m.id === mIdA);
+                mol.atomIds.push(b.id); b.moleculeId = mIdA;
+                if (b.isGas) mol.isGas = true;
+            } else if (!mIdA && mIdB) {
+                const mol = molecules.find(m => m.id === mIdB);
+                mol.atomIds.push(a.id); a.moleculeId = mIdB;
+                if (a.isGas) mol.isGas = true;
+            } else {
+                const molA = molecules.find(m => m.id === mIdA);
+                const molB = molecules.find(m => m.id === mIdB);
+                molA.atomIds.push(...molB.atomIds);
+                molB.atomIds.forEach(id => { const atm = atoms.find(x => x.id === id); if(atm) atm.moleculeId = mIdA; });
+                if (molB.isGas) molA.isGas = true;
+                molecules = molecules.filter(m => m.id !== mIdB);
+            }
+            selectedMoleculeId = tId;
+            arrangeMolecule(tId);
+            updateSelectionVisuals();
+        }
+
+        function arrangeMolecule(molId) {
+            const mol = molecules.find(m => m.id === molId);
+            if(!mol) return;
+            const molAtoms = mol.atomIds.map(id => atoms.find(a => a.id === id)).filter(Boolean);
+            const cX = molAtoms.reduce((s, a) => s + a.x, 0) / molAtoms.length;
+            const cY = molAtoms.reduce((s, a) => s + a.y, 0) / molAtoms.length;
+            const radius = molAtoms.length === 2 ? 18 : 35;
+            molAtoms.forEach((a, i) => {
+                const angle = (i / molAtoms.length) * Math.PI * 2;
+                a.x = cX + Math.cos(angle) * radius; a.y = cY + Math.sin(angle) * radius;
+                updateAtomPosition(a);
+            });
+        }
+
+        function getMoleculeFormula(molAtoms) {
+            const counts = {};
+            molAtoms.forEach(a => counts[a.symbol] = (counts[a.symbol] || 0) + 1);
+            let formula = "";
+            ELEMENT_ORDER.forEach(s => { if(counts[s]) formula += `${s}${counts[s] > 1 ? counts[s] : ''}`; });
+            return formula;
+        }
+
+        function renderBonds() {
+            document.querySelectorAll('.bond-line, .molecule-label').forEach(el => el.remove());
+            molecules.forEach(mol => {
+                const molAtoms = mol.atomIds.map(id => atoms.find(a => a.id === id)).filter(Boolean);
+                if (molAtoms.length === 0) return;
+                
+                const isSelected = selectedMoleculeId === mol.id;
+                let sumX = 0; molAtoms.forEach(a => sumX += a.x);
+                const avgX = sumX / molAtoms.length;
+                const lowestY = Math.max(...molAtoms.map(a => a.y));
+
+                for (let i = 0; i < molAtoms.length; i++) {
+                    const a = molAtoms[i]; const b = molAtoms[(i + 1) % molAtoms.length];
+                    if (molAtoms.length === 2 && i === 1) break;
+                    const x1 = a.x + 25; const y1 = a.y + 25; const x2 = b.x + 25; const y2 = b.y + 25;
+                    const len = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    const line = document.createElement('div');
+                    line.className = `bond-line ${isSelected ? 'selected' : ''}`;
+                    line.style.width = `${len}px`; line.style.left = `${x1}px`; line.style.top = `${y1}px`;
+                    line.style.transform = `rotate(${ang}deg)`;
+                    workspace.appendChild(line);
+                }
+
+                const counts = {};
+                molAtoms.forEach(a => counts[a.symbol] = (counts[a.symbol] || 0) + 1);
+                let htmlFormula = "";
+                ELEMENT_ORDER.forEach(s => { if(counts[s]) htmlFormula += `${s}${counts[s] > 1 ? `<sub>${counts[s]}</sub>` : ''}`; });
+                
+                if (htmlFormula) {
+                    const label = document.createElement('div');
+                    label.className = `molecule-label ${isSelected ? 'selected' : ''}`;
+                    label.innerHTML = htmlFormula;
+                    label.style.left = `${avgX + 25}px`; 
+                    label.style.top = `${lowestY + 55}px`;
+                    workspace.appendChild(label);
+                }
+            });
+        }
+
+        function updateClassification() {
+            const panels = { el: document.getElementById('panel-elements'), cm: document.getElementById('panel-comp-mix') };
+            const substancesInWorkspace = new Set();
+            const uniqueElements = new Set();
+            const uniqueCompounds = new Set();
+            const matter = { m: false, n: false, c: false, mix: false };
+            let hasS = false, hasG = false;
+
+            if (atoms.length === 0) {
+                statusBar.innerText = "Workspace Empty"; statusBar.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border-transparent";
+                panels.el.classList.add('hidden-panel'); panels.cm.classList.add('hidden-panel');
+                document.getElementById('fun-facts').classList.add('hidden-panel'); separationNote.classList.add('hidden');
+                document.getElementById('empty-hint').style.display='block'; return;
+            }
+            document.getElementById('empty-hint').style.display='none';
+
+            atoms.filter(a => !a.moleculeId).forEach(a => {
+                substancesInWorkspace.add(a.symbol);
+                uniqueElements.add(a.symbol);
+                if (a.isGas) hasG = true; else hasS = true;
+                if (['M', 'Cu', 'Fe', 'Na', 'Ca'].includes(a.symbol)) matter.m = true; else matter.n = true;
+            });
+
+            molecules.forEach(mol => {
+                const molAtoms = mol.atomIds.map(id => atoms.find(a => a.id === id)).filter(Boolean);
+                if (molAtoms.length === 0) return;
+                
+                const uniqueSymsInMol = new Set(molAtoms.map(a => a.symbol));
+                const formulaKey = getMoleculeFormula(molAtoms);
+                substancesInWorkspace.add(formulaKey);
+
+                if (mol.isGas) hasG = true; else hasS = true;
+                
+                if (uniqueSymsInMol.size > 1) { 
+                    matter.c = true; 
+                    uniqueCompounds.add(formulaKey);
+                } else {
+                    uniqueElements.add(formulaKey); 
+                    const sym = [...uniqueSymsInMol][0];
+                    if (['M', 'Cu', 'Fe', 'Na', 'Ca'].includes(sym)) matter.m = true; else matter.n = true;
+                }
+            });
+
+            matter.mix = (uniqueElements.size + uniqueCompounds.size) > 1;
+
+            panels.el.classList.toggle('hidden-panel', !matter.m && !matter.n);
+            panels.cm.classList.toggle('hidden-panel', !matter.c && !matter.mix);
+            separationNote.classList.toggle('hidden', !(matter.mix && hasS && hasG));
+
+            const columns = { m: ['hdr-m', 'cell-m-1', 'cell-m-2', 'cell-m-3', 'cell-m-4'], n: ['hdr-n', 'cell-n-1', 'cell-n-2', 'cell-n-3', 'cell-n-4'], c: ['hdr-c', 'cell-c-1', 'cell-c-2', 'cell-c-3'], mix: ['hdr-mix', 'cell-mix-1', 'cell-mix-2', 'cell-mix-3'] };
+            Object.keys(columns).forEach(key => columns[key].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.toggle('highlight-col', matter[key]);
+            }));
+
+            const factList = document.getElementById('fact-list'); factList.innerHTML = '';
+            substancesInWorkspace.forEach(sub => { 
+                if (FUN_FACTS[sub]) { 
+                    const d = document.createElement('div'); 
+                    d.className = 'fact-item'; 
+                    d.innerHTML = `<strong>${sub}:</strong> ${FUN_FACTS[sub]}`; 
+                    factList.appendChild(d); 
+                } 
+            });
+            document.getElementById('fun-facts').classList.toggle('hidden-panel', factList.innerHTML === '');
+
+            if (matter.mix) {
+                let mixLabel = "MIXTURE";
+                if (uniqueElements.size > 1 && uniqueCompounds.size === 0) {
+                    mixLabel = "MIXTURE OF ELEMENTS";
+                } else if (uniqueCompounds.size > 1 && uniqueElements.size === 0) {
+                    mixLabel = "MIXTURE OF COMPOUNDS";
+                } else {
+                    mixLabel = "MIXTURE OF ELEMENTS AND COMPOUNDS";
+                }
+                statusBar.innerText = mixLabel;
+                statusBar.className = "px-4 py-1.5 rounded-full text-xs font-bold border-2 bg-purple-50 text-purple-700 border-purple-200";
+            } else {
+                statusBar.innerText = matter.c ? "COMPOUND" : "ELEMENT";
+                statusBar.className = `px-4 py-1.5 rounded-full text-xs font-bold border-2 ${matter.c ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`;
+            }
+        }
+
+        function separateSelected() {
+            if (!selectedMoleculeId) return;
+            atoms.forEach(a => { if (a.moleculeId === selectedMoleculeId) { a.moleculeId = null; a.vy_p = 0; } });
+            molecules = molecules.filter(m => m.id !== selectedMoleculeId);
+            selectedMoleculeId = null; updateSelectionVisuals(); updateClassification();
+        }
+
+        function resetWorkspace() {
+            document.querySelectorAll('.atom, .bond-line, .molecule-label').forEach(el => el.remove());
+            atoms = []; molecules = []; nextId = 1; selectedMoleculeId = null; updateSelectionVisuals(); updateClassification();
+        }
+
+        function showWarning() { warningToast.style.display = 'block'; setTimeout(() => warningToast.style.display = 'none', 1500); }
+
+        window.onload = () => updatePhysics();
+    </script>
+</body>
+</html>
