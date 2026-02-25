@@ -14,28 +14,47 @@
         .liquid-water {
             transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), y 0.6s cubic-bezier(0.4, 0, 0.2, 1), fill 0.5s ease;
         }
+        /* Optimized for Tablet/iPad Viewports */
         .workspace-grid {
             display: grid;
-            grid-template-columns: 220px 1fr 280px;
-            gap: 1.5rem;
-            min-width: 850px; 
+            grid-template-columns: 1fr;
+            gap: 1rem;
         }
-        @media (max-width: 1024px) {
+        @media (min-width: 768px) {
             .workspace-grid {
-                grid-template-columns: 200px 1fr 240px;
-                min-width: 750px;
+                grid-template-columns: 240px 1fr;
             }
+            .analysis-column {
+                grid-column: span 2;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .workspace-grid {
+                grid-template-columns: 240px 1fr 300px;
+            }
+            .analysis-column {
+                grid-column: span 1;
+                display: flex;
+                flex-direction: column;
+            }
+        }
+        /* Ensure touch targets are large enough */
+        button {
+            min-height: 44px;
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800 overflow-x-auto">
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
     <header class="bg-indigo-700 text-white p-4 shadow-md flex-shrink-0">
-        <h1 class="text-2xl font-bold text-center">Solubility & Mixtures Lab</h1>
-        <p class="text-center text-indigo-100 opacity-90 text-sm">Interactive Science Simulation</p>
+        <h1 class="text-xl md:text-2xl font-bold text-center">Solubility & Mixtures Lab</h1>
+        <p class="text-center text-indigo-100 opacity-90 text-xs md:text-sm">Interactive Science Simulation</p>
     </header>
 
-    <main class="flex-grow p-4 md:p-6 flex justify-center items-start">
+    <main class="flex-grow p-3 md:p-6 flex justify-center items-start overflow-y-auto">
         <div class="workspace-grid w-full max-w-7xl">
             
             <!-- LEFT: Controls -->
@@ -59,7 +78,7 @@
                 </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-md mb-3 border-b pb-1 text-indigo-700 uppercase text-xs tracking-wider">Conditions & Actions</h2>
+                    <h2 class="font-bold text-md mb-3 border-b pb-1 text-indigo-700 uppercase text-xs tracking-wider">Conditions</h2>
                     <div class="space-y-3">
                         <button onclick="increaseTemp()" class="w-full bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-3 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
@@ -71,13 +90,13 @@
                             Filter Mixture
                         </button>
                         
-                        <div class="space-y-1">
+                        <div class="grid grid-cols-1 gap-1">
                             <label class="flex items-center gap-2 p-2 bg-slate-50 rounded cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="checkPowdered" onchange="updateUI()" class="w-4 h-4 text-indigo-600 rounded">
+                                <input type="checkbox" id="checkPowdered" onchange="updateUI()" class="w-5 h-5 md:w-4 md:h-4 text-indigo-600 rounded">
                                 <span class="text-xs font-medium">Powdered Form</span>
                             </label>
                             <label class="flex items-center gap-2 p-2 bg-slate-50 rounded cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="checkStirring" onchange="updateUI()" class="w-4 h-4 text-indigo-600 rounded">
+                                <input type="checkbox" id="checkStirring" onchange="updateUI()" class="w-5 h-5 md:w-4 md:h-4 text-indigo-600 rounded">
                                 <span class="text-xs font-medium">Faster Stirring</span>
                             </label>
                         </div>
@@ -90,18 +109,24 @@
             </div>
 
             <!-- CENTER: Beaker Visualization -->
-            <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-inner p-4 border border-slate-200 min-h-[500px]">
-                <div class="w-full max-w-xs mb-6">
-                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-tighter">
-                        <span id="sat-label">Saturation Progress</span>
-                        <span id="sat-percent-text">0%</span>
+            <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-inner p-4 border border-slate-200 min-h-[450px]">
+                <div class="w-full max-w-sm mb-6 space-y-3">
+                    <div>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-tighter">
+                            <span id="sat-label">Saturation Level</span>
+                            <span id="sat-percent-text">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner border border-slate-200">
+                            <div id="sat-progress-bar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-red-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner border border-slate-200">
-                        <div id="sat-progress-bar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-red-500 transition-all duration-500" style="width: 0%"></div>
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">Solute Dissolved:</span>
+                        <span id="info-solute-amt" class="text-xs font-mono font-bold text-indigo-600">0.00g</span>
                     </div>
                 </div>
 
-                <svg id="beaker-container" viewBox="0 0 300 400" class="w-full h-auto max-h-[400px] drop-shadow-xl">
+                <svg id="beaker-container" viewBox="0 0 300 400" class="w-full h-auto max-h-[380px] drop-shadow-xl">
                     <!-- Liquid level -->
                     <rect id="liquid-solvent" x="55" y="340" width="190" height="0" fill="#bae6fd" class="liquid-water" />
                     
@@ -117,8 +142,8 @@
                 </svg>
             </div>
 
-            <!-- RIGHT: Analysis Report -->
-            <div class="space-y-4">
+            <!-- RIGHT: Analysis Report (Responsive stacking) -->
+            <div class="analysis-column space-y-4">
                 <div class="bg-slate-900 text-white p-5 rounded-xl shadow-lg border-t-4 border-indigo-500">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2 border-b border-slate-700 pb-2">
                         <svg class="h-5 w-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -151,7 +176,7 @@
                 </div>
                 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-xs text-slate-500 uppercase mb-2 tracking-widest">Key Terms</h3>
+                    <h3 class="font-bold text-xs text-slate-500 uppercase mb-2 tracking-widest">Scientific Glossary</h3>
                     <div class="space-y-3 text-[11px] text-slate-600 leading-snug">
                         <p>
                             <b class="text-emerald-600 block mb-0.5">Homogeneous:</b>
@@ -163,7 +188,6 @@
                         </p>
                         <p><b class="text-indigo-600">Solvent:</b> The substance that dissolves a solute (e.g. water).</p>
                         <p><b class="text-indigo-600">Solute:</b> The substance that is dissolved in a solvent (e.g. salt).</p>
-                        <p><b class="text-indigo-600">Filtration:</b> Process of separating undissolved solids (residue) from a liquid (filtrate).</p>
                         <p><b class="text-indigo-600">Saturated Solution:</b> Homogeneous state where solvent holds max solute possible.</p>
                         <p><b class="text-orange-600">Suspension:</b> Heterogeneous state where undissolved solid remains visible.</p>
                     </div>
@@ -197,16 +221,19 @@
 
         function addSolute() {
             if (solventAmt === 0) {
-                alert("Please add solvent (water) before adding solute!");
+                // Using a custom UI hint instead of browser alert for better iPad UX
+                document.getElementById('info-desc').innerText = "ALERT: Please add solvent (water) before adding solute!";
+                document.getElementById('info-desc').className = "font-bold block mb-1 text-red-400 animate-bounce";
+                setTimeout(() => {
+                    document.getElementById('info-desc').className = "font-bold block mb-1 text-indigo-400";
+                    updateUI();
+                }, 2000);
                 return;
             }
             
             const capacity = getSolubilityCapacity();
             
-            // Logic change: If we are already exactly at or above capacity, 
-            // the next add adds more to the total (resulting in precipitate).
-            // If we are below capacity, but this click would put us over, 
-            // we cap the total at EXACT capacity for this one click.
+            // Logic: Catch saturation exactly before going to suspension
             if (soluteTotal < capacity && (soluteTotal + SOLUTE_INCREMENT) > capacity) {
                 soluteTotal = capacity;
             } else {
@@ -218,7 +245,6 @@
 
         function addInsoluble() {
             if (solventAmt === 0) {
-                alert("Please add solvent (water) before adding sand!");
                 return;
             }
             insolubleTotal += 15;
@@ -236,7 +262,6 @@
         function filterMixture() {
             if (solventAmt === 0) return;
             const solubilityCapacity = getSolubilityCapacity();
-            // Filtration removes only solids. Dissolved solute remains.
             soluteTotal = Math.min(soluteTotal, solubilityCapacity);
             insolubleTotal = 0;
             updateUI();
@@ -260,7 +285,6 @@
             const solubilityCapacity = getSolubilityCapacity();
             const dissolvedAmt = Math.min(soluteTotal, solubilityCapacity);
             
-            // Use a very small epsilon to check saturation to handle floating point issues
             const solutePrecipitate = Math.max(0, soluteTotal - (solubilityCapacity + 0.0001));
             
             const isSaturated = solventAmt > 0 && soluteTotal >= (solubilityCapacity - 0.0001);
@@ -275,7 +299,7 @@
             liquid.setAttribute('height', height);
             liquid.setAttribute('y', 365 - height);
             
-            // COLOR LOGIC: 
+            // Color Mixing: Blue to Green
             const r = Math.round(186 - (saturationRatio * (186 - 16)));
             const g = Math.round(230 - (saturationRatio * (230 - 185)));
             const b = Math.round(253 - (saturationRatio * (253 - 129)));
@@ -284,10 +308,12 @@
             const bar = document.getElementById('sat-progress-bar');
             const label = document.getElementById('sat-label');
             const percentText = document.getElementById('sat-percent-text');
+            const soluteAmtText = document.getElementById('info-solute-amt');
             const percent = Math.min(100, Math.round(saturationRatio * 100));
             
             bar.style.width = percent + '%';
             percentText.innerText = percent + '%';
+            soluteAmtText.innerText = dissolvedAmt.toFixed(2) + 'g';
 
             if (hasPrecipitate) {
                 label.innerText = "OVERSATURATED!";
@@ -323,16 +349,16 @@
                 homoEl.className = "font-bold text-orange-400";
                 
                 if (hasInsoluble && !hasPrecipitate) {
-                    descEl.innerText = "Heterogeneous mixture: Sand particles do not dissolve. The green color represents dissolved solute in the liquid phase.";
+                    descEl.innerText = "Heterogeneous mixture: Sand particles do not dissolve. The liquid phase contains dissolved salt.";
                 } else {
-                    descEl.innerText = "Saturation point exceeded. Solid precipitate has settled at the bottom.";
+                    descEl.innerText = "Saturation point exceeded. Solid precipitate has settled at the bottom (Heterogeneous).";
                 }
             } else {
                 typeEl.innerText = isSaturated ? "Saturated Solution" : "Unsaturated Solution";
                 homoEl.innerText = "Homogeneous";
                 homoEl.className = "font-bold text-emerald-400";
                 descEl.innerText = isSaturated 
-                    ? "Max solubility reached! The liquid is uniform green throughout and perfectly homogeneous." 
+                    ? "Max solubility reached! The mixture remains perfectly homogeneous." 
                     : "The solute is fully dissolved into a clear green homogeneous solution.";
             }
 
